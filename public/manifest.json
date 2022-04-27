@@ -1,0 +1,19 @@
+{
+    "name": "Salesforce Debug Logs (sfdl)",
+    "description": "Salesforce Debug Logs (sfdl)",
+    "version": "0.1",
+    "manifest_version": 3,
+    "action": {
+        "default_popup": "popup.html"
+    },
+    "background": {
+        "service_worker": "background.js"
+    },
+    "host_permissions": [
+        "https://*.salesforce.com/",
+        "https://*.force.com/"
+    ],
+    "permissions": [
+        "cookies"
+    ]
+  }

@@ -1,0 +1,41 @@
+{
+  "name": "@vanillawc/wc-monaco-editor",
+  "version": "1.10.15",
+  "license": "MIT",
+  "author": "Evan Plaice <evanplaice@gmail.com> (https://evanplaice.com/)",
+  "description": "A vanilla Monaco Editor web component",
+  "keywords": [
+    "web-components",
+    "vanilla",
+    "editor",
+    "monaco"
+  ],
+  "repository": "https://github.com/vanillawc/wc-monaco-editor/",
+  "main": "index.js",
+  "scripts": {
+    "start": "npx live-server --no-browser --port=5500 --open=dev",
+    "lint": "esmtk lint",
+    "build": "npm run build:esm && npm run build:min",
+    "build:esm": "esmtk bundle src/wc-monaco-editor.js index.js",
+    "build:min": "esmtk minify src/wc-monaco-editor.js index.min.js",
+    "copy": "npm run copy:editor && npm run copy:font && npm run copy:workers",
+    "copy:editor": "cp node_modules/monaco-editor-es/editor.main.js monaco/",
+    "copy:font": "cp node_modules/monaco-editor-es/*.ttf monaco/",
+    "copy:workers": "cp -r node_modules/monaco-editor-es/workers/* monaco/workers/",
+    "package": "npx rimraf package && npm pack | tail -n 1 | xargs tar -xf",
+    "preversion": "npm run lint",
+    "postversion": "git push --follow-tags"
+  },
+  "devDependencies": {
+    "esmtk": "^0.5.6",
+    "monaco-editor-es": "^0.30.1"
+  },
+  "standard": {
+    "ignore": [
+      "demo/*",
+      "dev/*",
+      "**/monaco/*",
+      "index.js"
+    ]
+  }
+}
