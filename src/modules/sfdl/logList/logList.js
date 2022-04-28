@@ -27,8 +27,8 @@ export default class LogList extends LightningElement{
         this.init();
 
         let sessionInformation = {
-            authToken: 'Bearer 00D1y0000008m7I!ARwAQFeSsbWyermjBxUXrM9oFneknE904bEA_b8Qy0qi_HNxfwS6Bb1mHQfGEp1YG6RbxJUF9GQxjLzMqHz8vAhcoyRxBJYP',
-            instanceUrl: 'https://naturalchemist--sand1.my.salesforce.com',
+            authToken: '',
+            instanceUrl: '',
         };
         this.getApexLogsInformation(sessionInformation);
     }
@@ -43,11 +43,11 @@ export default class LogList extends LightningElement{
             return log.id === event.target.dataset.logid
         });
 
-        const logDetail = await response[0].response;
+        const logDetails = await response[0].response;
         const logName = event.target.dataset.logname;
 
-        this.dispatchEvent(new CustomEvent('logdetail',{
-            detail: { logDetail, logName }
+        this.dispatchEvent(new CustomEvent('logdetails',{
+            detail: { logDetails, logName }
         }))
     }
 

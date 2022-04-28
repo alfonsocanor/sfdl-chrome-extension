@@ -1,34 +1,24 @@
 <template>
     <header class="demo-only-element slds-theme_default slds-border_bottom slds-p-around_small" style="z-index:1">
-      <button class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Toggle panel" aria-expanded="true" aria-controls="example-unique-id-11" aria-pressed="true">
-        <svg class="slds-button__icon" aria-hidden="true">
-          <!-- <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#toggle_panel_left"></use> -->
-        </svg>
-        <span class="slds-assistive-text">Provide description of action</span>
-      </button>
+
+
     </header>
     <div class="demo-only-element" style="background-color:#fafaf9;position:relative;height:92vh;overflow:hidden;display:flex;">
-      <div class="slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open" aria-hidden="false" id="example-unique-id-11">
-        <div class="slds-panel__header">
+      <div class="sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open" aria-hidden="false">
+        <div class="slds-panel__header" style="padding:14px;">
           <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Salesforce Debug Logs</h2>
-          <sfdl-picklist></sfdl-picklist>
-          <div class="slds-panel__header-actions">
-            <button class="slds-button slds-button_icon slds-button_icon-small slds-panel__close" title="Collapse Panel Header">
-              <svg class="slds-button__icon" aria-hidden="true">
-                <!-- <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#close"></use> -->
-              </svg>
-              <span class="slds-assistive-text">Collapse Panel Header</span>
-            </button>
-          </div>
         </div>
         <div class="slds-panel__body">
           <sfdl-log-list
-            onlogdetail={handleLogDetail}
+            onlogdetails={handleLogDetails}
           ></sfdl-log-list>
         </div>
       </div>
-      <div class="demo-only-content slds-col slds-p-around_medium">
-        <sfdl-log-details log-detail={logDetail}></sfdl-log-details>
+      <div class="demo-only-content slds-col" id="sfdl-console-log-details-section">
+        <sfdl-log-details 
+          show-log-list-section={showLogListSection}
+          ondisplayloglistsection={handleDisplayLogListSection}>
+        </sfdl-log-details>
       </div>
     </div>
   </template>
