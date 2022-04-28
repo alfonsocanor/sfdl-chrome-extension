@@ -18,7 +18,7 @@ export default class LogDetails extends LightningElement{
             });
         }
     }
-
+ 
     async renderedMonacoEditor(){
         console.log('2');
         this.showMonacoEditor = false;

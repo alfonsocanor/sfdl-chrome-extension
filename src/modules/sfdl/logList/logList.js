@@ -1,4 +1,5 @@
 import { track, LightningElement  } from 'lwc';
+import { getAllCookiesFromSalesforceDomain } from 'sfdl/authentication';
 
 const apexLogIdsQueryUrl = '/services/data/v51.0/tooling/query/?q=SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ';
 const KB2MB = 0.00000095367432;
@@ -20,13 +21,21 @@ const processResponseBasedOnContentType = {
 
 export default class LogList extends LightningElement{
     @track logList = [];
+    authMap = [];
 
     connectedCallback(){
+        this.init();
+
         let sessionInformation = {
             authToken: 'Bearer 00D1y0000008m7I!ARwAQFeSsbWyermjBxUXrM9oFneknE904bEA_b8Qy0qi_HNxfwS6Bb1mHQfGEp1YG6RbxJUF9GQxjLzMqHz8vAhcoyRxBJYP',
             instanceUrl: 'https://naturalchemist--sand1.my.salesforce.com',
         };
         this.getApexLogsInformation(sessionInformation);
+    }
+
+    async init(){
+        const allSalesforceCookies = await getAllCookiesFromSalesforceDomain();
+        console.log('@@@ allSalesforceCookies', allSalesforceCookies);
     }
 
     async handleLogInfo(event){
@@ -43,7 +52,7 @@ export default class LogList extends LightningElement{
     }
 
     async getApexLogsInformation(sessionInformation) {
-        let url2GetApexLogIds = sessionInformation.instanceUrl + apexLogIdsQueryUrl + sessionInformation.queryWhere;
+        let url2GetApexLogIds = sessionInformation.instanceUrl + apexLogIdsQueryUrl;// + sessionInformation.queryWhere;
         const apexLogList = await this.getInformationFromSalesforce(url2GetApexLogIds, {}, sessionInformation, 'contentTypeJson');
 
        this.processApexLogs(sessionInformation, apexLogList.response); 
