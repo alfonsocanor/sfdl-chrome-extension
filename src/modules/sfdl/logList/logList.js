@@ -1,5 +1,4 @@
-import { track, LightningElement  } from 'lwc';
-import { getAllCookiesFromSalesforceDomain } from 'sfdl/authentication';
+import { track, api, LightningElement  } from 'lwc';
 
 const apexLogIdsQueryUrl = '/services/data/v51.0/tooling/query/?q=SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ';
 const KB2MB = 0.00000095367432;
@@ -14,28 +13,17 @@ const processResponseBasedOnContentType = {
         let blob = new Blob([newResponse.text()], {
             type: 'text/html'
         });
-        console.log(blob.size);
+        console.log('blobsize: ' + blob.size); 
         return {id:logId, name:fileName, response:response.text()};
     }
 }
 
 export default class LogList extends LightningElement{
     @track logList = [];
-    authMap = [];
+    @api sessionInformation;
 
     connectedCallback(){
-        this.init();
-
-        let sessionInformation = {
-            authToken: '',
-            instanceUrl: '',
-        };
-        this.getApexLogsInformation(sessionInformation);
-    }
-
-    async init(){
-        const allSalesforceCookies = await getAllCookiesFromSalesforceDomain();
-        console.log('@@@ allSalesforceCookies', allSalesforceCookies);
+        this.getApexLogsInformation(this.sessionInformation);
     }
 
     async handleLogInfo(event){
@@ -52,15 +40,10 @@ export default class LogList extends LightningElement{
     }
 
     async getApexLogsInformation(sessionInformation) {
-        let url2GetApexLogIds = sessionInformation.instanceUrl + apexLogIdsQueryUrl;// + sessionInformation.queryWhere;
+        let url2GetApexLogIds = sessionInformation.instanceUrl + apexLogIdsQueryUrl;
         const apexLogList = await this.getInformationFromSalesforce(url2GetApexLogIds, {}, sessionInformation, 'contentTypeJson');
 
        this.processApexLogs(sessionInformation, apexLogList.response); 
-    }
-
-    getRecordsFromSalesforce(sessionInformation, query){
-        let url2GetApexLogIds = sessionInformation.instanceUrl + '/services/data/v51.0/query/?q=' + query;
-        return this.getInformationFromSalesforce(url2GetApexLogIds, {}, sessionInformation);
     }
 
     async getInformationFromSalesforce(requestUrl, additionalOutputs, sessionInformation, function2Execute, logId) {
@@ -72,7 +55,7 @@ export default class LogList extends LightningElement{
         const response = await fetch(requestUrl,{
             method:'GET',
             headers: {
-                'Authorization': sessionInformation.authToken,
+                'Authorization': 'Bearer ' + sessionInformation.authToken,
                 'Content-type': 'application/json; charset=UTF-8; text/plain',
             }
         });
@@ -83,10 +66,6 @@ export default class LogList extends LightningElement{
     async processApexLogs(sessionInformation, apexLogList) {
         apexLogList.forEach(async apexLog => {
             let completeUrl = sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
-
-            if (sessionInformation.debug) {
-                console.log('processApexLogs completeUrl: ', completeUrl);
-            }
 
             //Some operation values contains '/' char
             let regex = new RegExp('/', 'g');

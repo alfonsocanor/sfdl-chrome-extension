@@ -1,35 +1,30 @@
 <template>
-    <div class="slds-form-element">
-      <label class="slds-form-element__label" for="combobox-id-1" id="combobox-label-id-27">Relate To</label>
-      <div class="slds-form-element__control">
-        <div class="slds-combobox_container slds-size_small">
-          <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click">
-            <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
-                <button type="button" class="slds-input_faux slds-combobox__input" aria-labelledby="combobox-label-id-27 combobox-id-1-selected-value" id="combobox-id-1-selected-value" aria-controls="listbox-id-1" aria-expanded="false" aria-haspopup="listbox">
-                    <span class="slds-truncate" id="combobox-value-id-29">Select an Option…</span>
-                </button>
-                <span class="slds-icon_container slds-icon-utility-down slds-input__icon slds-input__icon_right">
-                    <svg class="slds-icon slds-icon slds-icon_x-small slds-icon-text-default" aria-hidden="true">
-                    <!-- <use xlink:href="/assets/icons/utility-sprite/svg/symbols.svg#down"></use> -->
-                    </svg>
-                </span>
-            </div>
-            <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid" role="listbox">
-                <ul class="slds-listbox slds-listbox_vertical" role="presentation">
-                    <template for:each={picklistInformation} for:item={picklist}>
-                        <li key={picklist.value}role="presentation" class="slds-listbox__item">
-                            <div id="option1" class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
-                                <span class="slds-media__figure slds-listbox__option-icon"></span>
-                                <span class="slds-media__body">
-                                <span class="slds-truncate" title="Option A">{picklist.label}</span>
-                                </span>
-                            </div>
-                        </li>
-                    </template>
-                </ul>
-            </div>
+  <div class="slds-form-element">
+    <label class="slds-form-element__label" for="combobox-id-1" id="combobox-label-id-27">Orgs domain</label>
+    <div class="slds-form-element__control">
+      <div class="slds-combobox_container slds-size_large">
+        <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" onclick={openPicklistOptions}>
+          <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+              <button type="button" class="slds-input_faux slds-combobox__input" aria-labelledby="combobox-label-id-27 combobox-id-1-selected-value" id="combobox-id-1-selected-value" aria-controls="listbox-id-1" aria-expanded="false" aria-haspopup="listbox">
+                  <span class="slds-truncate" id="combobox-value-id-29">{valueSelected}</span>
+              </button>
+              <span class="slds-icon_container slds-icon-utility-down slds-input__icon slds-input__icon_right">
+                <img src="/slds/icons/utility/down.svg"/>
+              </span>
+          </div>
+          <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid" role="listbox">
+              <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                  <template for:each={picklist} for:item="picklistInfo">
+                      <li key={picklistInfo.label} role="presentation" class="slds-listbox__item">
+                          <div data-domain={picklistInfo.label} data-sid={picklistInfo.value} onclick={updateSessionInformation} class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
+                              {picklistInfo.label}
+                          </div>
+                      </li>
+                  </template>
+              </ul>
           </div>
         </div>
       </div>
     </div>
-  </template>
+  </div>
+</template>

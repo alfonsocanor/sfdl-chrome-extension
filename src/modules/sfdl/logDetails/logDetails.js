@@ -9,13 +9,11 @@ export default class LogDetails extends LightningElement{
     toggleImage = '/slds/icons/utility/toggle_panel_right.svg';
 
     @api
-    async displayLogsDetailsFromLogList(logDetails){
+    async displayLogsDetailsFromLogList(logDetails, logName){
         this.logDetails = logDetails;
-        console.log('1');
         await this.renderedMonacoEditor();
-        console.log('3');
         if(this.template.querySelector('.sfdlMonacoEditor')){
-            this.logName = logDetails.logName;
+            this.logName = logName;
             monaco.editor.create(this.template.querySelector('.sfdlMonacoEditor'), {
                 value: logDetails,
                 automaticLayout: true
@@ -24,7 +22,6 @@ export default class LogDetails extends LightningElement{
     }
  
     async renderedMonacoEditor(){
-        console.log('2');
         this.showMonacoEditor = false;
         await new Promise((resolve)=>{setTimeout(resolve, 100);});
         this.showMonacoEditor = true;
