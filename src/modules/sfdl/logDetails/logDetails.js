@@ -1,4 +1,5 @@
 import { LightningElement,api } from 'lwc';
+import { invokeFilterFormatFunctions } from 'sfdl/logDetailsManipulation';
 import * as monaco from 'monaco-editor';
 
 const TOGGLE_IMAGE_RIGHT = '/slds/icons/utility/toggle_panel_right.svg';
@@ -11,17 +12,53 @@ export default class LogDetails extends LightningElement{
     showMonacoEditor;
     toggleImage = TOGGLE_IMAGE_RIGHT;
 
+    formatMethodEntryExitHierarchy = false;
+    heapStatementRemoveLines = false;
+
+    checkboxOptions = [
+        {
+            label: 'Method Entry/Exit hierarchy format',
+            name: 'methodEntryExitCodeUnitStartedFinished2Hierarchy',
+            checked: false
+        },
+        {
+            label: 'Remove HEAP_ALLOCATE / STATEMENT_EXECUTE',
+            name: 'removeHeapAllocateAndStatementExecute',
+            checked:false
+        }
+    ];
+
+    @api
+    hideMonacoEditor(){
+        this.showMonacoEditor = false;
+        this.logDetails = null;
+        this.logName = '';
+    }
+
     @api
     async displayLogsDetailsFromLogList(logDetails, logName){
-        this.logDetails = logDetails;
+        this.logDetails = await this.formatLogDetails(logDetails);
         await this.renderedMonacoEditor();
         if(this.template.querySelector('.sfdlMonacoEditor')){
             this.logName = logName;
             monaco.editor.create(this.template.querySelector('.sfdlMonacoEditor'), {
-                value: logDetails,
+                value: this.logDetails,
                 automaticLayout: true
             });
         }
+    }
+
+    async formatLogDetails(logDetails){
+        let logDetailsArrayOfLines = logDetails.split('\n');
+        let logDetailsFormatted; 
+        this.checkboxOptions.forEach((option) => {
+            if(option.checked){
+                logDetailsFormatted = invokeFilterFormatFunctions(logDetailsFormatted ? logDetailsFormatted : logDetailsArrayOfLines, option.name);
+                logDetailsFormatted.join('\n');
+            }
+        })
+        
+        return logDetailsFormatted ? logDetailsFormatted.join('\n') : logDetails;
     }
  
     async renderedMonacoEditor(){
@@ -39,5 +76,13 @@ export default class LogDetails extends LightningElement{
                 classAction: this.showLogListSection ? 'remove' : 'add'
             }
         }))
+    }
+
+    handleCheckboxOptions(event){
+        this.checkboxOptions.forEach((option) => {
+            if(option.name === event.detail.function2Execute){
+                option.checked = event.detail.checked;
+            }
+        })
     }
 }

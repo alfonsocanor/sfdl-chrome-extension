@@ -38,7 +38,12 @@ export default class Console extends LightningElement {
         this.template.querySelector('.sfdl-console-log-list-section').classList[event.detail.classAction]('slds-is-open');
     }
 
+    hideMonacoEditor(){
+        this.template.querySelector('sfdl-log-details').hideMonacoEditor();
+    }
+
     async handleSessionInformation(event){
+        this.hideMonacoEditor();
         this.renderLogList = false;
         await new Promise((resolve)=>{setTimeout(resolve, 100);});
         this.renderLogList = true;
