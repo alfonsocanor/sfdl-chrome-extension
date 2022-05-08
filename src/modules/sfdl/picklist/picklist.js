@@ -15,6 +15,14 @@ export default class Picklist extends LightningElement {
         this.areOptionsOpened = !this.areOptionsOpened;
         this.addDeleteHtmlClassOfAnElement(classAction, 'slds-is-open');
     }
+
+    closePicklistIfOnFocus(){
+        setTimeout(() => {
+            if(this.areOptionsOpened){
+                this.openPicklistOptions();
+            }
+        },200);
+    }
     
     addDeleteHtmlClassOfAnElement(action, htmlClassName){
         this.template.querySelector('.slds-combobox').classList[action](htmlClassName);

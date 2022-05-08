@@ -1,9 +1,14 @@
 <template>
-    <ul class="slds-has-dividers_around slds-has-block-links">
-        <template for:each={logList} for:item="log">
-            <li key={log.id} class="slds-item">
-                <button data-logid={log.id} data-logname={log.name} onclick={handleLogInfo}>{log.name}</button>
-            </li>
-        </template>
-      </ul>
+    <template if:true={thereAreLogsToDisplay}>
+        <ul class="slds-has-dividers_around slds-has-block-links">
+            <template for:each={logList} for:item="log">
+                <li key={log.id} class="slds-item">
+                    <button data-logid={log.id} data-logname={log.name} onclick={handleLogInfo}>{log.name}</button>
+                </li>
+            </template>
+        </ul>
+    </template>
+    <template if:false={thereAreLogsToDisplay}>
+        <span>No Salesforce Debug Logs found</span>
+    </template>
 </template>

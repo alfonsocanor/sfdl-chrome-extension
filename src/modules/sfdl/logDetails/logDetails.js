@@ -1,12 +1,15 @@
 import { LightningElement,api } from 'lwc';
 import * as monaco from 'monaco-editor';
 
+const TOGGLE_IMAGE_RIGHT = '/slds/icons/utility/toggle_panel_right.svg';
+const TOGGLE_IMAGE_LEFT = '/slds/icons/utility/toggle_panel_left.svg';
+
 export default class LogDetails extends LightningElement{
     @api showLogListSection;
     logName = '';
     logDetails;
     showMonacoEditor;
-    toggleImage = '/slds/icons/utility/toggle_panel_right.svg';
+    toggleImage = TOGGLE_IMAGE_RIGHT;
 
     @api
     async displayLogsDetailsFromLogList(logDetails, logName){
@@ -29,8 +32,7 @@ export default class LogDetails extends LightningElement{
     }
 
     handleHideShowSections(){
-        this.toggleImage = this.showLogListSection ? 
-            '/slds/icons/utility/toggle_panel_left.svg' : '/slds/icons/utility/toggle_panel_right.svg' ;
+        this.toggleImage = this.showLogListSection ? TOGGLE_IMAGE_LEFT : TOGGLE_IMAGE_RIGHT ;
 
         this.dispatchEvent(new CustomEvent('displayloglistsection',{
             detail: { 

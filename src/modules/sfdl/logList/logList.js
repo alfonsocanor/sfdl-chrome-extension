@@ -4,6 +4,9 @@ const apexLogIdsQueryUrl = '/services/data/v51.0/tooling/query/?q=SELECT Id, Las
 const KB2MB = 0.00000095367432;
 
 const processResponseBasedOnContentType = {
+    httpError(response){
+        return {hasError: true, error: response.message};
+    },
     async contentTypeJson(response){
         const logsInformation = await response.json()
         return logsInformation.records.map(logRecord => logRecord);
@@ -21,6 +24,7 @@ const processResponseBasedOnContentType = {
 export default class LogList extends LightningElement{
     @track logList = [];
     @api sessionInformation;
+    thereAreLogsToDisplay = true;
 
     connectedCallback(){
         this.getApexLogsInformation(this.sessionInformation);
@@ -43,7 +47,27 @@ export default class LogList extends LightningElement{
         let url2GetApexLogIds = sessionInformation.instanceUrl + apexLogIdsQueryUrl;
         const apexLogList = await this.getInformationFromSalesforce(url2GetApexLogIds, {}, sessionInformation, 'contentTypeJson');
 
-       this.processApexLogs(sessionInformation, apexLogList.response); 
+        if(apexLogList.response.hasError){
+            this.sendToastMessage2Console('error', apexLogList.response.error, sessionInformation.instanceUrl);
+            return;
+        }
+
+        if(apexLogList.response.length){
+            this.thereAreLogsToDisplay = true;
+            await this.processApexLogs(sessionInformation, apexLogList.response); 
+            this.sendToastMessage2Console('success', 'Retrieving logs...', sessionInformation.instanceUrl);
+        } else {
+            this.thereAreLogsToDisplay = false;
+            this.sendToastMessage2Console('info', 'There are no logs to retrieve', sessionInformation.instanceUrl);
+        }
+    }
+
+    sendToastMessage2Console(action, header, message){
+        this.dispatchEvent(new CustomEvent('toastmessage',{
+            detail:{
+                action, header, message
+            }
+        }))
     }
 
     async getInformationFromSalesforce(requestUrl, additionalOutputs, sessionInformation, function2Execute, logId) {
@@ -52,14 +76,24 @@ export default class LogList extends LightningElement{
     }
 
     async fetchLogsRecords(requestUrl, sessionInformation, function2Execute, logId, fileName){
-        const response = await fetch(requestUrl,{
-            method:'GET',
-            headers: {
-                'Authorization': 'Bearer ' + sessionInformation.authToken,
-                'Content-type': 'application/json; charset=UTF-8; text/plain',
-            }
-        });
+        let response = {}; 
+        try{
+            response = await fetch(requestUrl,{
+                method:'GET',
+                headers: {
+                    'Authorization': 'Bearer ' + sessionInformation.authToken,
+                    'Content-type': 'application/json; charset=UTF-8; text/plain',
+                }
+            });
 
+            if(response.status !== 200){
+                function2Execute = 'httpError';
+                response.message = response.status === 401 ? response.statusText + ': Invalid session' : response.message;
+            }
+        } catch(e){
+            function2Execute = 'httpError';
+            response.message = e.message;
+        }
         return processResponseBasedOnContentType[function2Execute](response, logId, fileName);
     }
 

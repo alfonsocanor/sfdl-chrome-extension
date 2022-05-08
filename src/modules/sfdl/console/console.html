@@ -3,8 +3,20 @@
     <sfdl-picklist 
       picklist={picklistInformation}
       onsessioninformation={handleSessionInformation}
+      ontoastmessage={handleToastMessage}
       placeholder="Select your domain">
-    </sfdl-picklist> Salesforce Debug Logs
+    </sfdl-picklist> 
+    
+    Salesforce Debug Logs
+
+    <template if:true={showToastMessage}>
+      <sfdl-toast 
+        action={toastAction} 
+        header={toastHeader} 
+        message={toastMessage}
+        onclosetoastmessage={closeToastIfOpenWhileAnotherExceptionOccurs}>
+      </sfdl-toast>
+    </template>
   </header>
   <div class="demo-only-element" style="background-color:#fafaf9;position:relative;height:92vh;overflow:hidden;display:flex;">
     <div class="sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open" aria-hidden="false">
@@ -15,6 +27,7 @@
         <template if:true={renderLogList}>
           <sfdl-log-list
             onlogdetails={handleLogDetails}
+            ontoastmessage={handleToastMessage}
             session-information={sessionInformation}>
           </sfdl-log-list>
         </template>
@@ -23,6 +36,7 @@
     <div class="demo-only-content slds-col" id="sfdl-console-log-details-section">
       <sfdl-log-details 
         show-log-list-section={showLogListSection}
+        ontoastmessage={handleToastMessage}
         ondisplayloglistsection={handleDisplayLogListSection}>
       </sfdl-log-details>
     </div>

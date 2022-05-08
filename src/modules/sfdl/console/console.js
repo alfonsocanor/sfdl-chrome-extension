@@ -4,6 +4,14 @@ import { getAllCookiesFromSalesforceDomain } from 'sfdl/authentication';
 export default class Console extends LightningElement {
     showLogListSection = true;
     renderLogList = false;
+    
+    showToastMessage = false;
+    toastAction;
+    toastHeader;
+    toastMessage;
+    toastInProgress = false;
+    toastCloseSetTimeoutId;
+
     @track picklistInformation = [];
     @track sessionInformation;
 
@@ -35,5 +43,27 @@ export default class Console extends LightningElement {
         await new Promise((resolve)=>{setTimeout(resolve, 100);});
         this.renderLogList = true;
         this.sessionInformation = event.detail.sessionInformation;
+    }
+
+    async handleToastMessage(event){
+        await this.closeToastIfOpenWhileAnotherExceptionOccurs();
+        this.toastAction = event.detail.action;
+        this.toastHeader = event.detail.header;
+        this.toastMessage = event.detail.message;
+        this.showToastMessage = true;
+        this.toastInProgress = true;
+
+        this.toastCloseSetTimeoutId = setTimeout(() => {
+            this.showToastMessage = false;
+            this.toastInProgress = false;
+        },4000);
+    }
+
+    async closeToastIfOpenWhileAnotherExceptionOccurs(){
+        if(this.toastInProgress){
+            clearTimeout(this.toastCloseSetTimeoutId);
+            this.showToastMessage = false;
+            await new Promise(resolve => setTimeout(resolve, 200));
+        }
     }
 }

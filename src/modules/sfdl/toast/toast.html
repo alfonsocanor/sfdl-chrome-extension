@@ -1,0 +1,20 @@
+<template>
+    <div class="slds-notify_container slds-is-relative slds-size_4-of-12" style="position:fixed; left: 50%; transform: translateX(-50%);">
+      <div class="slds-notify slds-notify_toast" role="status">
+        <span class="slds-assistive-text">{action}</span>
+        <span class="slds-icon_container slds-icon-utility-error slds-m-right_small slds-no-flex slds-align-top" title="Description of icon when needed">
+          <img src={iconAction} style="max-width:70% !important;" alt={action}/>
+        </span>
+        <div class="slds-notify__content">
+          <h2 class="slds-text-heading_small ">{header}</h2>
+          <p>{message}</p>
+        </div>
+        <div class="slds-notify__close">
+          <button style="width:22px;height:22px;" class="slds-button slds-button_icon slds-is-selected" onclick={closeToast} title="Toggle panel" aria-expanded="true" aria-controls="example-unique-id-11" aria-pressed="true">
+              <img src='/slds/icons/action/close.svg' alt="close x"/>
+              <span class="slds-assistive-text">Close</span>
+          </button>
+        </div>
+      </div>
+    </div>
+</template>
