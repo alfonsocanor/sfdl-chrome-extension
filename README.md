@@ -15,4 +15,4 @@ Currently this chrome extension is in progress and not public. Not all features 
 - Click on Load unpackaged button
 - Navigate to the repository cloned and select the folder dist
 
-## ![Built using lwc oss](https://raw.githubusercontent.com/Confirm4Crit/awesome-lwc/main/src/resources/favicon.ico =20x20)
+## ![Built using lwc oss](https://raw.githubusercontent.com/Confirm4Crit/awesome-lwc/main/src/resources/favicon.ico)
