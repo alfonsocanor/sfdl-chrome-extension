@@ -4,6 +4,7 @@
     "bugs": "https://github.com/chrome-extension-sfdl/issues",
     "dependencies": {
         "@vanillawc/wc-monaco-editor": "^1.10.15",
+        "babel-loader": "^8.2.5",
         "compression": "^1.7.4",
         "express": "^4.17.3",
         "helmet": "^4.2.0",

@@ -32,11 +32,11 @@ module.exports = {
             test: /\.js$/,
             exclude: /node_modules/,
             use: {
-            loader: '/Users/zkno/Documents/chrome-lwc/node_modules/babel-loader/lib/index.js',
+            loader: './node_modules/babel-loader/lib/index.js',
             options: {
                 plugins: [
-                '/Users/zkno/Documents/chrome-lwc/node_modules/@babel/plugin-proposal-object-rest-spread/lib/index.js',
-                '/Users/zkno/Documents/chrome-lwc/node_modules/@babel/plugin-syntax-class-properties/lib/index.js'
+                './node_modules/@babel/plugin-proposal-object-rest-spread/lib/index.js',
+                './node_modules/@babel/plugin-syntax-class-properties/lib/index.js'
                 ],
                 babelrc: false
             }
@@ -46,17 +46,17 @@ module.exports = {
             test: /\.ts$/,
             exclude: /node_modules/,
             use: {
-                loader: '/Users/zkno/Documents/chrome-lwc/node_modules/babel-loader/lib/index.js',
+                loader: './node_modules/babel-loader/lib/index.js',
                 options: {
                     plugins: [
-                    '/Users/zkno/Documents/chrome-lwc/node_modules/@babel/plugin-syntax-class-properties/lib/index.js',
+                    './node_modules/@babel/plugin-syntax-class-properties/lib/index.js',
                     [
-                        '/Users/zkno/Documents/chrome-lwc/node_modules/@babel/plugin-syntax-decorators/lib/index.js',
+                        './node_modules/@babel/plugin-syntax-decorators/lib/index.js',
                         { decoratorsBeforeExport: true }
                     ]
                     ],
                     presets: [
-                    '/Users/zkno/Documents/chrome-lwc/node_modules/@babel/preset-typescript/lib/index.js'
+                    './node_modules/@babel/preset-typescript/lib/index.js'
                     ]
                 }
             }
@@ -87,14 +87,6 @@ module.exports = {
             from: 'src/slds',
             to: 'slds'
         },
-/*         {
-            from: 'src/prismjs',
-            to: 'prismjs'
-        }, */
-/*         {
-            from: 'src/monacowc',
-            to: 'monacowc'
-        }, */
         {
             from: 'src/resources',
             to: 'resources'
