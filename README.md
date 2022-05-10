@@ -1,11 +1,18 @@
-# chrome-extension-sfdl
+# sfdl
 
-Here will be some information about the app.
+Currently this chrome extension is in progress and not public. Not all features from sfdl cli (https://github.com/alfonsocanor/sfdl) are available at this moment.
 
-## How to start?
+## Install as a unpacked extension?
 
-Start simple by running `yarn watch` (or `npm run watch`, if you set up the project with `npm`). This will start the project with a local development server.
+- Clone this repository
+- From terminal navigate to the folder you clone the respository and rung:
+	- npm install
+	- npx webpack
+		- This command will create a folder called 'dist' that we will in the last step
+- Install chrome https://www.google.com/chrome
+- Go to chrome://extensions
+- Activate Developer mode
+- Click on Load unpackaged button
+- Navigate to the repository cloned and select the folder dist
 
-The source files are located in the [`src`](./src) folder. All web components are within the [`src/modules`](./src/modules) folder. The folder hierarchy also represents the naming structure of the web components.
-
-Find more information on the main repo on [GitHub](https://github.com/muenzpraeger/create-lwc-app).
+## ![Built using lwc oss](https://raw.githubusercontent.com/Confirm4Crit/awesome-lwc/main/src/resources/favicon.ico =20x20)
