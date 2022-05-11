@@ -37,12 +37,13 @@ export default class LogDetails extends LightningElement{
 
     @api
     async displayLogsDetailsFromLogList(logDetails, logName){
-        this.logDetails = await this.formatLogDetails(logDetails);
+        this.logDetails = logDetails;
+        let formatLogDetails = await this.formatLogDetails(logDetails);
         await this.renderedMonacoEditor();
         if(this.template.querySelector('.sfdlMonacoEditor')){
             this.logName = logName;
             monaco.editor.create(this.template.querySelector('.sfdlMonacoEditor'), {
-                value: this.logDetails,
+                value: formatLogDetails,
                 automaticLayout: true
             });
         }
@@ -83,6 +84,14 @@ export default class LogDetails extends LightningElement{
             if(option.name === event.detail.function2Execute){
                 option.checked = event.detail.checked;
             }
-        })
+        });
+
+        this.renderLogDetailsAfterManipulationOptionSelection();
+    }
+
+    renderLogDetailsAfterManipulationOptionSelection(){
+        if(this.logDetails){
+            this.displayLogsDetailsFromLogList(this.logDetails, this.logName);
+        }
     }
 }
