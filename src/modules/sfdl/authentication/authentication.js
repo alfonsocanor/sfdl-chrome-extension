@@ -4,4 +4,8 @@ const getAllCookiesFromSalesforceDomain = async() => {
     return  chrome.cookies.getAll({name: "sid", domain: "salesforce.com", secure: true});
 }
 
-export { getAllCookiesFromSalesforceDomain }
+const invalidDomainsToFilterOut = [
+        '.appexchange.salesforce.com'
+    ];
+
+export { getAllCookiesFromSalesforceDomain, invalidDomainsToFilterOut }

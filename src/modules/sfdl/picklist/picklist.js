@@ -29,7 +29,7 @@ export default class Picklist extends LightningElement {
     }
 
     updateSessionInformation(event){
-        this.valueSelected = 'https://' + event.target.dataset.domain;
+        this.valueSelected = event.target.dataset.domain;
         const sessionInformation = {
             authToken: event.target.dataset.sid,
             instanceUrl: this.valueSelected

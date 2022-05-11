@@ -1,5 +1,5 @@
 import { LightningElement, track } from 'lwc';
-import { getAllCookiesFromSalesforceDomain } from 'sfdl/authentication';
+import { getAllCookiesFromSalesforceDomain, invalidDomainsToFilterOut } from 'sfdl/authentication';
 
 export default class Console extends LightningElement {
     showLogListSection = true;
@@ -25,7 +25,9 @@ export default class Console extends LightningElement {
     }
 
     createCookiesSession4SfdlPicklist(allSalesforceCookies){
-        return allSalesforceCookies.map(cookie => ({ label:cookie.domain, value:cookie.value }));
+        return allSalesforceCookies
+            .filter(cookie => !invalidDomainsToFilterOut.includes(cookie.domain))
+            .map(cookie => ({ label: 'https://' + cookie.domain, value:cookie.value }));
     }
 
     async handleLogDetails(event){
