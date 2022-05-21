@@ -22,12 +22,22 @@ const processResponseBasedOnContentType = {
 }
 
 export default class LogList extends LightningElement{
-    @track logList = [];
     @api sessionInformation;
+    @track logList = [];
     thereAreLogsToDisplay = true;
+    isDownloading;
+    @track abortDownload;
+    firstRender = true;
 
     connectedCallback(){
         this.getApexLogsInformation(this.sessionInformation);
+    }
+
+    renderedCallback(){
+        if(this.firstRender){
+            this.disableDownloadButton(true);
+            this.firstRender = false;
+        }
     }
 
     async handleLogInfo(event){
@@ -54,7 +64,7 @@ export default class LogList extends LightningElement{
 
         if(apexLogList.response.length){
             this.thereAreLogsToDisplay = true;
-            await this.processApexLogs(sessionInformation, apexLogList.response); 
+            this.processApexLogs(sessionInformation, apexLogList.response); 
             this.sendToastMessage2Console('success', 'Retrieving logs...', sessionInformation.instanceUrl);
         } else {
             this.thereAreLogsToDisplay = false;
@@ -97,7 +107,7 @@ export default class LogList extends LightningElement{
         return processResponseBasedOnContentType[function2Execute](response, logId, fileName);
     }
 
-    async processApexLogs(sessionInformation, apexLogList) {
+    processApexLogs(sessionInformation, apexLogList) {
         apexLogList.forEach(async apexLog => {
             let completeUrl = sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
 
@@ -114,6 +124,26 @@ export default class LogList extends LightningElement{
             let logInformation = await this.getInformationFromSalesforce(completeUrl, { fileName }, sessionInformation, 'contentTypeText', apexLog.Id)
 
             this.logList.push(logInformation.response);
+            if(this.logList.length === apexLogList.length){
+                this.disableDownloadButton(false);
+            }
         });
+    }
+
+    handleOpenCloseSfdlDownload(){
+        this.isDownloading = !this.isDownloading;
+    }
+
+    cancelDownload(){
+        this.template.querySelector('sfdl-download-logs').handleCancelDownload({ abortTime: Date.now() });
+        this.handleOpenCloseSfdlDownload();
+    }
+
+    handleToastMessage(event){
+        this.sendToastMessage2Console(event.detail.action, event.detail.header, event.detail.message);
+    }
+
+    disableDownloadButton(isDisable){
+        this.template.querySelector('.downloadLogsButton').disabled = isDisable;
     }
 }

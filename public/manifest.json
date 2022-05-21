@@ -14,6 +14,11 @@
         "https://*.force.com/"
     ],
     "permissions": [
-        "cookies"
-    ]
-  }
+        "cookies", "downloads"
+    ],
+    "icons": {
+        "16": "/resources/sfdl16.png",
+        "48": "/resources/sfdl48.png",
+        "128": "/resources/sfdl128.png"
+    }
+}
