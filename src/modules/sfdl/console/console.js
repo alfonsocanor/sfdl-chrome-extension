@@ -11,6 +11,7 @@ export default class Console extends LightningElement {
     toastMessage;
     toastInProgress = false;
     toastCloseSetTimeoutId;
+    manipulationOptions;
 
     @track picklistInformation = [];
     @track sessionInformation;
@@ -72,5 +73,9 @@ export default class Console extends LightningElement {
             this.showToastMessage = false;
             await new Promise(resolve => setTimeout(resolve, 200));
         }
+    }
+
+    handleManipulationOptions(event){
+        this.template.querySelector('sfdl-log-list').handleManipulationOptionsForDownloading(event.detail.manipulationOptions);
     }
 }

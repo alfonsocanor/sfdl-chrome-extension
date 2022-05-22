@@ -8,11 +8,11 @@ const fileLinesAnalyseFunctions = {
     },
 
     isMethodEntryLine(line){
-        return line.includes('|METHOD_ENTRY|');
+        return line.includes('|METHOD_ENTRY|') || line.includes('|SYSTEM_METHOD_ENTRY|');
     },
 
     isMethodEntryExit(line){
-        return line.includes('|METHOD_EXIT|');
+        return line.includes('|METHOD_EXIT|') || line.includes('|SYSTEM_METHOD_EXIT|');
     },
     isCodeUnitStarted(line){
         return line.includes('|CODE_UNIT_STARTED|');
@@ -55,6 +55,21 @@ function tabs2Add2Line(numberOfTabs){
     return tabs2Return;
 }
 
-export function invokeFilterFormatFunctions(logDetailsArrayOfLines, function2Execute){
+function invokeFilterFormatFunctions(logDetailsArrayOfLines, function2Execute){
     return invokeLinesFormatting[function2Execute] ? invokeLinesFormatting[function2Execute](logDetailsArrayOfLines) : invokeLinesFormatting.defaultFormatting(logDetailsArrayOfLines, function2Execute);
+}
+
+export function manipulationDetailLogs(logDetails, manipulationOptions){
+    let logDetailsArrayOfLines = logDetails.split('\n');
+    let logDetailsFormatted; 
+    if(manipulationOptions){
+        manipulationOptions.forEach((option) => {
+            if(option.checked){
+                logDetailsFormatted = invokeFilterFormatFunctions(logDetailsFormatted ? logDetailsFormatted : logDetailsArrayOfLines, option.name);
+                logDetailsFormatted.join('\n');
+            }
+        })
+    }
+    
+    return logDetailsFormatted ? logDetailsFormatted.join('\n') : logDetails;
 }

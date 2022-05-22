@@ -1,5 +1,5 @@
 import { LightningElement,api } from 'lwc';
-import { invokeFilterFormatFunctions } from 'sfdl/logDetailsManipulation';
+import { manipulationDetailLogs } from 'sfdl/logDetailsManipulation';
 import * as monaco from 'monaco-editor';
 
 const TOGGLE_IMAGE_RIGHT = '/slds/icons/utility/toggle_panel_right.svg';
@@ -15,7 +15,7 @@ export default class LogDetails extends LightningElement{
     formatMethodEntryExitHierarchy = false;
     heapStatementRemoveLines = false;
 
-    checkboxOptions = [
+    manipulationOptions = [
         {
             label: 'Method Entry/Exit hierarchy format',
             name: 'methodEntryExitCodeUnitStartedFinished2Hierarchy',
@@ -38,7 +38,7 @@ export default class LogDetails extends LightningElement{
     @api
     async displayLogsDetailsFromLogList(logDetails, logName){
         this.logDetails = logDetails;
-        let formatLogDetails = await this.formatLogDetails(logDetails);
+        let formatLogDetails = await manipulationDetailLogs(logDetails, this.manipulationOptions);
         await this.renderedMonacoEditor();
         if(this.template.querySelector('.sfdlMonacoEditor')){
             this.logName = logName;
@@ -47,19 +47,6 @@ export default class LogDetails extends LightningElement{
                 automaticLayout: true
             });
         }
-    }
-
-    async formatLogDetails(logDetails){
-        let logDetailsArrayOfLines = logDetails.split('\n');
-        let logDetailsFormatted; 
-        this.checkboxOptions.forEach((option) => {
-            if(option.checked){
-                logDetailsFormatted = invokeFilterFormatFunctions(logDetailsFormatted ? logDetailsFormatted : logDetailsArrayOfLines, option.name);
-                logDetailsFormatted.join('\n');
-            }
-        })
-        
-        return logDetailsFormatted ? logDetailsFormatted.join('\n') : logDetails;
     }
  
     async renderedMonacoEditor(){
@@ -79,14 +66,21 @@ export default class LogDetails extends LightningElement{
         }))
     }
 
-    handleCheckboxOptions(event){
-        this.checkboxOptions.forEach((option) => {
+    handleManipulationOptions(event){
+        this.manipulationOptions.forEach((option) => {
             if(option.name === event.detail.function2Execute){
                 option.checked = event.detail.checked;
             }
         });
 
+        this.sendManipulationOptionsToConsole();
         this.renderLogDetailsAfterManipulationOptionSelection();
+    }
+
+    sendManipulationOptionsToConsole(){
+        this.dispatchEvent(new CustomEvent('manipulationoptions',{
+            detail: { manipulationOptions: this.manipulationOptions }
+        }));
     }
 
     renderLogDetailsAfterManipulationOptionSelection(){

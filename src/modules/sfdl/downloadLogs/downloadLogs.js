@@ -1,52 +1,39 @@
 import { LightningElement, api } from 'lwc';
+import { manipulationDetailLogs } from 'sfdl/logDetailsManipulation';
 import * as JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
 export default class DownloadLogs extends LightningElement{
     @api logList;
-    cancelDownload = {};
+    @api manipulationOptions;
 
     connectedCallback(){
         this.startDownloadProcess();
-    }
-
-    @api
-    handleCancelDownload(cancelDownload){
-        console.log('Cancel')
-        this.sendToastMessage2LogList('warning', 'sfdl', 'Download debug logs process cancelled.')
-        this.cancelDownload = cancelDownload;
     }
 
     async startDownloadProcess(){
         let zip = new JSZip();
 
         let debugLogsZipFolder = this.createZipFolder(zip);
-        this.addDebugLogsToZipFolder(debugLogsZipFolder);
-        let executionTimeBeforeProcessingGenerateAsync = Date.now();
+        await this.addDebugLogsToZipFolder(debugLogsZipFolder);
 
-        console.log('processing...');
         let content = await debugLogsZipFolder.generateAsync({type:"blob"});
-        
-        if(this.cancelDownloadProcess(executionTimeBeforeProcessingGenerateAsync)){
-            return;
-        }
+
 
         this.saveDebugLogsZipFile(content);
         this.sendToastMessage2LogList('success', 'sfdl', 'Logs download, validate in your local directory.');
         this.sendDownloadProcessCompletedAlert();
     }
 
-    cancelDownloadProcess(executionTimeBeforeProcessingGenerateAsync){
-        return this.cancelDownload && executionTimeBeforeProcessingGenerateAsync < this.cancelDownload.abortTime;
-    }
-
     createZipFolder(zip){
         return zip.folder("Salesforce Debug Logs");
     }
 
-    addDebugLogsToZipFolder(debugLogsZipFolder){
-        this.logList.forEach(log => {
-            debugLogsZipFolder.file(log.name, log.response) 
+    async addDebugLogsToZipFolder(debugLogsZipFolder){
+        this.logList.forEach(async log => {
+            let logDetailFromPromise = await log.response;
+            let logDetail =  manipulationDetailLogs(logDetailFromPromise, this.manipulationOptions);
+            debugLogsZipFolder.file(log.name, Promise.resolve(logDetail));
         });
     }
 

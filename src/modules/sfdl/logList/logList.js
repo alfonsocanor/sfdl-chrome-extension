@@ -23,6 +23,7 @@ const processResponseBasedOnContentType = {
 
 export default class LogList extends LightningElement{
     @api sessionInformation;
+
     @track logList = [];
     thereAreLogsToDisplay = true;
     isDownloading;
@@ -134,10 +135,6 @@ export default class LogList extends LightningElement{
         this.isDownloading = !this.isDownloading;
     }
 
-    cancelDownload(){
-        this.template.querySelector('sfdl-download-logs').handleCancelDownload({ abortTime: Date.now() });
-        this.handleOpenCloseSfdlDownload();
-    }
 
     handleToastMessage(event){
         this.sendToastMessage2Console(event.detail.action, event.detail.header, event.detail.message);
@@ -145,5 +142,10 @@ export default class LogList extends LightningElement{
 
     disableDownloadButton(isDisable){
         this.template.querySelector('.downloadLogsButton').disabled = isDisable;
+    }
+
+    @api
+    handleManipulationOptionsForDownloading(manipulationOptions){
+        this.manipulationOptions = manipulationOptions;
     }
 }
