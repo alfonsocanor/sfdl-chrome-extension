@@ -1,7 +1,7 @@
 import { track, api, LightningElement  } from 'lwc';
 
-const apexLogIdsQueryUrl = '/services/data/v51.0/tooling/query/?q=SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ';
-const KB2MB = 0.00000095367432;
+const apexLogIdsQueryUrl = '/services/data/v51.0/tooling/query/?q=SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ORDER BY LastModifiedDate ASC';
+//const KB2MB = 0.00000095367432;
 
 const processResponseBasedOnContentType = {
     httpError(response){
@@ -30,6 +30,9 @@ export default class LogList extends LightningElement{
     @track abortDownload;
     firstRender = true;
 
+    indexFocusOn;
+    firstTimeKeyboardNavigation = true;
+
     connectedCallback(){
         this.getApexLogsInformation(this.sessionInformation);
     }
@@ -42,6 +45,9 @@ export default class LogList extends LightningElement{
     }
 
     async handleLogInfo(event){
+        this.removeBoderForAllTheButtons();
+        this.addBoxShadowForTheLogDetailSelected(event);
+        
         const response = this.logList.filter(log => {
             return log.id === event.target.dataset.logid
         });
@@ -52,6 +58,15 @@ export default class LogList extends LightningElement{
         this.dispatchEvent(new CustomEvent('logdetails',{
             detail: { logDetails, logName }
         }))
+    }
+
+    addBoxShadowForTheLogDetailSelected(event){
+        event.target.style.boxShadow = '0 0 0 3px #006bff40';
+    }
+    removeboxShadowForAllTheLogDetails(){
+        this.template.querySelectorAll('.displayLogButton').forEach(element => {
+            element.style.boxShadow = 'none';
+        });
     }
 
     async getApexLogsInformation(sessionInformation) {
@@ -112,15 +127,7 @@ export default class LogList extends LightningElement{
         apexLogList.forEach(async apexLog => {
             let completeUrl = sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
 
-            //Some operation values contains '/' char
-            let regex = new RegExp('/', 'g');
-
-            let fileName =
-                (apexLog.LogLength * KB2MB).toFixed(4) + 'MB | ' +
-                apexLog.Operation.replace(regex, '') + ' | ' +
-                apexLog.LastModifiedDate.split('.')[0] + ' | ' +
-                apexLog.LogUser.Name + ' | ' +
-                apexLog.Id + '.log';
+            let fileName = this.logName2Display(apexLog);
 
             let logInformation = await this.getInformationFromSalesforce(completeUrl, { fileName }, sessionInformation, 'contentTypeText', apexLog.Id)
 
@@ -129,6 +136,35 @@ export default class LogList extends LightningElement{
                 this.disableDownloadButton(false);
             }
         });
+    }
+
+    logName2Display(apexLog){
+        return  apexLog.LogUser.Name + ' | ' + 
+                this.createOperationFormat(apexLog.Operation) + ' | ' +
+                apexLog.LogLength + 'bytes | ' +
+                this.createDatetimeFormat(new Date(apexLog.LastModifiedDate));
+    }
+
+    createOperationFormat(operation){
+        let regex = new RegExp('/', 'g');
+
+        if(operation.includes('__')){
+            return operation.replace(regex, '').split('__')[1];
+        }
+
+        return operation.replace(regex, '');
+    }
+
+    createDatetimeFormat(date){
+        return  this.padNumberValues(date.getDay(), 2,'0') + '/' +
+                this.padNumberValues(date.getMonth(), 2, '0') + ' ' +
+                this.padNumberValues(date.getHours(), 2, '0') + 'h' + 
+                this.padNumberValues(date.getMinutes(), 2, '0') + 'm' +
+                this.padNumberValues(date.getSeconds(), 2, '0') + 's';
+    }
+
+    padNumberValues(numberValue, padLength, padString){
+        return numberValue.toString().padStart(padLength, padString);
     }
 
     handleOpenCloseSfdlDownload(){

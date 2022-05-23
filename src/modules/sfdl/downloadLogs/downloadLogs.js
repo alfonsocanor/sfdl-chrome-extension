@@ -33,8 +33,12 @@ export default class DownloadLogs extends LightningElement{
         this.logList.forEach(async log => {
             let logDetailFromPromise = await log.response;
             let logDetail =  manipulationDetailLogs(logDetailFromPromise, this.manipulationOptions);
-            debugLogsZipFolder.file(log.name, Promise.resolve(logDetail));
+            debugLogsZipFolder.file(this.createLogFileName(log), Promise.resolve(logDetail));
         });
+    }
+
+    createLogFileName(log){
+        return log.name.replaceAll('/','-') + ' | ' + log.id + '.log';
     }
 
     saveDebugLogsZipFile(content){

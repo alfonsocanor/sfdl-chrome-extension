@@ -27,7 +27,14 @@
         <ul class="slds-has-dividers_around slds-has-block-links">
             <template for:each={logList} for:item="log">
                 <li key={log.id} class="slds-item">
-                    <button data-logid={log.id} data-logname={log.name} onclick={handleLogInfo}>{log.name}</button>
+                    <button 
+                        class="displayLogButton"
+                        data-logid={log.id} 
+                        data-logname={log.name} 
+                        onclick={handleLogInfo}
+                        style="text-align: left; border: none !important; width:100%;">
+                        {log.name}
+                    </button>
                 </li>
             </template>
         </ul>
