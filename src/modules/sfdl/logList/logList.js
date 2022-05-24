@@ -45,7 +45,7 @@ export default class LogList extends LightningElement{
     }
 
     async handleLogInfo(event){
-        this.removeBoderForAllTheButtons();
+        this.removeboxShadowForAllTheLogDetails();
         this.addBoxShadowForTheLogDetailSelected(event);
         
         const response = this.logList.filter(log => {

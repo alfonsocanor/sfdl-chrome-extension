@@ -3,20 +3,15 @@
         <sfdl-console></sfdl-console>
     </template>
     <template if:true={isPopup}>
-        <div class="center">
-            <img src="/resources/lwc.png" />
-        </div>
-
-        <!-- Page code -->
-        <div class="center">
-            <div class="container">
-                <p class="info">
-                    Edit <strong class="code">src/modules/my/app/app.html</strong>
-                    <br />and save for live reload.
+        <div class="slds-grid slds-wrap slds-align_absolute-center slds-p-around_x-small" style="width:250px; background:white; text-align:center;">
+            <div class="slds-size_1-of-1">
+                <p>
+                    <strong>Welcome to Salesforce Debug Logs</strong>
+                    <br/>Go to Station Console...
                 </p>
             </div>
-            <div>
-                <button class="slds-button slds-button_brand" onclick={openSfdlAppInANewTab}>Hello</button>
+            <div class="slds-m-top_small">
+                <button class="slds-button slds-button_brand" onclick={openSfdlAppInANewTab}>sfdl</button>
             </div>
         </div>
     </template>
