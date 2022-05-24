@@ -1,5 +1,5 @@
 import { LightningElement, track } from 'lwc';
-import { getAllCookiesFromSalesforceDomain, invalidDomainsToFilterOut } from 'sfdl/authentication';
+import { getAllCookiesFromSalesforceDomain, isSessionInformationValid } from 'sfdl/authentication';
 
 export default class Console extends LightningElement {
     showLogListSection = true;
@@ -22,13 +22,16 @@ export default class Console extends LightningElement {
 
     async init(){
         const allSalesforceCookies = await getAllCookiesFromSalesforceDomain();
-        this.picklistInformation = this.createCookiesSession4SfdlPicklist(allSalesforceCookies);
+        this.createCookiesSession4SfdlPicklist(allSalesforceCookies);
     }
 
-    createCookiesSession4SfdlPicklist(allSalesforceCookies){
-        return allSalesforceCookies
-            .filter(cookie => !invalidDomainsToFilterOut.includes(cookie.domain))
-            .map(cookie => ({ label: 'https://' + cookie.domain, value:cookie.value }));
+    async createCookiesSession4SfdlPicklist(allSalesforceCookies){
+        allSalesforceCookies.forEach(async cookie => {
+            let isAValidSession = await isSessionInformationValid(cookie);
+            if(isAValidSession){
+                this.picklistInformation.push({ label: 'https://' + cookie.domain, value:cookie.value });
+            }
+        });
     }
 
     async handleLogDetails(event){
