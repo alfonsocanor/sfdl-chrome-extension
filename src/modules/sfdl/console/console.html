@@ -6,8 +6,6 @@
       ontoastmessage={handleToastMessage}
       placeholder="Select your domain">
     </sfdl-picklist> 
-    
-    Salesforce Debug Logs
 
     <template if:true={showToastMessage}>
       <sfdl-toast 
@@ -18,28 +16,55 @@
       </sfdl-toast>
     </template>
   </header>
-  <div class="demo-only-element" style="background-color:#fafaf9;position:relative;height:92vh;overflow:hidden;display:flex;">
-    <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open" aria-hidden="false">
-      <div class="slds-panel__header" style="padding:15px;">
-        <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Debugging Station Log List</h2>
-      </div>
-      <div class="slds-panel__body">
-        <template if:true={renderLogList}>
-          <sfdl-log-list
-            onlogdetails={handleLogDetails}
+
+  <div class="slds-tabs_default slds-tabs_medium" style="background-color:white !important;">
+    <ul class="slds-tabs_default__nav" role="tablist">
+      <li class="slds-tabs_default__item" title="Bug Icon" role="presentation" style="padding: 10px;">
+        <button onclick={handleHideShowSections} style="width:25px;height:25px;cursor:default !important;" class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Toggle panel" aria-expanded="true" aria-controls="example-unique-id-11" aria-pressed="true">
+          <img src="/slds/icons/utility/bug.svg" alt="bug slds icon"/>
+        </button>
+      </li>
+      <li class="slds-tabs_default__item slds-is-active liElementAnalyseLogs" title="Analise Logs" role="presentation">
+        <a class="slds-tabs_default__link" data-tabname="analyseLogs" onclick={handleTabNavigation} role="tab" tabindex="0" aria-selected="true" aria-controls="tab-default-1">Analize Logs</a>
+      </li>
+      <li class="slds-tabs_default__item liElementCompareLogs" title="Compare Logs" role="presentation">
+        <a class="slds-tabs_default__link" data-tabname="compareLogs" onclick={handleTabNavigation} role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-2">Compare Logs</a>
+      </li>
+      <li class="slds-tabs_default__item liElementCompareOrgs" title="Compare Orgs" role="presentation">
+        <a class="slds-tabs_default__link" data-tabname="compareOrgs" onclick={handleTabNavigation} role="tab" tabindex="-1" aria-selected="false" aria-controls="tab-default-2">Compare Orgs</a>
+      </li>
+    </ul>
+    <div class="sfdl-analise-logs slds-tabs_default__content slds-show" role="tabpanel" aria-labelledby="tab-default-1__item" style="padding:0px;">
+      <div class="demo-only-element" style="background-color:#fafaf9;position:relative;height:92vh;overflow:hidden;display:flex;">
+        <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open" aria-hidden="false">
+          <div class="slds-panel__header" style="padding:15px;">
+            <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
+          </div>
+          <div class="slds-panel__body">
+            <template if:true={renderLogList}>
+              <sfdl-log-list
+                onlogdetails={handleLogDetails}
+                ontoastmessage={handleToastMessage}
+                session-information={sessionInformation}>
+              </sfdl-log-list>
+            </template>
+          </div>
+        </div>
+        <div class="demo-only-content slds-col" id="sfdl-console-log-details-section">
+          <sfdl-log-details 
+            show-log-list-section={showLogListSection}
             ontoastmessage={handleToastMessage}
-            session-information={sessionInformation}>
-          </sfdl-log-list>
-        </template>
+            ondisplayloglistsection={handleDisplayLogListSection}
+            onmanipulationoptions={handleManipulationOptions}>
+          </sfdl-log-details>
+        </div>
       </div>
     </div>
-    <div class="demo-only-content slds-col" id="sfdl-console-log-details-section">
-      <sfdl-log-details 
-        show-log-list-section={showLogListSection}
-        ontoastmessage={handleToastMessage}
-        ondisplayloglistsection={handleDisplayLogListSection}
-        onmanipulationoptions={handleManipulationOptions}>
-      </sfdl-log-details>
+    <div class="sfdl-compare-logs slds-tabs_default__content slds-hide" role="tabpanel" aria-labelledby="tab-default-2__item" style="padding:0px;">
+      Compare Logs
+    </div>
+    <div class="sfdl-compare-orgs slds-tabs_default__content slds-hide" role="tabpanel" aria-labelledby="tab-default-2__item" style="padding:0px;">
+      Compare Orgs
     </div>
   </div>
 </template>

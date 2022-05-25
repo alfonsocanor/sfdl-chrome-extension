@@ -1,6 +1,12 @@
 import { LightningElement, track } from 'lwc';
 import { getAllCookiesFromSalesforceDomain, isSessionInformationValid } from 'sfdl/authentication';
 
+const tabNavigation = {
+    analyseLogs:{tab:'.liElementAnalyseLogs', body:'.sfdl-analise-logs',},
+    compareLogs:{tab:'.liElementCompareLogs', body:'.sfdl-compare-logs'},
+    compareOrgs:{tab:'.liElementCompareOrgs', body:'.sfdl-compare-orgs'}
+}
+
 export default class Console extends LightningElement {
     showLogListSection = true;
     renderLogList = false;
@@ -80,5 +86,34 @@ export default class Console extends LightningElement {
 
     handleManipulationOptions(event){
         this.template.querySelector('sfdl-log-list').handleManipulationOptionsForDownloading(event.detail.manipulationOptions);
+    }
+
+    handleTabNavigation(event){
+        this.inactiveAllTabs();
+        this.activateTab(event);
+        this.hideAllContent();
+        this.showContentBasedOnTab(event);
+    }
+
+    activateTab(event){
+        this.template.querySelector(tabNavigation[event.target.dataset.tabname].tab).classList.add('slds-is-active');
+    }
+
+    inactiveAllTabs(){
+        this.template.querySelectorAll('li').forEach( liElement => {
+            liElement.classList.remove('slds-is-active');
+        });
+    }
+
+    showContentBasedOnTab(event){
+        this.template.querySelector(tabNavigation[event.target.dataset.tabname].body).classList.remove('slds-hide');
+        this.template.querySelector(tabNavigation[event.target.dataset.tabname].body).classList.add('slds-show');
+    }
+
+    hideAllContent(){
+        this.template.querySelectorAll('.slds-tabs_default__content').forEach( contentElement => {
+            contentElement.classList.remove('slds-show');
+            contentElement.classList.add('slds-hide');
+        });
     }
 }
