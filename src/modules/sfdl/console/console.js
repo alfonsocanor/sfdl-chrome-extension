@@ -96,6 +96,7 @@ export default class Console extends LightningElement {
     }
 
     activateTab(event){
+        console.log('@@ activate tab: ' + event.target.dataset.tabname);
         this.template.querySelector(tabNavigation[event.target.dataset.tabname].tab).classList.add('slds-is-active');
     }
 
@@ -111,7 +112,7 @@ export default class Console extends LightningElement {
     }
 
     hideAllContent(){
-        this.template.querySelectorAll('.slds-tabs_default__content').forEach( contentElement => {
+        this.template.querySelectorAll('.slds-tabs_scoped__content').forEach( contentElement => {
             contentElement.classList.remove('slds-show');
             contentElement.classList.add('slds-hide');
         });

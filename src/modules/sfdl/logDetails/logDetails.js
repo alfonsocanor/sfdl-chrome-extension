@@ -1,5 +1,6 @@
 import { LightningElement,api } from 'lwc';
 import { manipulationDetailLogs } from 'sfdl/logDetailsManipulation';
+import { monacoThemes, tokenizerRoot } from 'util/monacoThemes';
 import * as monaco from 'monaco-editor';
 
 const TOGGLE_IMAGE_RIGHT = '/slds/icons/utility/toggle_panel_right.svg';
@@ -28,6 +29,24 @@ export default class LogDetails extends LightningElement{
         }
     ];
 
+    connectedCallback(){
+        this.setMonacoNewLanguage('apexlog')
+        this.setMonarchTokensProvider(tokenizerRoot);
+        this.defineMonacoTheme('customDawn');
+    }
+
+    defineMonacoTheme(monacoThemeName){
+        monaco.editor.defineTheme(monacoThemeName, monacoThemes[monacoThemeName]);
+    }
+
+    setMonarchTokensProvider(tokenizer){
+        monaco.languages.setMonarchTokensProvider('apexlog', tokenizer)
+    }
+
+    setMonacoNewLanguage(languageName){
+        monaco.languages.register({ id: languageName });
+    }
+
     @api
     hideMonacoEditor(){
         this.showMonacoEditor = false;
@@ -44,7 +63,9 @@ export default class LogDetails extends LightningElement{
             this.logName = logName;
             monaco.editor.create(this.template.querySelector('.sfdlMonacoEditor'), {
                 value: formatLogDetails,
-                automaticLayout: true
+                automaticLayout: true,
+                language: 'apexlog',
+                theme: 'customDawn'
             });
         }
     }

@@ -8,11 +8,11 @@ const fileLinesAnalyseFunctions = {
     },
 
     isMethodEntryLine(line){
-        return line.includes('|METHOD_ENTRY|') || line.includes('|SYSTEM_METHOD_ENTRY|');
+        return line.includes('|METHOD_ENTRY|') || line.includes('|SYSTEM_METHOD_ENTRY|') || line.includes('|CONSTRUCTOR_ENTRY|');
     },
 
     isMethodEntryExit(line){
-        return line.includes('|METHOD_EXIT|') || line.includes('|SYSTEM_METHOD_EXIT|');
+        return line.includes('|METHOD_EXIT|') || line.includes('|SYSTEM_METHOD_EXIT|') || line.includes('|CONSTRUCTOR_EXIT|');
     },
     isCodeUnitStarted(line){
         return line.includes('|CODE_UNIT_STARTED|');
