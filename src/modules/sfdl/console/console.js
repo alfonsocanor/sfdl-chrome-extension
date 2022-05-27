@@ -85,7 +85,9 @@ export default class Console extends LightningElement {
     }
 
     handleManipulationOptions(event){
-        this.template.querySelector('sfdl-log-list').handleManipulationOptionsForDownloading(event.detail.manipulationOptions);
+        if(this.template.querySelector('sfdl-log-list')){
+            this.template.querySelector('sfdl-log-list').handleManipulationOptionsForDownloading(event.detail.manipulationOptions);
+        }
     }
 
     handleTabNavigation(event){
@@ -96,7 +98,6 @@ export default class Console extends LightningElement {
     }
 
     activateTab(event){
-        console.log('@@ activate tab: ' + event.target.dataset.tabname);
         this.template.querySelector(tabNavigation[event.target.dataset.tabname].tab).classList.add('slds-is-active');
     }
 

@@ -16,19 +16,6 @@ export default class LogDetails extends LightningElement{
     formatMethodEntryExitHierarchy = false;
     heapStatementRemoveLines = false;
 
-    manipulationOptions = [
-        {
-            label: 'Method Entry/Exit hierarchy format',
-            name: 'methodEntryExitCodeUnitStartedFinished2Hierarchy',
-            checked: false
-        },
-        {
-            label: 'Remove HEAP_ALLOCATE / STATEMENT_EXECUTE',
-            name: 'removeHeapAllocateAndStatementExecute',
-            checked:false
-        }
-    ];
-
     connectedCallback(){
         this.setMonacoNewLanguage('apexlog')
         this.setMonarchTokensProvider(tokenizerRoot);
@@ -57,7 +44,7 @@ export default class LogDetails extends LightningElement{
     @api
     async displayLogsDetailsFromLogList(logDetails, logName){
         this.logDetails = logDetails;
-        let formatLogDetails = await manipulationDetailLogs(logDetails, this.manipulationOptions);
+        let formatLogDetails = await manipulationDetailLogs(logDetails, this.getManipulationOptions());
         await this.renderedMonacoEditor();
         if(this.template.querySelector('.sfdlMonacoEditor')){
             this.logName = logName;
@@ -88,19 +75,13 @@ export default class LogDetails extends LightningElement{
     }
 
     handleManipulationOptions(event){
-        this.manipulationOptions.forEach((option) => {
-            if(option.name === event.detail.function2Execute){
-                option.checked = event.detail.checked;
-            }
-        });
-
-        this.sendManipulationOptionsToConsole();
+        this.sendManipulationOptionsToConsole(event.detail.manipulationOptions);
         this.renderLogDetailsAfterManipulationOptionSelection();
     }
 
-    sendManipulationOptionsToConsole(){
+    sendManipulationOptionsToConsole(manipulationOptions){
         this.dispatchEvent(new CustomEvent('manipulationoptions',{
-            detail: { manipulationOptions: this.manipulationOptions }
+            detail: { manipulationOptions }
         }));
     }
 
@@ -108,5 +89,9 @@ export default class LogDetails extends LightningElement{
         if(this.logDetails){
             this.displayLogsDetailsFromLogList(this.logDetails, this.logName);
         }
+    }
+
+    getManipulationOptions(){
+        return this.template.querySelector('sfdl-log-manipulation-menu').currentManipulationOptions();
     }
 }

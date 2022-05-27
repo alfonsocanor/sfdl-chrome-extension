@@ -1,0 +1,16 @@
+<template>
+    <div class="sfdlDropdownMenu slds-dropdown-trigger slds-dropdown-trigger_click">
+        <button style="width:22px;height:22px; padding:2px;" onclick={handleOpenCloseMenu} class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Manipulation Filter Menu">
+            <img src={filterIcon} alt="menu filter manipulation options"/>
+        </button>
+        <div class="slds-dropdown slds-dropdown_left slds-dropdown_small" style="min-width:18rem !important; padding-bottom:0px;">
+            <button style="width:12px;height:12px; position:absolute; right:5px; z-index:1;" onclick={handleOpenCloseMenu} class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Manipulation Filter Menu">
+                <img src={closeIcon} alt="close icon"/>
+            </button>
+            <sfdl-checkbox
+                checkbox-options={manipulationOptions}
+                oncheckboxselection={handleManipulationOptions}>
+            </sfdl-checkbox>
+        </div>
+    </div>
+</template>

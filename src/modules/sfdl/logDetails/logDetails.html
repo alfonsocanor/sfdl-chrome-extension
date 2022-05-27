@@ -1,17 +1,18 @@
 <template>
   <div class="slds-grid slds-panel__header" style="padding-top:14px;">
-    <button onclick={handleHideShowSections} style="width:22px;height:22px;" class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Toggle panel" aria-expanded="true" aria-controls="example-unique-id-11" aria-pressed="true">
-      <img src={toggleImage} alt="wide full log details"/>
+    <button 
+      onclick={handleHideShowSections} 
+      style="width:22px;height:22px;" 
+      class="slds-m-right_small slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" 
+      title="Toggle panel">
+        <img src={toggleImage} alt="wide full log details"/>
     </button>
+    <sfdl-log-manipulation-menu
+      oncheckboxselection={handleManipulationOptions}>
+    </sfdl-log-manipulation-menu>
     <div class="slds-col slds-grid slds-size_1-of-1">
       <div class="slds-col slds-size_4-of-12">
         <span class="slds-m-left_x-small">{logName}</span>
-      </div>
-      <div class="slds-col slds-size_8-of-12">
-        <sfdl-checkbox
-          checkbox-options={manipulationOptions}
-          oncheckboxselection={handleManipulationOptions}>
-        </sfdl-checkbox>
       </div>
     </div>
   </div>

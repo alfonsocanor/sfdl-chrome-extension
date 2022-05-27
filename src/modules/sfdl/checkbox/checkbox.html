@@ -1,12 +1,10 @@
 <template>
-    <div class="slds-form-element" style="right:20px;">
-        <div class="slds-form-element__control slds-grid">
+    <div class="slds-form-element" style="padding:0 5px;">
+        <div class="slds-form-element__control slds-grid slds-wrap">
             <template for:each={checkboxOptions} for:item="option">
-                <div key={option.name} class="slds-col slds-size_1-of-2 slds-align_absolute-center">
-                    <input 
-                        style="width:18px; height:18px;margin-right:5px;"
-                        type="checkbox" name={option.name} checked={option.checked} data-name={option.name} onchange={handleSelection}/>
-                    <label class="slds-checkbox__label" for={option.name}>
+                <div key={option.name} class="slds-col slds-size_1-of-1">
+                    <input style="width:16px; height:16px; margin-right:5px;" type="checkbox" name={option.name} checked={option.checked} data-name={option.name} onchange={handleSelection}/>
+                    <label class="slds-checkbox__label" for={option.name} style="position:relative; bottom:2px;">
                         <span class="slds-checkbox_faux"></span>
                         <span class="slds-form-element__label">{option.label}</span>
                     </label>
