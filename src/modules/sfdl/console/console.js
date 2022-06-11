@@ -2,9 +2,9 @@ import { LightningElement, track } from 'lwc';
 import { getAllCookiesFromSalesforceDomain, isSessionInformationValid } from 'sfdl/authentication';
 
 const tabNavigation = {
-    analyseLogs:{tab:'.liElementAnalyseLogs', body:'.sfdl-analise-logs',},
-    compareLogs:{tab:'.liElementCompareLogs', body:'.sfdl-compare-logs'},
-    compareOrgs:{tab:'.liElementCompareOrgs', body:'.sfdl-compare-orgs'}
+    analyseLogs:{tab:'.liElementAnalyseLogs', body:'.sfdl-analise-logs', open:'openAnaliseLogs'},
+    compareLogs:{tab:'.liElementCompareLogs', body:'.sfdl-compare-logs', open:'openCompareLogs'},
+    compareOrgs:{tab:'.liElementCompareOrgs', body:'.sfdl-compare-orgs', open:'openCompareOrgs'}
 }
 
 export default class Console extends LightningElement {
@@ -18,6 +18,13 @@ export default class Console extends LightningElement {
     toastInProgress = false;
     toastCloseSetTimeoutId;
     manipulationOptions;
+
+    openAnaliseLogs=true;
+    openCompareLogs=false;
+    openCompareOrgs=true;
+
+    logList = [];
+    isDownloadInProgress = false;
 
     @track picklistInformation = [];
     @track sessionInformation;
@@ -42,7 +49,7 @@ export default class Console extends LightningElement {
 
     async handleLogDetails(event){
         let sfdlLogDetailsComponent = this.template.querySelector('sfdl-log-details');
-        sfdlLogDetailsComponent.displayLogsDetailsFromLogList(event.detail.logDetails, event.detail.logName);
+        sfdlLogDetailsComponent.processLogsFromLogList(event.detail.logDetails, event.detail.logName);
     }
 
     handleDisplayLogListSection(event){
@@ -90,14 +97,34 @@ export default class Console extends LightningElement {
         }
     }
 
-    handleTabNavigation(event){
+    async handleTabNavigation(event){
+        if(!this.openCompareLogs && this.noLogs2Compare(event)){
+            await this.closeToastIfOpenWhileAnotherExceptionOccurs();
+            this.toastAction = this.isDownloadInProgress ? 'warning' : 'error';
+            this.toastHeader = 'Compare Logs';
+            this.toastMessage = this.isDownloadInProgress ? 'Retrieving logs in progress...' : 'There are no logs to compare, select an org with logs';
+            this.showToastMessage = true;
+            this.toastInProgress = true;
+    
+            this.toastCloseSetTimeoutId = setTimeout(() => {
+                this.showToastMessage = false;
+                this.toastInProgress = false;
+            },4000);
+            return;
+        }
+
         this.inactiveAllTabs();
         this.activateTab(event);
         this.hideAllContent();
         this.showContentBasedOnTab(event);
     }
 
+    noLogs2Compare(event){
+        return event.target.dataset.tabname === 'compareLogs' && !this.logList.length;
+    }
+
     activateTab(event){
+        this[tabNavigation[event.target.dataset.tabname].open] = true;
         this.template.querySelector(tabNavigation[event.target.dataset.tabname].tab).classList.add('slds-is-active');
     }
 
@@ -117,5 +144,17 @@ export default class Console extends LightningElement {
             contentElement.classList.remove('slds-show');
             contentElement.classList.add('slds-hide');
         });
+    }
+
+    handleLogList(event){
+        this.closeToastIfOpenWhileAnotherExceptionOccurs();
+        this.logList = event.detail.logList;
+        this.openCompareLogs = true;
+        this.showToastMessage = false;
+        this.toastInProgress = false;
+    }
+    
+    handleDownloadInProgress2Compare(){
+        this.isDownloadInProgress = true;
     }
 }

@@ -8,6 +8,7 @@ export default class DownloadLogs extends LightningElement{
     @api manipulationOptions;
 
     connectedCallback(){
+        console.log('List: ' , this.logList);
         this.startDownloadProcess();
     }
 

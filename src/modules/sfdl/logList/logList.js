@@ -1,7 +1,6 @@
 import { track, api, LightningElement  } from 'lwc';
 
-const apexLogIdsQueryUrl = '/services/data/v51.0/tooling/query/?q=SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ORDER BY LastModifiedDate ASC';
-//const KB2MB = 0.00000095367432;
+const APEX_LOG_IDS_QUERY_URL = '/services/data/v51.0/tooling/query/?q=SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ORDER BY LastModifiedDate ASC';
 
 const processResponseBasedOnContentType = {
     httpError(response){
@@ -23,18 +22,28 @@ const processResponseBasedOnContentType = {
 
 export default class LogList extends LightningElement{
     @api sessionInformation;
+    @api isAnaliseLogs = false;
+    @api isCompareLogs = false;
+    @api logs2Compare = [];
+    totalLogsCompletelyRetrieved = 0;
 
     @track logList = [];
+    
     thereAreLogsToDisplay = true;
     isDownloading;
-    @track abortDownload;
     firstRender = true;
 
-    indexFocusOn;
-    firstTimeKeyboardNavigation = true;
+    compareLogsColumns2LogDetails = {
+        column1:{id:'',logName:'', logDetails:''},
+        column2:{id:'',logName:'', logDetails:''}
+    }
 
     connectedCallback(){
-        this.getApexLogsInformation(this.sessionInformation);
+        if(this.isAnaliseLogs){
+            this.getApexLogsInformation(this.sessionInformation);
+        } else if(this.isCompareLogs){
+            this.logList = this.logs2Compare;
+        }
     }
 
     renderedCallback(){
@@ -44,24 +53,109 @@ export default class LogList extends LightningElement{
         }
     }
 
-    async handleLogInfo(event){
-        this.removeboxShadowForAllTheLogDetails();
-        this.addBoxShadowForTheLogDetailSelected(event);
-        
-        const response = this.logList.filter(log => {
-            return log.id === event.target.dataset.logid
-        });
+    handleLogInfo(event){
+        if(this.isAnaliseLogs){
+            this.logInfoAnalyseLogs(event);
+        } else  if(this.isCompareLogs){
+            this.logInfoCompareLogs(event);
+        }
+    }
 
-        const logDetails = await response[0].response;
-        const logName = event.target.dataset.logname;
+    async logInfoAnalyseLogs(event){
+        this.removeboxShadowForAllTheLogDetails();
+        this.boxShadowForTheLogDetailSelected(event, '0 0 0 3px #006bff40');
 
         this.dispatchEvent(new CustomEvent('logdetails',{
-            detail: { logDetails, logName }
+            detail: { 
+                logName: event.target.dataset.logname,
+                logDetails: this.getLogByIdFromLogList(event.target.dataset.logid)[0] 
+            }
+            //detail: { logName: logInfo.logName, logDetails: logInfo.logDetails }
         }))
     }
 
-    addBoxShadowForTheLogDetailSelected(event){
-        event.target.style.boxShadow = '0 0 0 3px #006bff40';
+    getLogByIdFromLogList(logId){
+        return this.logList.filter(log => log.id === logId);
+    }
+
+    async getLogInformation(event){
+        const response = this.logList.filter(log => {
+            return log.id === event.target.dataset.logid
+        });
+        const logDetails = await response[0].response;
+        const logName = event.target.dataset.logname;
+
+        return { logDetails, logName }
+    }
+
+    logInfoCompareLogs(event){
+        let wasUnselected = this.unselectLogs2Compare(event);
+
+        console.log('wasUnselected@ ' + wasUnselected);
+        
+        if(!wasUnselected){
+            this.selectLogs2Compare(event);
+        }
+
+        console.log('@COMpare compareLogsColumns2LogDetails: ' , this.compareLogsColumns2LogDetails);
+    }
+
+    async selectLogs2Compare(event){
+        const logInfo = await this.getLogInformation(event);
+        if(this.bothLogs2CompareSelected()){
+            this.updateCompareLogsColumns2LogDetails('column1', event.target.dataset.logid, logInfo.logName, logInfo.logDetails);
+            this.boxShadowForTheLogDetailSelected(event, '0 0 0 3px #006bff40');
+        } else {
+            console.log('at else');
+            for(const log2Compare in this.compareLogsColumns2LogDetails){
+                if(!this.compareLogsColumns2LogDetails[log2Compare].id){
+                    console.log('@log2Compare: ' + log2Compare);
+                    this.updateCompareLogsColumns2LogDetails(log2Compare, event.target.dataset.logid, logInfo.logName, logInfo.logDetails);
+                    this.boxShadowForTheLogDetailSelected(event, '0 0 0 3px #006bff40');
+                    break;
+                }
+            }
+        }
+
+    }
+
+    bothLogs2CompareSelected(){
+        for(const log2Compare in this.compareLogsColumns2LogDetails){
+            if(!this.compareLogsColumns2LogDetails[log2Compare].id){
+                return false;
+            }
+        }
+        return true;
+    }
+
+    updateCompareLogsColumns2LogDetails(columnNumber, logId, logName, logDetails){
+        this.compareLogsColumns2LogDetails[columnNumber].id = logId;
+        this.compareLogsColumns2LogDetails[columnNumber].logName = logName;
+        this.compareLogsColumns2LogDetails[columnNumber].logDetails = logDetails;
+    }
+
+    unselectLogs2Compare(event){
+        for(const log2Compare in this.compareLogsColumns2LogDetails){
+            if(this.bothLogs2CompareSelected()){
+                console.log(this.template.querySelectorAll('.displayLogButton').length);
+                this.template.querySelectorAll('.displayLogButton').find(element => element.dataset.logid === this.compareLogsColumns2LogDetails.column2.id).style.boxShadow = 'none';
+                this.compareLogsColumns2LogDetails.column2.id = '';
+                this.compareLogsColumns2LogDetails.column2.logName = '';
+                this.compareLogsColumns2LogDetails.column2.logDetails = '';        
+            } else if(this.compareLogsColumns2LogDetails[log2Compare].id === event.target.dataset.logid){
+                this.compareLogsColumns2LogDetails[log2Compare].id = '';
+                this.compareLogsColumns2LogDetails[log2Compare].logName = '';
+                this.compareLogsColumns2LogDetails[log2Compare].logDetails = '';
+                this.boxShadowForTheLogDetailSelected(event, 'none');
+                return true
+            }
+        }
+
+        return false;
+    }
+
+    boxShadowForTheLogDetailSelected(event, color){
+        event.target.style.boxShadow = color;
     }
     removeboxShadowForAllTheLogDetails(){
         this.template.querySelectorAll('.displayLogButton').forEach(element => {
@@ -70,7 +164,7 @@ export default class LogList extends LightningElement{
     }
 
     async getApexLogsInformation(sessionInformation) {
-        let url2GetApexLogIds = sessionInformation.instanceUrl + apexLogIdsQueryUrl;
+        let url2GetApexLogIds = sessionInformation.instanceUrl + APEX_LOG_IDS_QUERY_URL;
         const apexLogList = await this.getInformationFromSalesforce(url2GetApexLogIds, {}, sessionInformation, 'contentTypeJson');
 
         if(apexLogList.response.hasError){
@@ -124,6 +218,7 @@ export default class LogList extends LightningElement{
     }
 
     processApexLogs(sessionInformation, apexLogList) {
+        this.downloadinprogress2compare();
         apexLogList.forEach(async apexLog => {
             let completeUrl = sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
 
@@ -131,12 +226,21 @@ export default class LogList extends LightningElement{
 
             let logInformation = await this.getInformationFromSalesforce(completeUrl, { fileName }, sessionInformation, 'contentTypeText', apexLog.Id)
 
+            console.log('@logInformation: ' , logInformation);
             this.logList.push(logInformation.response);
-            if(this.logList.length === apexLogList.length){
-                this.disableDownloadButton(false);
-            }
+
+            logInformation.response.response
+            .then(() => {
+                this.totalLogsCompletelyRetrieved++;
+                if(apexLogList.length === this.totalLogsCompletelyRetrieved){
+                    this.disableDownloadButton(false);
+                    this.sendLogList2Console(this.logList);
+                    this.sendToastMessage2Console('success', 'You can use compare now!', 'Compare Logs');
+                }
+            })
         });
     }
+
 
     logName2Display(apexLog){
         return  apexLog.LogUser.Name + ' | ' + 
@@ -183,5 +287,17 @@ export default class LogList extends LightningElement{
     @api
     handleManipulationOptionsForDownloading(manipulationOptions){
         this.manipulationOptions = manipulationOptions;
+    }
+
+    downloadinprogress2compare(){
+        this.dispatchEvent(new CustomEvent('downloadinprogress2compare',{
+            detail: true
+        }));
+    }
+
+    sendLogList2Console(logList){
+        this.dispatchEvent(new CustomEvent('sendloglist',{
+            detail:{ logList }
+        }));
     }
 }

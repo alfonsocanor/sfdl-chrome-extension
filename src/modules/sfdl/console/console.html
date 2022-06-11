@@ -30,34 +30,72 @@
           <a class="slds-tabs_scoped__link" data-tabname="compareOrgs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Compare Orgs</a>
         </li>
       </ul>
-      <div class="sfdl-analise-logs slds-tabs_scoped__content slds-show" style="padding:0; border-right:none;">
-        <div style="background-color:#fafaf9;position:relative;height:92vh;overflow:hidden;display:flex;">
-          <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
-            <div class="slds-panel__header" style="padding:15px;">
-              <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
+      <template if:true={openAnaliseLogs}>
+        <div class="sfdl-analise-logs slds-tabs_scoped__content slds-show" style="padding:0; border-right:none;">
+          <div style="background-color:#fafaf9;position:relative;height:92vh;overflow:hidden;display:flex;">
+            <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
+              <div class="slds-panel__header" style="padding:15px;">
+                <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
+              </div>
+              <div class="slds-panel__body">
+                <template if:true={renderLogList}>
+                  <sfdl-log-list
+                    is-analise-logs="true"
+                    onlogdetails={handleLogDetails}
+                    ontoastmessage={handleToastMessage}
+                    session-information={sessionInformation}
+                    onsendloglist={handleLogList}
+                    ondownloadinprogress2compare={handleDownloadInProgress2Compare}>
+                  </sfdl-log-list>
+                </template>
+              </div>
             </div>
-            <div class="slds-panel__body">
-              <template if:true={renderLogList}>
-                <sfdl-log-list
-                  onlogdetails={handleLogDetails}
-                  ontoastmessage={handleToastMessage}
-                  session-information={sessionInformation}>
-                </sfdl-log-list>
-              </template>
+            <div class="slds-col" style="position:relative;">
+              <sfdl-log-details 
+                is-analise-logs="true"
+                show-log-list-section={showLogListSection}
+                ontoastmessage={handleToastMessage}
+                ondisplayloglistsection={handleDisplayLogListSection}
+                onmanipulationoptions={handleManipulationOptions}>
+              </sfdl-log-details>
             </div>
-          </div>
-          <div class="slds-col">
-            <sfdl-log-details 
-              show-log-list-section={showLogListSection}
-              ontoastmessage={handleToastMessage}
-              ondisplayloglistsection={handleDisplayLogListSection}
-              onmanipulationoptions={handleManipulationOptions}>
-            </sfdl-log-details>
           </div>
         </div>
-      </div>
-      <div class="sfdl-compare-logs slds-tabs_scoped__content slds-hide" style="padding:0; border-right:none;">Compare Logs</div>
-      <div class="sfdl-compare-orgs slds-tabs_scoped__content slds-hide" style="padding:0; border-right:none;">Compare Orgs</div>
+      </template>
+      <template if:true={openCompareLogs}>
+        <div class="sfdl-compare-logs slds-tabs_scoped__content slds-hide" style="padding:0; border-right:none;">
+          <div style="background-color:#fafaf9;position:relative;height:92vh;overflow:hidden;display:flex;">
+            <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
+              <div class="slds-panel__header" style="padding:15px;">
+                <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
+              </div>
+              <div class="slds-panel__body">
+                <template if:true={renderLogList}>
+                  <sfdl-log-list
+                    is-compare-logs="true"
+                    session-information={sessionInformation}
+                    logs-2-compare={logList}
+                    onlogdetails={handleLogDetails}
+                    ontoastmessage={handleToastMessage}>
+                  </sfdl-log-list>
+                </template>
+              </div>
+            </div>
+            <div class="slds-col" style="position:relative;">
+              <sfdl-log-details 
+                is-compare-logs="true"
+                ontoastmessage={handleToastMessage}
+                ondisplayloglistsection={handleDisplayLogListSection}
+                onmanipulationoptions={handleManipulationOptions}
+                onshowcomponent={showContentBasedOnTab}>
+              </sfdl-log-details>
+            </div>
+          </div>
+        </div>
+      </template>
+      <template if:true={openCompareOrgs}>
+        <div class="sfdl-compare-orgs slds-tabs_scoped__content slds-hide" style="padding:0; border-right:none;">List Orgs</div>
+      </template>
     </div>
   </div>
 </template>

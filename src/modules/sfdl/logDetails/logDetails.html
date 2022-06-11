@@ -11,7 +11,7 @@
       oncheckboxselection={handleManipulationOptions}>
     </sfdl-log-manipulation-menu>
     <div class="slds-col slds-grid slds-size_1-of-1">
-      <div class="slds-col slds-size_4-of-12">
+      <div class="slds-col slds-size_1-of-1">
         <span class="slds-m-left_x-small">{logName}</span>
       </div>
     </div>
@@ -23,5 +23,8 @@
       <div style="width: 99% !important; height:100%">
         <div class="sfdlMonacoEditor" style="height:92vh;"></div>
       </div>
+  </template>
+  <template if:true={isProcessing}>
+      <sfdl-spinner></sfdl-spinner>
   </template>
 </template>

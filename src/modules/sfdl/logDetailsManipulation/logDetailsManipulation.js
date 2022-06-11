@@ -60,6 +60,10 @@ function invokeFilterFormatFunctions(logDetailsArrayOfLines, function2Execute){
 }
 
 export function manipulationDetailLogs(logDetails, manipulationOptions){
+    if(!logDetails){
+        return '';
+    }
+
     let logDetailsArrayOfLines = logDetails.split('\n');
     let logDetailsFormatted; 
     if(manipulationOptions){

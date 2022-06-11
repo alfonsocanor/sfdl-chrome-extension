@@ -8,13 +8,21 @@ const TOGGLE_IMAGE_LEFT = '/slds/icons/utility/toggle_panel_left.svg';
 
 export default class LogDetails extends LightningElement{
     @api showLogListSection;
+    @api isAnaliseLogs = false;
+    @api isCompareLogs = false;
+
     logName = '';
-    logDetails;
+    logDetails; 
+    logCompareLeft;
+    logCompareRight;
+
     showMonacoEditor;
     toggleImage = TOGGLE_IMAGE_RIGHT;
 
     formatMethodEntryExitHierarchy = false;
     heapStatementRemoveLines = false;
+
+    isProcessing = false;
 
     connectedCallback(){
         this.setMonacoNewLanguage('apexlog')
@@ -42,13 +50,24 @@ export default class LogDetails extends LightningElement{
     }
 
     @api
-    async displayLogsDetailsFromLogList(logDetails, logName){
-        this.logDetails = logDetails;
+    async processLogsFromLogList(logDetails, logName){
+        this.showMonacoEditor = false;
+        this.isProcessing = true;
+        this.logDetails = await logDetails.response;
+        if(this.isAnaliseLogs){
+            this.displayAnalyseLogsDetails(this.logDetails, logName);
+        } else if (this.isCompareLogs){
+            this.displayCompareLogsDetails(this.logDetails, logName);
+        }
+    }
+
+    async displayAnalyseLogsDetails(logDetails,logName){
         let formatLogDetails = await manipulationDetailLogs(logDetails, this.getManipulationOptions());
         await this.renderedMonacoEditor();
-        if(this.template.querySelector('.sfdlMonacoEditor')){
+        const sfdlMonacoEditor = this.template.querySelector('.sfdlMonacoEditor');
+        if(sfdlMonacoEditor){
             this.logName = logName;
-            monaco.editor.create(this.template.querySelector('.sfdlMonacoEditor'), {
+            monaco.editor.create(sfdlMonacoEditor, {
                 value: formatLogDetails,
                 automaticLayout: true,
                 language: 'apexlog',
@@ -56,12 +75,25 @@ export default class LogDetails extends LightningElement{
             });
         }
     }
+
+    async displayCompareLogsDetails(logDetails,logName){
+        this.logCompareLeft = logDetails[0];
+        this.logCompareRight = logDetails[1]; 
+
+        const sfdlMonacoEditor = this.template.querySelector('.sfdlMonacoEditor');
+        const diffEditor = monaco.editor.createDiffEditor(sfdlMonacoEditor);
+        diffEditor.setModel({
+            original: manipulationDetailLogs(logDetails[0], this.getManipulationOptions()),
+            modified: manipulationDetailLogs(logDetails[1], this.getManipulationOptions())
+        });
+    }
  
     async renderedMonacoEditor(){
         this.showMonacoEditor = false;
         await new Promise((resolve)=>{setTimeout(resolve, 100);});
         this.showMonacoEditor = true;
         await new Promise((resolve)=>{setTimeout(resolve, 100);});
+        this.isProcessing = false;
     }
 
     handleHideShowSections(){
@@ -86,8 +118,9 @@ export default class LogDetails extends LightningElement{
     }
 
     renderLogDetailsAfterManipulationOptionSelection(){
+        console.log('@this.logDetails' , this.logDetails);
         if(this.logDetails){
-            this.displayLogsDetailsFromLogList(this.logDetails, this.logName);
+            this.displayAnalyseLogsDetails(this.logDetails, this.logName);
         }
     }
 
