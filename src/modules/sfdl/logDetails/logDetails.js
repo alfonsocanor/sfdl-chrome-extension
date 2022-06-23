@@ -76,7 +76,7 @@ export default class LogDetails extends LightningElement{
         }
     }
 
-    async displayCompareLogsDetails(logDetails,logName){
+    async displayCompareLogsDetails(logDetails){
         this.logCompareLeft = logDetails[0];
         this.logCompareRight = logDetails[1]; 
 
