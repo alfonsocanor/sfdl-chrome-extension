@@ -1,3 +1,4 @@
+/*global chrome*/
 import { track, api, LightningElement  } from 'lwc';
 
 const APEX_LOG_IDS_QUERY_URL = '/services/data/v51.0/tooling/query/?q=SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ORDER BY LastModifiedDate ASC';
@@ -218,29 +219,19 @@ export default class LogList extends LightningElement{
     }
 
     processApexLogs(sessionInformation, apexLogList) {
-        this.downloadinprogress2compare();
-        apexLogList.forEach(async apexLog => {
-            let completeUrl = sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
-
-            let fileName = this.logName2Display(apexLog);
-
-            let logInformation = await this.getInformationFromSalesforce(completeUrl, { fileName }, sessionInformation, 'contentTypeText', apexLog.Id)
-
-            console.log('@logInformation: ' , logInformation);
-            this.logList.push(logInformation.response);
-
-            logInformation.response.response
-            .then(() => {
-                this.totalLogsCompletelyRetrieved++;
-                if(apexLogList.length === this.totalLogsCompletelyRetrieved){
-                    this.disableDownloadButton(false);
-                    this.sendLogList2Console(this.logList);
-                    this.sendToastMessage2Console('success', 'You can use compare now!', 'Compare Logs');
-                }
-            })
+        const message = new Promise(resolve =>
+            chrome.runtime.sendMessage({
+                message: "getApexLogsBody", 
+                sessionInformation, apexLogList
+            }, resolve));
+        
+        message.then(response => {
+            this.logList = response;
+            this.disableDownloadButton(false);
+            this.sendLogList2Console(this.logList);
+            this.sendToastMessage2Console('success', 'You can use compare now!', 'Compare Logs');
         });
     }
-
 
     logName2Display(apexLog){
         return  apexLog.LogUser.Name + ' | ' + 

@@ -1,47 +1,99 @@
 /*global chrome*/
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.message === "getSfHost") {
-    // When on a *.visual.force.com page, the session in the cookie does not have API access,
-    // so we read the corresponding session from *.salesforce.com page.
-    // The first part of the session cookie is the OrgID,
-    // which we use as key to support being logged in to multiple orgs at once.
-    // http://salesforce.stackexchange.com/questions/23277/different-session-ids-in-different-contexts
-    // There is no straight forward way to unambiguously understand if the user authenticated against salesforce.com or cloudforce.com
-    // (and thereby the domain of the relevant cookie) cookie domains are therefore tried in sequence.
-    chrome.cookies.get({url: request.url, name: "sid", storeId: sender.tab.cookieStoreId}, cookie => {
-      if (!cookie) {
-        sendResponse(null);
-        return;
-      }
-      let [orgId] = cookie.value.split("!");
-      chrome.cookies.getAll({name: "sid", domain: "salesforce.com", secure: true, storeId: sender.tab.cookieStoreId}, cookies => {
-        let sessionCookie = cookies.find(c => c.value.startsWith(orgId + "!"));
-        if (sessionCookie) {
-          sendResponse(sessionCookie.domain);
-        } else {
-          chrome.cookies.getAll({name: "sid", domain: "cloudforce.com", secure: true, storeId: sender.tab.cookieStoreId}, cookies => {
-            sessionCookie = cookies.find(c => c.value.startsWith(orgId + "!"));
-            if (sessionCookie) {
-              sendResponse(sessionCookie.domain);
-            } else {
-              sendResponse(null);
-            }
-          });
-        }
+
+const processResponseBasedOnContentType = {
+  httpError(response){
+      return {hasError: true, error: response.message};
+  },
+  async contentTypeJson(response){
+      const logsInformation = await response.json()
+      return logsInformation.records.map(logRecord => logRecord);
+  },
+  async contentTypeText(response, logId, fileName){
+      let newResponse = response.clone();
+      let blob = new Blob([newResponse.text()], {
+          type: 'text/html'
       });
-    });
-    return true;
+      console.log('blobsize: ' + blob.size);
+      return {id:logId, name:fileName, response:response.text()};
   }
-  if (request.message === "getSession") {
-    chrome.cookies.get({url: "https://" + request.sfHost, name: "sid", storeId: sender.tab.cookieStoreId}, sessionCookie => {
-      if (!sessionCookie) {
-        sendResponse(null);
-        return;
-      }
-      let session = {key: sessionCookie.value, hostname: sessionCookie.domain};
-      sendResponse(session);
+}
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.message === 'getApexLogsBody'){
+    let totalLogsCompletelyRetrieved = 0;
+    let logList = []
+    request.apexLogList.forEach(async apexLog => {
+          let completeUrl = request.sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
+    
+          let fileName = logName2Display(apexLog);
+    
+          let logInformation = await getInformationFromSalesforce(completeUrl, { fileName }, request.sessionInformation, 'contentTypeText', apexLog.Id)
+          let logDetail = await logInformation.response.response;
+          logInformation.response.response = logDetail;
+          logList.push(logInformation.response);
+    
+          totalLogsCompletelyRetrieved++;
+          if(request.apexLogList.length === totalLogsCompletelyRetrieved){
+              sendResponse(logList);
+          }
     });
-    return true; // Tell Chrome that we want to call sendResponse asynchronously.
+    return true; //Asynchronously.
   }
-  return false;
+  return false; //Synchronously.
 });
+
+async function getInformationFromSalesforce(requestUrl, additionalOutputs, sessionInformation, function2Execute, logId) {
+  const response = await fetchLogsRecords(requestUrl,sessionInformation, function2Execute, logId, additionalOutputs.fileName);
+  return {response, additionalOutputs};
+}
+
+async function fetchLogsRecords(requestUrl, sessionInformation, function2Execute, logId, fileName){
+  let response = {}; 
+  try{
+    response = await fetch(requestUrl,{
+        method:'GET',
+        headers: {
+            'Authorization': 'Bearer ' + sessionInformation.authToken,
+            'Content-type': 'application/json; charset=UTF-8; text/plain',
+        }
+    });
+
+    if(response.status !== 200){
+        function2Execute = 'httpError';
+        response.message = response.status === 401 ? response.statusText + ': Invalid session' : response.message;
+    }
+  } catch(e){
+    function2Execute = 'httpError';
+    response.message = e.message;
+  }
+  return processResponseBasedOnContentType[function2Execute](response, logId, fileName);
+}
+
+function logName2Display(apexLog){
+  return  apexLog.LogUser.Name + ' | ' + 
+          createOperationFormat(apexLog.Operation) + ' | ' +
+          apexLog.LogLength + 'bytes | ' +
+          createDatetimeFormat(new Date(apexLog.LastModifiedDate));
+}
+
+function createOperationFormat(operation){
+  let regex = new RegExp('/', 'g');
+
+  if(operation.includes('__')){
+      return operation.replace(regex, '').split('__')[1];
+  }
+
+  return operation.replace(regex, '');
+}
+
+function createDatetimeFormat(date){
+  return  padNumberValues(date.getDay(), 2,'0') + '/' +
+          padNumberValues(date.getMonth(), 2, '0') + ' ' +
+          padNumberValues(date.getHours(), 2, '0') + 'h' + 
+          padNumberValues(date.getMinutes(), 2, '0') + 'm' +
+          padNumberValues(date.getSeconds(), 2, '0') + 's';
+}
+
+function padNumberValues(numberValue, padLength, padString){
+  return numberValue.toString().padStart(padLength, padString);
+}
