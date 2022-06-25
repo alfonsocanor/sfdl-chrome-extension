@@ -1,4 +1,12 @@
 <template>
+    <template if:true={retrivingLogsInProgress}>
+        <div class="sfdl-process-bar" style="width:92%;">
+            <sfdl-process-bar 
+                total={totalLogsToDownload}
+                placeholder="Downloading logs...">
+            </sfdl-process-bar>
+        </div>
+    </template>
     <template if:true={isDownloading}> 
         <div class="slds-grid slds-wrap" style="margin-bottom:14px;">
             <div class="slds-col slds-size_1-of-8" style="position:relative; padding-top:18px">
@@ -18,7 +26,7 @@
         </sfdl-download-logs>
     </template>
     <template if:true={thereAreLogsToDisplay}>
-        <template if:false={isDownloading}>
+        <template if:false={retrivingLogsInProgress}>
             <div onload={whatHappen} class="slds-size_1-of-1 slds-m-bottom_small slds-p-left_xx-small" style="text-align:left;">
                 <button style="width:22px; height:22px;" class="downloadLogsButton slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" onclick={handleOpenCloseSfdlDownload}><img src="/slds/icons/utility/download.svg" alt="start download process"/></button>
                 <span class="slds-p-left_x-small " style="color:rgb(127 127 127);">Download all logs</span>

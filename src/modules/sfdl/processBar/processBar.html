@@ -1,0 +1,8 @@
+<template>
+    {currentValue} / {total}
+    <div class="slds-progress-bar" aria-valuemin="0" aria-valuemax={maxValue} aria-valuenow={valueNow} aria-label={placeholder} role="progressbar">
+        <span class="slds-progress-bar__value" style={progressBarValue}>
+        <span class="slds-assistive-text">Progress: valueNow</span>
+        </span>
+    </div>
+</template>

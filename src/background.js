@@ -1,5 +1,7 @@
 /*global chrome*/
 
+const totalLogsProcessed = { logsProcessed: 0, totalLogs: 0 };
+
 const processResponseBasedOnContentType = {
   httpError(response){
       return {hasError: true, error: response.message};
@@ -9,17 +11,14 @@ const processResponseBasedOnContentType = {
       return logsInformation.records.map(logRecord => logRecord);
   },
   async contentTypeText(response, logId, fileName){
-      let newResponse = response.clone();
-      let blob = new Blob([newResponse.text()], {
-          type: 'text/html'
-      });
-      console.log('blobsize: ' + blob.size);
+      totalLogsProcessed.logsProcessed++;
       return {id:logId, name:fileName, response:response.text()};
   }
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.message === 'getApexLogsBody'){
+    totalLogsProcessed.totalLogs = request.apexLogList.length;
     let totalLogsCompletelyRetrieved = 0;
     let logList = []
     request.apexLogList.forEach(async apexLog => {
@@ -39,8 +38,21 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     });
     return true; //Asynchronously.
   }
+
+  if (request.message === 'downloadProgressBar'){
+    sendResponse(totalLogsProcessed.logsProcessed);
+    if(resetTotalLogsProcessed()){
+      totalLogsProcessed.logsProcessed = 0;
+    }
+    
+    return false; //Asynchronously.
+  }
   return false; //Synchronously.
 });
+
+function resetTotalLogsProcessed(){
+  return totalLogsProcessed.totalLogs === totalLogsProcessed.logsProcessed;
+}
 
 async function getInformationFromSalesforce(requestUrl, additionalOutputs, sessionInformation, function2Execute, logId) {
   const response = await fetchLogsRecords(requestUrl,sessionInformation, function2Execute, logId, additionalOutputs.fileName);

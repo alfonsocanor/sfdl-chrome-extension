@@ -39,6 +39,11 @@ export default class LogList extends LightningElement{
         column2:{id:'',logName:'', logDetails:''}
     }
 
+    totalLogsToDownload = 0;
+
+    retrivingLogsInProgress = false;
+    downloadAllLogsActivated = false;
+
     connectedCallback(){
         if(this.isAnaliseLogs){
             this.getApexLogsInformation(this.sessionInformation);
@@ -219,6 +224,9 @@ export default class LogList extends LightningElement{
     }
 
     processApexLogs(sessionInformation, apexLogList) {
+        this.totalLogsToDownload = apexLogList.length;
+        this.retrivingLogsInProgress = true;
+        this.downloadProgressBar();
         const message = new Promise(resolve =>
             chrome.runtime.sendMessage({
                 message: "getApexLogsBody", 
@@ -227,9 +235,18 @@ export default class LogList extends LightningElement{
         
         message.then(response => {
             this.logList = response;
-            this.disableDownloadButton(false);
+            this.retrivingLogsInProgress = false;
+            setTimeout(() => {
+                this.disableDownloadButton(false);
+            }, 1000);
             this.sendLogList2Console(this.logList);
             this.sendToastMessage2Console('success', 'You can use compare now!', 'Compare Logs');
+
+            //Future feature - Cached the information in the LocalStorage - Use Blob as below
+            let blob = new Blob(response, {
+                type: 'text/html'
+            });
+            console.log('blob size: ' + blob.size);
         });
     }
 
@@ -290,5 +307,11 @@ export default class LogList extends LightningElement{
         this.dispatchEvent(new CustomEvent('sendloglist',{
             detail:{ logList }
         }));
+    }
+
+    async downloadProgressBar(){
+        let currentValue = await chrome.runtime.sendMessage({message: "downloadProgressBar"});
+        this.template.querySelector('sfdl-process-bar').updateProgressBar(currentValue);
+        return currentValue === this.totalLogsToDownload ? currentValue : this.downloadProgressBar();
     }
 }
