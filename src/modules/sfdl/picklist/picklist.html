@@ -1,27 +1,39 @@
 <template>
-  <div class="slds-form-element">
-    <label class="slds-form-element__label" for="combobox-id-1" id="combobox-label-id-27">Orgs domain</label>
-    <div class="slds-form-element__control">
-      <div class="slds-combobox_container slds-size_large">
-        <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" onclick={openPicklistOptions}>
-          <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
-              <button type="button" class="slds-input_faux slds-combobox__input" onfocusout={closePicklistIfOnFocus} aria-labelledby="combobox-label-id-27 combobox-id-1-selected-value" id="combobox-id-1-selected-value" aria-controls="listbox-id-1" aria-expanded="false" aria-haspopup="listbox">
-                  <span class="slds-truncate" id="combobox-value-id-29">{valueSelected}</span>
-              </button>
-              <span class="slds-icon_container slds-icon-utility-down slds-input__icon slds-input__icon_right">
-                <img src="/slds/icons/utility/down.svg"/>
-              </span>
-          </div>
-          <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid" role="listbox">
-              <ul class="slds-listbox slds-listbox_vertical" role="presentation">
-                  <template for:each={picklist} for:item="picklistInfo">
-                      <li key={picklistInfo.label} role="presentation" class="slds-listbox__item">
-                          <div data-domain={picklistInfo.label} data-sid={picklistInfo.value} onclick={updateSessionInformation} class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
-                              {picklistInfo.label}
-                          </div>
-                      </li>
-                  </template>
-              </ul>
+  <div class="slds-grid slds-grid_vertical-align-end">
+    <div class="slds-col slds-size_1-of-12" style="margin:0; width: 2% !important; margin-bottom: 4px;">
+      <sfdl-log-query-filter
+        onquerywhere={handleQueryWhere}>
+      </sfdl-log-query-filter>
+    </div>
+    <div class="slds-col slds-size_1-of-12" style="margin:0; width: 2% !important; margin-bottom: 4px;">
+      <button style="width:22px;height:22px; padding:2px;" onclick={queryLogs} disabled class="queryLogsButton slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Filter queries">
+        <img src={searchIcon} alt="menu filter manipulation options"/>
+      </button>
+    </div>
+    <div class="slds-col slds-form-element slds-size_6-of-12">
+      <label class="slds-form-element__label" for="combobox-id-1" id="combobox-label-id-27">Orgs domain</label>
+      <div class="slds-form-element__control">
+        <div class="slds-combobox_container slds-size_large">
+          <div class="slds-combobox slds-dropdown-trigger slds-dropdown-trigger_click" onclick={openPicklistOptions}>
+            <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+                <button type="button" class="slds-input_faux slds-combobox__input" onfocusout={closePicklistIfOnFocus} aria-labelledby="combobox-label-id-27 combobox-id-1-selected-value" id="combobox-id-1-selected-value" aria-controls="listbox-id-1" aria-expanded="false" aria-haspopup="listbox">
+                    <span class="slds-truncate" id="combobox-value-id-29">{valueSelected}</span>
+                </button>
+                <span class="slds-icon_container slds-icon-utility-down slds-input__icon slds-input__icon_right">
+                  <img src="/slds/icons/utility/down.svg"/>
+                </span>
+            </div>
+            <div id="listbox-id-1" class="slds-dropdown slds-dropdown_length-5 slds-dropdown_fluid" role="listbox">
+                <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                    <template for:each={picklist} for:item="picklistInfo">
+                        <li key={picklistInfo.label} role="presentation" class="slds-listbox__item">
+                            <div data-domain={picklistInfo.label} data-sid={picklistInfo.value} onclick={updateSessionInformation} class="slds-media slds-listbox__option slds-listbox__option_plain slds-media_small" role="option">
+                                {picklistInfo.label}
+                            </div>
+                        </li>
+                    </template>
+                </ul>
+            </div>
           </div>
         </div>
       </div>

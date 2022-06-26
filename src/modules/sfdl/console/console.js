@@ -77,6 +77,10 @@ export default class Console extends LightningElement {
         this.showToastMessage = true;
         this.toastInProgress = true;
 
+        if(event.detail.enableQuerySearch){
+            this.template.querySelector('sfdl-picklist').disableQueryButton(false);
+        }
+
         this.toastCloseSetTimeoutId = setTimeout(() => {
             this.showToastMessage = false;
             this.toastInProgress = false;

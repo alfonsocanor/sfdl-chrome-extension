@@ -1,0 +1,17 @@
+<template>
+    <div class="sfdlDropdownMenu slds-dropdown-trigger slds-dropdown-trigger_click">
+        <button style="width:22px;height:22px; padding:2px;" onclick={handleOpenCloseMenu} class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Filter queries">
+            <img src={filterIcon} alt="menu filter manipulation options"/>
+        </button>
+        <div class="slds-dropdown slds-dropdown_left slds-dropdown_small" 
+            style="min-width:18rem !important; 
+                   padding-bottom:0px;     
+                   padding-left: 5px;
+                   padding-top: 18px;">
+            <button style="width:12px;height:12px; position:absolute; right:5px; z-index:1; top:3px" onclick={handleOpenCloseMenu} class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Filter queries">
+                <img src={closeIcon} alt="close icon"/>
+            </button>
+            <textarea placeholder={placeholder} rows="2" cols="40" onchange={handleQueryWhere}>{queryWhere}</textarea>
+        </div>
+    </div>
+</template>

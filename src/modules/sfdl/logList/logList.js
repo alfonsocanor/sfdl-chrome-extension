@@ -1,7 +1,9 @@
 /*global chrome*/
 import { track, api, LightningElement  } from 'lwc';
 
-const APEX_LOG_IDS_QUERY_URL = '/services/data/v51.0/tooling/query/?q=SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ORDER BY LastModifiedDate ASC';
+const APEX_LOG_IDS_QUERY_URL = '/services/data/v51.0/tooling/query/?q=';
+const APEX_LOG_IDS_QUERY_URL_SELECT_FROM = 'SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ';
+const APEX_LOG_IDS_QUERY_URL_ORDER_BY = ' ORDER BY LastModifiedDate DESC';
 
 const processResponseBasedOnContentType = {
     httpError(response){
@@ -76,7 +78,6 @@ export default class LogList extends LightningElement{
                 logName: event.target.dataset.logname,
                 logDetails: this.getLogByIdFromLogList(event.target.dataset.logid)[0] 
             }
-            //detail: { logName: logInfo.logName, logDetails: logInfo.logDetails }
         }))
     }
 
@@ -170,7 +171,9 @@ export default class LogList extends LightningElement{
     }
 
     async getApexLogsInformation(sessionInformation) {
-        let url2GetApexLogIds = sessionInformation.instanceUrl + APEX_LOG_IDS_QUERY_URL;
+        let url2GetApexLogIds = sessionInformation.instanceUrl + 
+            APEX_LOG_IDS_QUERY_URL + APEX_LOG_IDS_QUERY_URL_SELECT_FROM + 
+            (sessionInformation.queryWhere ? sessionInformation.queryWhere : APEX_LOG_IDS_QUERY_URL_ORDER_BY);
         const apexLogList = await this.getInformationFromSalesforce(url2GetApexLogIds, {}, sessionInformation, 'contentTypeJson');
 
         if(apexLogList.response.hasError){
@@ -188,10 +191,10 @@ export default class LogList extends LightningElement{
         }
     }
 
-    sendToastMessage2Console(action, header, message){
+    sendToastMessage2Console(action, header, message, enableQuerySearch){
         this.dispatchEvent(new CustomEvent('toastmessage',{
             detail:{
-                action, header, message
+                action, header, message, enableQuerySearch
             }
         }))
     }
@@ -240,7 +243,7 @@ export default class LogList extends LightningElement{
                 this.disableDownloadButton(false);
             }, 1000);
             this.sendLogList2Console(this.logList);
-            this.sendToastMessage2Console('success', 'You can use compare now!', 'Compare Logs');
+            this.sendToastMessage2Console('success', 'You can use compare now!', 'Compare Logs', true);
 
             //Future feature - Cached the information in the LocalStorage - Use Blob as below
             let blob = new Blob(response, {

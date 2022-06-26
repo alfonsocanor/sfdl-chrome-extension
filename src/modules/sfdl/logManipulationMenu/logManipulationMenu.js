@@ -1,10 +1,6 @@
 import { LightningElement, api } from 'lwc';
 
 export default class DropdownMenu extends LightningElement{
-    filterIcon = '/slds/icons/utility/filterList.svg';
-    closeIcon = '/slds/icons/utility/close.svg';
-    isMenuOpen = true;
-
     manipulationOptions = [
         {
             label: 'ENTRY/EXIT',
@@ -17,6 +13,10 @@ export default class DropdownMenu extends LightningElement{
             checked:false
         }
     ];
+    
+    filterIcon = '/slds/icons/utility/filterList.svg';
+    closeIcon = '/slds/icons/utility/close.svg';
+    isMenuOpen = true;
 
     handleOpenCloseMenu(){
         this.isMenuOpen = !this.isMenuOpen;

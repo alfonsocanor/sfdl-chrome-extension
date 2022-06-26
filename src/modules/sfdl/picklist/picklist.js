@@ -1,13 +1,21 @@
 import { LightningElement, api } from 'lwc';
 
 export default class Picklist extends LightningElement {
+    searchIcon = '/slds/icons/utility/search.svg';
+
     @api picklist;
     areOptionsOpened = false;
     @api placeholper;
     valueSelected;
+    queryWhere = '';
+
+    sessionInformation = {
+        authToken: '',
+        instanceUrl: ''
+    };
 
     connectedCallback(){
-        this.valueSelected = this.placeholper ? this.placeholper : 'Select value';
+        this.valueSelected = this.placeholper ? this.placeholper : 'Pick up an org...';
     }
 
     openPicklistOptions(){
@@ -30,15 +38,31 @@ export default class Picklist extends LightningElement {
 
     updateSessionInformation(event){
         this.valueSelected = event.target.dataset.domain;
-        const sessionInformation = {
+        this.sessionInformation = {
             authToken: event.target.dataset.sid,
-            instanceUrl: this.valueSelected
+            instanceUrl: this.valueSelected,
+            queryWhere: this.queryWhere
         }
 
+        this.disableQueryButton(false);
+    }
+
+    queryLogs(){
         this.dispatchEvent(new CustomEvent('sessioninformation',{
             detail: { 
-                sessionInformation
+                sessionInformation: this.sessionInformation
             }
         }));
+
+        this.disableQueryButton(true);
+    }
+
+    handleQueryWhere(event){
+        this.queryWhere = this.sessionInformation.queryWhere = event.detail.queryWhere;
+    }
+
+    @api
+    disableQueryButton(isDisable){
+        this.template.querySelector('.queryLogsButton').disabled = isDisable;
     }
 }
