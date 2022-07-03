@@ -171,8 +171,8 @@ export default class LogList extends LightningElement{
     }
 
     async getApexLogsInformation(sessionInformation) {
-        let url2GetApexLogIds = sessionInformation.instanceUrl + 
-            APEX_LOG_IDS_QUERY_URL + APEX_LOG_IDS_QUERY_URL_SELECT_FROM + 
+        let url2GetApexLogIds = sessionInformation.instanceUrl +
+            APEX_LOG_IDS_QUERY_URL + APEX_LOG_IDS_QUERY_URL_SELECT_FROM +
             (sessionInformation.queryWhere ? sessionInformation.queryWhere : APEX_LOG_IDS_QUERY_URL_ORDER_BY);
         const apexLogList = await this.getInformationFromSalesforce(url2GetApexLogIds, {}, sessionInformation, 'contentTypeJson');
 
@@ -183,7 +183,7 @@ export default class LogList extends LightningElement{
 
         if(apexLogList.response.length){
             this.thereAreLogsToDisplay = true;
-            this.processApexLogs(sessionInformation, apexLogList.response); 
+            this.processApexLogs(sessionInformation, apexLogList.response);
             this.sendToastMessage2Console('success', 'Retrieving logs...', sessionInformation.instanceUrl);
         } else {
             this.thereAreLogsToDisplay = false;
@@ -230,13 +230,17 @@ export default class LogList extends LightningElement{
         this.totalLogsToDownload = apexLogList.length;
         this.retrivingLogsInProgress = true;
         this.downloadProgressBar();
+        console.time();
         const message = new Promise(resolve =>
             chrome.runtime.sendMessage({
                 message: "getApexLogsBody", 
                 sessionInformation, apexLogList
             }, resolve));
+        console.timeEnd();
         
         message.then(response => {
+            console.time();
+            console.log('here inside message promise');
             this.logList = response;
             this.retrivingLogsInProgress = false;
             setTimeout(() => {
@@ -314,7 +318,10 @@ export default class LogList extends LightningElement{
 
     async downloadProgressBar(){
         let currentValue = await chrome.runtime.sendMessage({message: "downloadProgressBar"});
-        this.template.querySelector('sfdl-process-bar').updateProgressBar(currentValue);
+        const sfdlProcessBar = this.template.querySelector('sfdl-process-bar');
+        if(sfdlProcessBar){
+            this.template.querySelector('sfdl-process-bar').updateProgressBar(currentValue);
+        }
         return currentValue === this.totalLogsToDownload ? currentValue : this.downloadProgressBar();
     }
 }

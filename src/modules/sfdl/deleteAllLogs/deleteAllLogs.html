@@ -1,0 +1,24 @@
+<template>
+    <div class="sfdlDropdownMenu slds-dropdown-trigger slds-dropdown-trigger_click">
+        <button style="width:22px;height:22px; padding:2px;" onclick={handleOpenCloseMenu} class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Filter queries">
+            <img src={deleteIcon} alt="menu filter manipulation options"/>
+        </button>
+
+        <div class="slds-dropdown slds-dropdown_left slds-dropdown_small" 
+            style="min-width:18rem !important; 
+                padding-bottom:0px;     
+                padding-left: 5px;
+                padding-top: 18px;
+                text-align:center;">
+            <div class="slds-notify slds-notify_alert slds-alert_warning" 
+                style="position:relative; padding:0; border-radius:5px; right:2px" role="alert">
+                <span class="slds-assistive-text">warning</span>
+                <h2>All Apex Logs in the org selected will be deleted</h2>
+            </div>
+            <button style="width:12px;height:12px; position:absolute; right:5px; z-index:1; top:3px" onclick={handleOpenCloseMenu} class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Filter queries">
+                <img src={closeIcon} alt="close icon"/>
+            </button>
+            <button class="slds-button slds-button_brand" onclick={deleteAllLogs} style="height:20px !important; margin: 4px 0;">Delete All Logs</button>
+        </div>
+    </div>
+</template>

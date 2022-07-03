@@ -1,6 +1,7 @@
 /*global chrome*/
 
-const totalLogsProcessed = { logsProcessed: 0, totalLogs: 0 };
+let totalLogs2Process = 0;
+let totalLogsCompletelyRetrieved = 0;
 
 const processResponseBasedOnContentType = {
   httpError(response){
@@ -11,21 +12,20 @@ const processResponseBasedOnContentType = {
       return logsInformation.records.map(logRecord => logRecord);
   },
   async contentTypeText(response, logId, fileName){
-      totalLogsProcessed.logsProcessed++;
       return {id:logId, name:fileName, response:response.text()};
   }
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.message === 'getApexLogsBody'){
-    totalLogsProcessed.totalLogs = request.apexLogList.length;
-    let totalLogsCompletelyRetrieved = 0;
+    totalLogs2Process = request.apexLogList.length;
     let logList = []
     request.apexLogList.forEach(async apexLog => {
           let completeUrl = request.sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
     
           let fileName = logName2Display(apexLog);
-    
+  
+
           let logInformation = await getInformationFromSalesforce(completeUrl, { fileName }, request.sessionInformation, 'contentTypeText', apexLog.Id)
           let logDetail = await logInformation.response.response;
           logInformation.response.response = logDetail;
@@ -33,6 +33,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
           totalLogsCompletelyRetrieved++;
           if(request.apexLogList.length === totalLogsCompletelyRetrieved){
+              console.log('here at send');
               sendResponse(logList);
           }
     });
@@ -40,9 +41,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if (request.message === 'downloadProgressBar'){
-    sendResponse(totalLogsProcessed.logsProcessed);
+    sendResponse(totalLogsCompletelyRetrieved);
     if(resetTotalLogsProcessed()){
-      totalLogsProcessed.logsProcessed = 0;
+      totalLogsCompletelyRetrieved = 0;
+      totalLogs2Process = 0;
     }
     
     return false; //Asynchronously.
@@ -51,7 +53,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 function resetTotalLogsProcessed(){
-  return totalLogsProcessed.totalLogs === totalLogsProcessed.logsProcessed;
+  return totalLogs2Process === totalLogsCompletelyRetrieved;
 }
 
 async function getInformationFromSalesforce(requestUrl, additionalOutputs, sessionInformation, function2Execute, logId) {

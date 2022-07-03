@@ -44,7 +44,7 @@ export default class Picklist extends LightningElement {
             queryWhere: this.queryWhere
         }
 
-        this.disableQueryButton(false);
+        this.disableActionButtons(false);
     }
 
     queryLogs(){
@@ -54,7 +54,7 @@ export default class Picklist extends LightningElement {
             }
         }));
 
-        this.disableQueryButton(true);
+        this.disableActionButtons(true);
     }
 
     handleQueryWhere(event){
@@ -62,7 +62,9 @@ export default class Picklist extends LightningElement {
     }
 
     @api
-    disableQueryButton(isDisable){
-        this.template.querySelector('.queryLogsButton').disabled = isDisable;
+    disableActionButtons(isDisable){
+        this.template.querySelectorAll('.actionButtons').forEach( buttonElement => {
+            buttonElement.disabled = isDisable;
+        })
     }
 }
