@@ -23,8 +23,13 @@ export default class Toast extends LightningElement{
     @api action;
     @api header;
     @api message;
+    showToast = true;
     firstRender = true;
     iconAction;
+
+    connectedCallback(){
+        console.log('connected callback @toast');
+    }
 
     renderedCallback(){
         if(this.firstRender){
