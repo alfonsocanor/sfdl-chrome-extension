@@ -2,6 +2,7 @@ import { LightningElement, api } from 'lwc';
 import { manipulationDetailLogs } from 'sfdl/logDetailsManipulation';
 import * as JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { showToastEvent } from 'sfdl/utils';
 
 export default class DownloadLogs extends LightningElement{
     @api logList;
@@ -53,10 +54,11 @@ export default class DownloadLogs extends LightningElement{
     }
 
     sendToastMessage2LogList(action, header, message){
-        this.dispatchEvent(new CustomEvent('toastmessage',{
+        showToastEvent(action,header,message);
+/*         this.dispatchEvent(new CustomEvent('toastmessage',{
             detail:{
                 action, header, message
             }
-        }))
+        })) */
     }
 }

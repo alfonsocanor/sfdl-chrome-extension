@@ -1,4 +1,5 @@
 import { LightningElement, api } from 'lwc';
+import { showToastEvent, getValueLocalStorage } from 'sfdl/utils';
 
 export default class Picklist extends LightningElement {
     searchIcon = '/slds/icons/utility/search.svg';
@@ -47,7 +48,14 @@ export default class Picklist extends LightningElement {
         this.disableActionButtons(false);
     }
 
-    queryLogs(){
+    async queryLogs(){
+        let isDownloadInProgress = await getValueLocalStorage('isDownloadInProgress');
+        if(isDownloadInProgress){
+            showToastEvent(
+                'warning','Download already in progress', 'Hold on tight. Download logs was lauched from another sfdl console.');
+            return;
+        }
+
         this.dispatchEvent(new CustomEvent('sessioninformation',{
             detail: { 
                 sessionInformation: this.sessionInformation

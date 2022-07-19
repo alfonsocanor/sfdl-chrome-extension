@@ -27,10 +27,6 @@ export default class Toast extends LightningElement{
     firstRender = true;
     iconAction;
 
-    connectedCallback(){
-        console.log('connected callback @toast');
-    }
-
     renderedCallback(){
         if(this.firstRender){
             let actionSldsHtmlClass = this.determineSldsHtmlClassToApply(this.action);
@@ -53,6 +49,6 @@ export default class Toast extends LightningElement{
     }
 
     closeToast(){
-        this.dispatchEvent(new CustomEvent('closetoastmessage',{detail: true}));
+        this.showToast = false;
     }
 }

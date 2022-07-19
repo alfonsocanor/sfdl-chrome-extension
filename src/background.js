@@ -22,10 +22,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     let logList = []
     request.apexLogList.forEach(async apexLog => {
           let completeUrl = request.sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
-    
           let fileName = logName2Display(apexLog);
-  
-
           let logInformation = await getInformationFromSalesforce(completeUrl, { fileName }, request.sessionInformation, 'contentTypeText', apexLog.Id)
           let logDetail = await logInformation.response.response;
           logInformation.response.response = logDetail;
@@ -33,7 +30,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
           totalLogsCompletelyRetrieved++;
           if(request.apexLogList.length === totalLogsCompletelyRetrieved){
-              console.log('here at send');
               sendResponse(logList);
           }
     });

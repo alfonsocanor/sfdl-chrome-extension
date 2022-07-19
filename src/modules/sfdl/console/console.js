@@ -1,5 +1,6 @@
 import { LightningElement, track } from 'lwc';
 import { getAllCookiesFromSalesforceDomain, isSessionInformationValid } from 'sfdl/authentication';
+import { showToastEvent } from 'sfdl/utils';
 
 const tabNavigation = {
     analyseLogs:{tab:'.liElementAnalyseLogs', body:'.sfdl-analise-logs', open:'openAnaliseLogs'},
@@ -107,13 +108,15 @@ export default class Console extends LightningElement {
             this.toastAction = this.isDownloadInProgress ? 'warning' : 'error';
             this.toastHeader = 'Compare Logs';
             this.toastMessage = this.isDownloadInProgress ? 'Retrieving logs in progress...' : 'There are no logs to compare, select an org with logs';
-            this.showToastMessage = true;
+            
+            showToastEvent(this.toastAction, this.toastHeader, this.toastMessage);
+/*             this.showToastMessage = true;
             this.toastInProgress = true;
     
             this.toastCloseSetTimeoutId = setTimeout(() => {
                 this.showToastMessage = false;
                 this.toastInProgress = false;
-            },4000);
+            },4000); */
             return;
         }
 

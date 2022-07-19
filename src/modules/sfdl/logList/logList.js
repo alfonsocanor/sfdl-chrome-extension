@@ -1,5 +1,6 @@
 /*global chrome*/
 import { track, api, LightningElement  } from 'lwc';
+import { showToastEvent, setKeyValueLocalStorage } from 'sfdl/utils';
 
 const APEX_LOG_IDS_QUERY_URL = '/services/data/v51.0/tooling/query/?q=';
 const APEX_LOG_IDS_QUERY_URL_SELECT_FROM = 'SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ';
@@ -45,6 +46,7 @@ export default class LogList extends LightningElement{
 
     retrivingLogsInProgress = false;
     downloadAllLogsActivated = false;
+    downloadInProgress;
 
     connectedCallback(){
         if(this.isAnaliseLogs){
@@ -192,11 +194,12 @@ export default class LogList extends LightningElement{
     }
 
     sendToastMessage2Console(action, header, message, enableQuerySearch){
-        this.dispatchEvent(new CustomEvent('toastmessage',{
+        showToastEvent(action,header,message);
+/*         this.dispatchEvent(new CustomEvent('toastmessage',{
             detail:{
                 action, header, message, enableQuerySearch
             }
-        }))
+        })) */
     }
 
     async getInformationFromSalesforce(requestUrl, additionalOutputs, sessionInformation, function2Execute, logId) {
@@ -226,7 +229,8 @@ export default class LogList extends LightningElement{
         return processResponseBasedOnContentType[function2Execute](response, logId, fileName);
     }
 
-    processApexLogs(sessionInformation, apexLogList) {
+    async processApexLogs(sessionInformation, apexLogList) {
+        setKeyValueLocalStorage('isDownloadInProgress', true);
         this.totalLogsToDownload = apexLogList.length;
         this.retrivingLogsInProgress = true;
         this.downloadProgressBar();
@@ -240,7 +244,7 @@ export default class LogList extends LightningElement{
         
         message.then(response => {
             console.time();
-            console.log('here inside message promise');
+            setKeyValueLocalStorage('isDownloadInProgress', false);
             this.logList = response;
             this.retrivingLogsInProgress = false;
             setTimeout(() => {
