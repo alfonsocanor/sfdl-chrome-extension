@@ -48,6 +48,9 @@ export default class LogList extends LightningElement{
     downloadAllLogsActivated = false;
     downloadInProgress;
 
+    firstLogId = '';
+    lastLogId = '';
+
     connectedCallback(){
         if(this.isAnaliseLogs){
             this.getApexLogsInformation(this.sessionInformation);
@@ -323,5 +326,37 @@ export default class LogList extends LightningElement{
             this.template.querySelector('sfdl-process-bar').updateProgressBar(currentValue);
         }
         return currentValue === this.totalLogsToDownload ? currentValue : this.downloadProgressBar();
+    }
+
+    onKeyUp(event){
+        if(event.keyCode === 38 || event.keyCode === 40){
+            this.logListNavigation(event);
+        }
+    }
+
+    logListNavigation(event){    
+        let keyUp = event.keyCode === 38;
+        let keyDown = event.keyCode === 40;
+        
+        let itemSelected = this.template.querySelectorAll('.logList');
+
+        if(this.firstTimeKeyboardNavigation){
+            this.indexFocusOn = keyUp ? itemSelected.length - 1 : 0;
+            this.firstTimeKeyboardNavigation = false;
+        } else if(this.indexFocusOn === 0 && keyUp){
+            this.indexFocusOn = itemSelected.length - 1;
+        } else if(this.indexFocusOn === itemSelected.length - 1 && keyDown){
+            this.indexFocusOn = 0;
+        } else {
+            this.indexFocusOn = keyUp ? this.indexFocusOn - 1  : this.indexFocusOn + 1;
+        }
+
+        itemSelected[this.indexFocusOn].focus();
+
+        this.firstTimeKeyboardNavigation = true;
+        let lookupInput = this.template.querySelector('.lookupInput');
+        this.selectedValue = lookupInput.value + event.charCode;
+        lookupInput.selectionStart = lookupInput.value.length;
+        lookupInput.focus();        
     }
 }

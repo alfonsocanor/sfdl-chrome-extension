@@ -35,10 +35,11 @@
             <template for:each={logList} for:item="log">
                 <li key={log.id} class="slds-item">
                     <button 
-                        class="displayLogButton"
+                        class="displayLogButton logList"
                         data-logid={log.id} 
                         data-logname={log.name} 
                         onclick={handleLogInfo}
+                        onkeyup={onKeyUp}
                         style="text-align: left; border: none !important; width:100%;">
                         {log.name}
                     </button>
