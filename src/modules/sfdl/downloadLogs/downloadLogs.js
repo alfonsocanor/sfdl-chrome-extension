@@ -9,7 +9,6 @@ export default class DownloadLogs extends LightningElement{
     @api manipulationOptions;
 
     connectedCallback(){
-        console.log('List: ' , this.logList);
         this.startDownloadProcess();
     }
 
@@ -23,8 +22,10 @@ export default class DownloadLogs extends LightningElement{
 
 
         this.saveDebugLogsZipFile(content);
-        this.sendToastMessage2LogList('success', 'sfdl', 'Logs download, validate in your local directory.');
         this.sendDownloadProcessCompletedAlert();
+
+        showToastEvent('success', 'sfdl', 'Logs download, validate in your local directory.');
+
     }
 
     createZipFolder(zip){
@@ -51,14 +52,5 @@ export default class DownloadLogs extends LightningElement{
         this.dispatchEvent(new CustomEvent('downloadprocesscompleted',{
             detail:{}
         }));
-    }
-
-    sendToastMessage2LogList(action, header, message){
-        showToastEvent(action,header,message);
-/*         this.dispatchEvent(new CustomEvent('toastmessage',{
-            detail:{
-                action, header, message
-            }
-        })) */
     }
 }

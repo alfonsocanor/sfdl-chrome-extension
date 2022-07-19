@@ -179,27 +179,26 @@ export default class LogList extends LightningElement{
         const apexLogList = await this.getInformationFromSalesforce(url2GetApexLogIds, {}, sessionInformation, 'contentTypeJson');
 
         if(apexLogList.response.hasError){
-            this.sendToastMessage2Console('error', apexLogList.response.error, sessionInformation.instanceUrl);
+            showToastEvent('error', apexLogList.response.error, sessionInformation.instanceUrl);
             return;
         }
 
         if(apexLogList.response.length){
             this.thereAreLogsToDisplay = true;
             this.processApexLogs(sessionInformation, apexLogList.response);
-            this.sendToastMessage2Console('success', 'Retrieving logs...', sessionInformation.instanceUrl);
+            showToastEvent('success', 'Retrieving logs...', sessionInformation.instanceUrl);
         } else {
             this.thereAreLogsToDisplay = false;
-            this.sendToastMessage2Console('info', 'There are no logs to retrieve', sessionInformation.instanceUrl);
+            showToastEvent('info', 'There are no logs to retrieve', sessionInformation.instanceUrl);
         }
     }
 
-    sendToastMessage2Console(action, header, message, enableQuerySearch){
-        showToastEvent(action,header,message);
-/*         this.dispatchEvent(new CustomEvent('toastmessage',{
+    enableSearchQueryIcon(){
+         this.dispatchEvent(new CustomEvent('enablepicklistbuttons',{
             detail:{
-                action, header, message, enableQuerySearch
+                enableQuerySearch: true
             }
-        })) */
+        }))
     }
 
     async getInformationFromSalesforce(requestUrl, additionalOutputs, sessionInformation, function2Execute, logId) {
@@ -251,7 +250,9 @@ export default class LogList extends LightningElement{
                 this.disableDownloadButton(false);
             }, 1000);
             this.sendLogList2Console(this.logList);
-            this.sendToastMessage2Console('success', 'You can use compare now!', 'Compare Logs', true);
+
+            showToastEvent('success', 'You can use compare now!', 'Compare Logs', true);
+            this.enableSearchQueryIcon();
 
             //Future feature - Cached the information in the LocalStorage - Use Blob as below
             let blob = new Blob(response, {
@@ -292,11 +293,6 @@ export default class LogList extends LightningElement{
 
     handleOpenCloseSfdlDownload(){
         this.isDownloading = !this.isDownloading;
-    }
-
-
-    handleToastMessage(event){
-        this.sendToastMessage2Console(event.detail.action, event.detail.header, event.detail.message);
     }
 
     disableDownloadButton(isDisable){

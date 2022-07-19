@@ -3,18 +3,9 @@
     <sfdl-picklist 
       picklist={picklistInformation}
       onsessioninformation={handleSessionInformation}
-      ontoastmessage={handleToastMessage}
+      onenablepicklistbuttons={handleActivateActionButtons}
       placeholder="Select your domain">
     </sfdl-picklist> 
-
-<!--     <template if:true={showToastMessage}>
-      <sfdl-toast 
-        action={toastAction} 
-        header={toastHeader} 
-        message={toastMessage}
-        onclosetoastmessage={closeToastIfOpenWhileAnotherExceptionOccurs}>
-      </sfdl-toast>
-    </template> -->
   </header>
 
   <div class="slds-tabs_default__content slds-show" style="padding:0;">
@@ -42,7 +33,7 @@
                   <sfdl-log-list
                     is-analise-logs="true"
                     onlogdetails={handleLogDetails}
-                    ontoastmessage={handleToastMessage}
+                    onenablepicklistbuttons={handleActivateActionButtons}
                     session-information={sessionInformation}
                     onsendloglist={handleLogList}
                     ondownloadinprogress2compare={handleDownloadInProgress2Compare}>
@@ -54,7 +45,7 @@
               <sfdl-log-details 
                 is-analise-logs="true"
                 show-log-list-section={showLogListSection}
-                ontoastmessage={handleToastMessage}
+                onenablepicklistbuttons={handleActivateActionButtons}
                 ondisplayloglistsection={handleDisplayLogListSection}
                 onmanipulationoptions={handleManipulationOptions}>
               </sfdl-log-details>
@@ -76,7 +67,7 @@
                     session-information={sessionInformation}
                     logs-2-compare={logList}
                     onlogdetails={handleLogDetails}
-                    ontoastmessage={handleToastMessage}>
+                    onenablepicklistbuttons={handleActivateActionButtons}>
                   </sfdl-log-list>
                 </template>
               </div>
@@ -84,7 +75,7 @@
             <div class="slds-col" style="position:relative;">
               <sfdl-log-details 
                 is-compare-logs="true"
-                ontoastmessage={handleToastMessage}
+                onenablepicklistbuttons={handleActivateActionButtons}
                 ondisplayloglistsection={handleDisplayLogListSection}
                 onmanipulationoptions={handleManipulationOptions}
                 onshowcomponent={showContentBasedOnTab}>

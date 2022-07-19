@@ -118,7 +118,6 @@ export default class LogDetails extends LightningElement{
     }
 
     renderLogDetailsAfterManipulationOptionSelection(){
-        console.log('@this.logDetails' , this.logDetails);
         if(this.logDetails){
             this.displayAnalyseLogsDetails(this.logDetails, this.logName);
         }

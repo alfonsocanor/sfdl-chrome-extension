@@ -12,12 +12,10 @@ export default class Console extends LightningElement {
     showLogListSection = true;
     renderLogList = false;
     
-    showToastMessage = false;
     toastAction;
     toastHeader;
     toastMessage;
-    toastInProgress = false;
-    toastCloseSetTimeoutId;
+    
     manipulationOptions;
 
     openAnaliseLogs=true;
@@ -70,30 +68,8 @@ export default class Console extends LightningElement {
         this.sessionInformation = event.detail.sessionInformation;
     }
 
-    async handleToastMessage(event){
-        await this.closeToastIfOpenWhileAnotherExceptionOccurs();
-        this.toastAction = event.detail.action;
-        this.toastHeader = event.detail.header;
-        this.toastMessage = event.detail.message;
-        this.showToastMessage = true;
-        this.toastInProgress = true;
-
-        if(event.detail.enableQuerySearch){
+    async handleActivateActionButtons(){
             this.template.querySelector('sfdl-picklist').disableActionButtons(false);
-        }
-
-        this.toastCloseSetTimeoutId = setTimeout(() => {
-            this.showToastMessage = false;
-            this.toastInProgress = false;
-        },4000);
-    }
-
-    async closeToastIfOpenWhileAnotherExceptionOccurs(){
-        if(this.toastInProgress){
-            clearTimeout(this.toastCloseSetTimeoutId);
-            this.showToastMessage = false;
-            await new Promise(resolve => setTimeout(resolve, 200));
-        }
     }
 
     handleManipulationOptions(event){
@@ -104,19 +80,11 @@ export default class Console extends LightningElement {
 
     async handleTabNavigation(event){
         if(!this.openCompareLogs && this.noLogs2Compare(event)){
-            await this.closeToastIfOpenWhileAnotherExceptionOccurs();
             this.toastAction = this.isDownloadInProgress ? 'warning' : 'error';
             this.toastHeader = 'Compare Logs';
             this.toastMessage = this.isDownloadInProgress ? 'Retrieving logs in progress...' : 'There are no logs to compare, select an org with logs';
             
             showToastEvent(this.toastAction, this.toastHeader, this.toastMessage);
-/*             this.showToastMessage = true;
-            this.toastInProgress = true;
-    
-            this.toastCloseSetTimeoutId = setTimeout(() => {
-                this.showToastMessage = false;
-                this.toastInProgress = false;
-            },4000); */
             return;
         }
 
@@ -154,11 +122,8 @@ export default class Console extends LightningElement {
     }
 
     handleLogList(event){
-        this.closeToastIfOpenWhileAnotherExceptionOccurs();
         this.logList = event.detail.logList;
         this.openCompareLogs = true;
-        this.showToastMessage = false;
-        this.toastInProgress = false;
     }
     
     handleDownloadInProgress2Compare(){
