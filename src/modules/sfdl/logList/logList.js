@@ -5,6 +5,8 @@ import { showToastEvent, setKeyValueLocalStorage } from 'sfdl/utils';
 const APEX_LOG_IDS_QUERY_URL = '/services/data/v51.0/tooling/query/?q=';
 const APEX_LOG_IDS_QUERY_URL_SELECT_FROM = 'SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ';
 const APEX_LOG_IDS_QUERY_URL_ORDER_BY = ' ORDER BY LastModifiedDate DESC';
+const KEYBOARD_ARROW_UP_CODE = 38;
+const KEYBOARD_ARROW_DOWN_CODE = 40;
 
 const processResponseBasedOnContentType = {
     httpError(response){
@@ -48,8 +50,7 @@ export default class LogList extends LightningElement{
     downloadAllLogsActivated = false;
     downloadInProgress;
 
-    firstLogId = '';
-    lastLogId = '';
+    index4NavigationFocusOn;
 
     connectedCallback(){
         if(this.isAnaliseLogs){
@@ -57,6 +58,11 @@ export default class LogList extends LightningElement{
         } else if(this.isCompareLogs){
             this.logList = this.logs2Compare;
         }
+    }
+
+    saveFirstAndLastLogIdsFromLogList(){
+        this.firstLogId = this.logList[0].id;
+        this.lastLogId = this.logList[this.logList.length - 1].id;
     }
 
     renderedCallback(){
@@ -75,6 +81,7 @@ export default class LogList extends LightningElement{
     }
 
     async logInfoAnalyseLogs(event){
+        this.setIndexFocusFromOnClickLogSelection(event);
         this.removeboxShadowForAllTheLogDetails();
         this.boxShadowForTheLogDetailSelected(event, '0 0 0 3px #006bff40');
 
@@ -168,10 +175,14 @@ export default class LogList extends LightningElement{
 
     boxShadowForTheLogDetailSelected(event, color){
         event.target.style.boxShadow = color;
+        event.target.style.outline = '-webkit-focus-ring-color auto 1px';
+        event.target.focus();
     }
     removeboxShadowForAllTheLogDetails(){
         this.template.querySelectorAll('.displayLogButton').forEach(element => {
             element.style.boxShadow = 'none';
+            element.style.outline = 'none';
+
         });
     }
 
@@ -328,35 +339,45 @@ export default class LogList extends LightningElement{
         return currentValue === this.totalLogsToDownload ? currentValue : this.downloadProgressBar();
     }
 
-    onKeyUp(event){
+    onKeyArrowsPressed(event){
+        this.preventDefault(event);
         if(event.keyCode === 38 || event.keyCode === 40){
             this.logListNavigation(event);
         }
     }
 
     logListNavigation(event){    
-        let keyUp = event.keyCode === 38;
-        let keyDown = event.keyCode === 40;
+        let keyUp = event.keyCode === KEYBOARD_ARROW_UP_CODE;
+        let keyDown = event.keyCode === KEYBOARD_ARROW_DOWN_CODE;
         
         let itemSelected = this.template.querySelectorAll('.logList');
 
-        if(this.firstTimeKeyboardNavigation){
-            this.indexFocusOn = keyUp ? itemSelected.length - 1 : 0;
-            this.firstTimeKeyboardNavigation = false;
-        } else if(this.indexFocusOn === 0 && keyUp){
-            this.indexFocusOn = itemSelected.length - 1;
-        } else if(this.indexFocusOn === itemSelected.length - 1 && keyDown){
-            this.indexFocusOn = 0;
+        if(this.index4NavigationFocusOn === 0 && keyUp){
+            this.index4NavigationFocusOn = itemSelected.length - 1;
+        } else if(this.index4NavigationFocusOn === itemSelected.length - 1 && keyDown){
+            this.index4NavigationFocusOn = 0;
         } else {
-            this.indexFocusOn = keyUp ? this.indexFocusOn - 1  : this.indexFocusOn + 1;
+            this.index4NavigationFocusOn = keyUp ? this.index4NavigationFocusOn - 1  : this.index4NavigationFocusOn + 1;
         }
 
-        itemSelected[this.indexFocusOn].focus();
+        let eventObject = {
+            target:itemSelected[this.index4NavigationFocusOn]
+        }
 
-        this.firstTimeKeyboardNavigation = true;
-        let lookupInput = this.template.querySelector('.lookupInput');
-        this.selectedValue = lookupInput.value + event.charCode;
-        lookupInput.selectionStart = lookupInput.value.length;
-        lookupInput.focus();        
+        this.logInfoAnalyseLogs(eventObject); 
+    }
+
+    preventDefault(event){
+        event.preventDefault();
+    }
+
+    setIndexFocusFromOnClickLogSelection(event){
+        let logList = this.template.querySelectorAll('.logList');
+        for(const index in logList){
+            if(logList[index].dataset.logid === event.target.dataset.logid){
+                this.index4NavigationFocusOn = Number(index);
+                return;
+            }
+        }
     }
 }

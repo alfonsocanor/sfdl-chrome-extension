@@ -50,7 +50,7 @@ export default class Picklist extends LightningElement {
 
     async queryLogs(){
         let isDownloadInProgress = await getValueLocalStorage('isDownloadInProgress');
-        if(isDownloadInProgress){
+        if(false){
             showToastEvent(
                 'warning','Download already in progress', 'Hold on tight. Download logs was lauched from another sfdl console.');
             return;

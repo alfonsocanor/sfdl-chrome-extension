@@ -39,7 +39,8 @@
                         data-logid={log.id} 
                         data-logname={log.name} 
                         onclick={handleLogInfo}
-                        onkeyup={onKeyUp}
+                        onkeyup={preventDefault}
+                        onkeydown={onKeyArrowsPressed}
                         style="text-align: left; border: none !important; width:100%;">
                         {log.name}
                     </button>
