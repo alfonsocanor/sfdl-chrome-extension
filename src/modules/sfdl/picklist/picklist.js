@@ -1,5 +1,5 @@
 import { LightningElement, api } from 'lwc';
-import { showToastEvent, getValueLocalStorage } from 'sfdl/utils';
+import { showToastEvent, getValueLocalStorage, clearLocalStorage } from 'sfdl/utils';
 
 export default class Picklist extends LightningElement {
     searchIcon = '/slds/icons/utility/search.svg';
@@ -17,6 +17,10 @@ export default class Picklist extends LightningElement {
 
     connectedCallback(){
         this.valueSelected = this.placeholper ? this.placeholper : 'Pick up an org...';
+    }
+
+    handlerClearLocalStorage(){
+        clearLocalStorage();
     }
 
     openPicklistOptions(){
@@ -50,7 +54,7 @@ export default class Picklist extends LightningElement {
 
     async queryLogs(){
         let isDownloadInProgress = await getValueLocalStorage('isDownloadInProgress');
-        if(false){
+        if(isDownloadInProgress){
             showToastEvent(
                 'warning','Download already in progress', 'Hold on tight. Download logs was lauched from another sfdl console.');
             return;

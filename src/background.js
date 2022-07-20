@@ -5,51 +5,63 @@ let totalLogsCompletelyRetrieved = 0;
 
 const processResponseBasedOnContentType = {
   httpError(response){
-      return {hasError: true, error: response.message};
+    return {hasError: true, error: response.message};
   },
   async contentTypeJson(response){
-      const logsInformation = await response.json()
-      return logsInformation.records.map(logRecord => logRecord);
+    const logsInformation = await response.json()
+    return logsInformation.records.map(logRecord => logRecord);
   },
   async contentTypeText(response, logId, fileName){
-      return {id:logId, name:fileName, response:response.text()};
+    return {id:logId, name:fileName, response:response.text()};
   }
 }
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.message === 'getApexLogsBody'){
+  if(request.message === 'getApexLogsBody'){
+    totalLogsCompletelyRetrieved = 0;
     totalLogs2Process = request.apexLogList.length;
     let logList = []
     request.apexLogList.forEach(async apexLog => {
-          let completeUrl = request.sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
-          let fileName = logName2Display(apexLog);
-          let logInformation = await getInformationFromSalesforce(completeUrl, { fileName }, request.sessionInformation, 'contentTypeText', apexLog.Id)
-          let logDetail = await logInformation.response.response;
-          logInformation.response.response = logDetail;
-          logList.push(logInformation.response);
-    
-          totalLogsCompletelyRetrieved++;
-          if(request.apexLogList.length === totalLogsCompletelyRetrieved){
-              sendResponse(logList);
-          }
+      let completeUrl = request.sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
+      let fileName = logName2Display(apexLog);
+      let logInformation = await getInformationFromSalesforce(completeUrl, { fileName }, request.sessionInformation, 'contentTypeText', apexLog.Id)
+      let logDetail = await logInformation.response.response;
+      logInformation.response.response = logDetail;
+      logList.push(logInformation.response);
+
+      totalLogsCompletelyRetrieved++;
+      if(request.apexLogList.length === totalLogsCompletelyRetrieved){
+        setKeyValueLocalStorage('isDownloadInProgress', false);
+        sendResponse(logList);
+      }
     });
     return true; //Asynchronously.
   }
 
-  if (request.message === 'downloadProgressBar'){
+  if(request.message === 'downloadProgressBar'){
     sendResponse(totalLogsCompletelyRetrieved);
-    if(resetTotalLogsProcessed()){
-      totalLogsCompletelyRetrieved = 0;
-      totalLogs2Process = 0;
+    if(validateResetTotalLogsProcessed()){
+      applyResetProperties();
     }
     
-    return false; //Asynchronously.
+    return false; //Synchronously.
   }
+
+  if(request.message === 'resetBackgroundProperties'){
+    applyResetProperties();
+    return true;
+  }
+
   return false; //Synchronously.
 });
 
-function resetTotalLogsProcessed(){
+function validateResetTotalLogsProcessed(){
   return totalLogs2Process === totalLogsCompletelyRetrieved;
+}
+
+function applyResetProperties(){
+  totalLogsCompletelyRetrieved = 0;
+  totalLogs2Process = 0;
 }
 
 async function getInformationFromSalesforce(requestUrl, additionalOutputs, sessionInformation, function2Execute, logId) {
@@ -61,16 +73,16 @@ async function fetchLogsRecords(requestUrl, sessionInformation, function2Execute
   let response = {}; 
   try{
     response = await fetch(requestUrl,{
-        method:'GET',
-        headers: {
-            'Authorization': 'Bearer ' + sessionInformation.authToken,
-            'Content-type': 'application/json; charset=UTF-8; text/plain',
-        }
+      method:'GET',
+      headers: {
+        'Authorization': 'Bearer ' + sessionInformation.authToken,
+        'Content-type': 'application/json; charset=UTF-8; text/plain',
+      }
     });
 
     if(response.status !== 200){
-        function2Execute = 'httpError';
-        response.message = response.status === 401 ? response.statusText + ': Invalid session' : response.message;
+      function2Execute = 'httpError';
+      response.message = response.status === 401 ? response.statusText + ': Invalid session' : response.message;
     }
   } catch(e){
     function2Execute = 'httpError';
@@ -90,7 +102,7 @@ function createOperationFormat(operation){
   let regex = new RegExp('/', 'g');
 
   if(operation.includes('__')){
-      return operation.replace(regex, '').split('__')[1];
+    return operation.replace(regex, '').split('__')[1];
   }
 
   return operation.replace(regex, '');
@@ -106,4 +118,8 @@ function createDatetimeFormat(date){
 
 function padNumberValues(numberValue, padLength, padString){
   return numberValue.toString().padStart(padLength, padString);
+}
+
+function setKeyValueLocalStorage(key, value){
+  chrome.storage.local.set({ [key]: value });
 }

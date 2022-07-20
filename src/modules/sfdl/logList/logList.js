@@ -65,6 +65,10 @@ export default class LogList extends LightningElement{
         this.lastLogId = this.logList[this.logList.length - 1].id;
     }
 
+    disconnectedCallback(){
+        chrome.runtime.sendMessage({message: "resetBackgroundProperties"});
+    }
+
     renderedCallback(){
         if(this.firstRender){
             this.disableDownloadButton(true);
@@ -247,17 +251,13 @@ export default class LogList extends LightningElement{
         this.totalLogsToDownload = apexLogList.length;
         this.retrivingLogsInProgress = true;
         this.downloadProgressBar();
-        console.time();
         const message = new Promise(resolve =>
             chrome.runtime.sendMessage({
                 message: "getApexLogsBody", 
                 sessionInformation, apexLogList
             }, resolve));
-        console.timeEnd();
         
         message.then(response => {
-            console.time();
-            setKeyValueLocalStorage('isDownloadInProgress', false);
             this.logList = response;
             this.retrivingLogsInProgress = false;
             setTimeout(() => {
