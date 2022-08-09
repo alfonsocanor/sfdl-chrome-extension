@@ -1,4 +1,3 @@
-/*global chrome*/
 import { LightningElement, track } from 'lwc';
 import { getAllCookiesFromSalesforceDomain, isSessionInformationValid } from 'sfdl/authentication';
 import { showToastEvent } from 'sfdl/utils';

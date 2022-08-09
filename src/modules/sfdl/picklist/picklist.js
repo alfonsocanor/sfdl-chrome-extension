@@ -1,5 +1,3 @@
-/*global chrome*/
-
 import { LightningElement, api } from 'lwc';
 import { showToastEvent, getValueLocalStorage, clearLocalStorage } from 'sfdl/utils';
 
