@@ -2,6 +2,7 @@
 
 let totalLogs2Process = 0;
 let totalLogsCompletelyRetrieved = 0;
+let fetchAbortController = new AbortController();
 
 const processResponseBasedOnContentType = {
   httpError(response){
@@ -16,15 +17,28 @@ const processResponseBasedOnContentType = {
   }
 }
 
+chrome.tabs.onRemoved.addListener(()=>{
+  abortFetchOperation();
+  applyResetProperties();
+  setKeyValueLocalStorage('isDownloadInProgress', false);
+});
+
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if(request.message === 'getApexLogsBody'){
     totalLogsCompletelyRetrieved = 0;
     totalLogs2Process = request.apexLogList.length;
     let logList = []
-    request.apexLogList.forEach(async apexLog => {
+
+    request.apexLogList.every(async apexLog => {
       let completeUrl = request.sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
       let fileName = logName2Display(apexLog);
-      let logInformation = await getInformationFromSalesforce(completeUrl, { fileName }, request.sessionInformation, 'contentTypeText', apexLog.Id)
+      let logInformation;
+      try{
+        logInformation = await getInformationFromSalesforce(completeUrl, { fileName }, request.sessionInformation, 'contentTypeText', apexLog.Id)
+      } catch (e){
+        console.log('Download operation cancelled!');
+      } 
+
       let logDetail = await logInformation.response.response;
       logInformation.response.response = logDetail;
       logList.push(logInformation.response);
@@ -34,22 +48,19 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         setKeyValueLocalStorage('isDownloadInProgress', false);
         sendResponse(logList);
       }
+      return true;
     });
+
     return true; //Asynchronously.
   }
 
   if(request.message === 'downloadProgressBar'){
-    sendResponse(totalLogsCompletelyRetrieved);
+    sendResponse({totalLogsCompletelyRetrieved});
     if(validateResetTotalLogsProcessed()){
-      applyResetProperties();
+      applyResetProperties();  
     }
     
     return false; //Synchronously.
-  }
-
-  if(request.message === 'resetBackgroundProperties'){
-    applyResetProperties();
-    return true;
   }
 
   return false; //Synchronously.
@@ -62,6 +73,11 @@ function validateResetTotalLogsProcessed(){
 function applyResetProperties(){
   totalLogsCompletelyRetrieved = 0;
   totalLogs2Process = 0;
+}
+
+function abortFetchOperation(){
+  fetchAbortController.abort();
+  fetchAbortController = new AbortController();
 }
 
 async function getInformationFromSalesforce(requestUrl, additionalOutputs, sessionInformation, function2Execute, logId) {
@@ -77,7 +93,8 @@ async function fetchLogsRecords(requestUrl, sessionInformation, function2Execute
       headers: {
         'Authorization': 'Bearer ' + sessionInformation.authToken,
         'Content-type': 'application/json; charset=UTF-8; text/plain',
-      }
+      },
+      signal: fetchAbortController.signal
     });
 
     if(response.status !== 200){

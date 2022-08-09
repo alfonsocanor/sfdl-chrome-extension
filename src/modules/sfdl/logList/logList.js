@@ -60,20 +60,16 @@ export default class LogList extends LightningElement{
         }
     }
 
-    saveFirstAndLastLogIdsFromLogList(){
-        this.firstLogId = this.logList[0].id;
-        this.lastLogId = this.logList[this.logList.length - 1].id;
-    }
-
-    disconnectedCallback(){
-        chrome.runtime.sendMessage({message: "resetBackgroundProperties"});
-    }
-
     renderedCallback(){
         if(this.firstRender){
             this.disableDownloadButton(true);
             this.firstRender = false;
         }
+    }
+
+    saveFirstAndLastLogIdsFromLogList(){
+        this.firstLogId = this.logList[0].id;
+        this.lastLogId = this.logList[this.logList.length - 1].id;
     }
 
     handleLogInfo(event){
@@ -332,11 +328,15 @@ export default class LogList extends LightningElement{
 
     async downloadProgressBar(){
         let currentValue = await chrome.runtime.sendMessage({message: "downloadProgressBar"});
+
         const sfdlProcessBar = this.template.querySelector('sfdl-process-bar');
+
         if(sfdlProcessBar){
-            this.template.querySelector('sfdl-process-bar').updateProgressBar(currentValue);
+            this.template.querySelector('sfdl-process-bar').updateProgressBar(currentValue.totalLogsCompletelyRetrieved);
         }
-        return currentValue === this.totalLogsToDownload ? currentValue : this.downloadProgressBar();
+
+        return currentValue.totalLogsCompletelyRetrieved === this.totalLogsToDownload ? 
+            currentValue.totalLogsCompletelyRetrieved : this.downloadProgressBar();
     }
 
     onKeyArrowsPressed(event){

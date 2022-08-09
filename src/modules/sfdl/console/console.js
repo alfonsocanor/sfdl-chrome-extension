@@ -1,3 +1,4 @@
+/*global chrome*/
 import { LightningElement, track } from 'lwc';
 import { getAllCookiesFromSalesforceDomain, isSessionInformationValid } from 'sfdl/authentication';
 import { showToastEvent } from 'sfdl/utils';
@@ -27,6 +28,19 @@ export default class Console extends LightningElement {
 
     @track picklistInformation = [];
     @track sessionInformation;
+
+    resetConsoleProperties(){
+        this.showLogListSection = true;
+        this.renderLogList = false;
+        this.manipulationOptions = {};
+        this.openAnaliseLogs=true;
+        this.openCompareLogs=false;
+        this.openCompareOrgs=true;
+        this.logList = [];
+        this.isDownloadInProgress = false;
+        this.picklistInformation = [];
+        this.sessionInformation = {};
+    }
 
     connectedCallback(){
         this.init();
