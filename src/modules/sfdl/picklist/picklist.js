@@ -3,6 +3,7 @@ import { showToastEvent, getValueLocalStorage, clearLocalStorage } from 'sfdl/ut
 
 export default class Picklist extends LightningElement {
     searchIcon = '/slds/icons/utility/search.svg';
+    localStorageIcon = '/slds/icons/utility/bucket.svg';
 
     @api picklist;
     areOptionsOpened = false;
@@ -23,7 +24,14 @@ export default class Picklist extends LightningElement {
         clearLocalStorage();
     }
 
-    openPicklistOptions(){
+    async openPicklistOptions(){
+        let isDownloadInProgress = await getValueLocalStorage('isDownloadInProgress');
+        if(isDownloadInProgress){
+            showToastEvent(
+                'warning','Download already in progress', 'Hold on tight. Download logs was lauched from another sfdl console.');
+            return;
+        }
+
         let classAction = this.areOptionsOpened ? 'remove' : 'add';
         this.areOptionsOpened = !this.areOptionsOpened;
         this.addDeleteHtmlClassOfAnElement(classAction, 'slds-is-open');
