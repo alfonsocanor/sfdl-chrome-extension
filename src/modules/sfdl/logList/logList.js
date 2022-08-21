@@ -247,29 +247,38 @@ export default class LogList extends LightningElement{
         this.totalLogsToDownload = apexLogList.length;
         this.retrivingLogsInProgress = true;
         this.downloadProgressBar();
-        const message = new Promise(resolve =>
-            chrome.runtime.sendMessage({
-                message: "getApexLogsBody", 
-                sessionInformation, apexLogList
-            }, resolve));
-        
-        message.then(response => {
-            this.logList = response;
-            this.retrivingLogsInProgress = false;
-            setTimeout(() => {
-                this.disableDownloadButton(false);
-            }, 1000);
-            this.sendLogList2Console(this.logList);
 
-            showToastEvent('success', 'You can use compare now!', 'Compare Logs', true);
-            this.enableSearchQueryIcon();
-
-            //Future feature - Cached the information in the LocalStorage - Use Blob as below
-            let blob = new Blob(response, {
-                type: 'text/html'
-            });
-            console.log('blob size: ' + blob.size);
+        let message = await chrome.runtime.sendMessage({
+            message: "downloadApexLogs", 
+            sessionInformation, apexLogList
         });
+
+        if(message.logsDownloaded){
+            this.getLogsDownloadedFromWorkerBackground();
+        }
+    }
+
+    async getLogsDownloadedFromWorkerBackground(){
+        let message = await chrome.runtime.sendMessage({
+            message: "getLogsDownloaded"
+        });
+
+        this.logList = this.logList.concat(message.batchLogs2Process);
+
+        return message.continueProcess ? 
+            this.getLogsDownloadedFromWorkerBackground() : //recursion
+            this.logsProcessedResults();
+    }
+
+    logsProcessedResults(){
+        this.retrivingLogsInProgress = false;
+        setTimeout(() => {
+            this.disableDownloadButton(false);
+        }, 1000);
+        this.sendLogList2Console(this.logList);
+
+        showToastEvent('success', 'You can use compare now!', 'Compare Logs', true);
+        this.enableSearchQueryIcon();
     }
 
     logName2Display(apexLog){

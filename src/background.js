@@ -1,7 +1,10 @@
 /*global chrome*/
 
 let totalLogs2Process = 0;
-let totalLogsCompletelyRetrieved = 0;
+let totalLogsCompletelyRetrieved;
+let lastBatchExecuted = false;
+let allLogsDownloaded = [];
+const BYTES_SIZE_LIMIT = 22000000;
 let fetchAbortController = new AbortController();
 
 const processResponseBasedOnContentType = {
@@ -24,10 +27,10 @@ chrome.tabs.onRemoved.addListener(()=>{
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if(request.message === 'getApexLogsBody'){
+  if(request.message === 'downloadApexLogs'){
+    let logList = [];
     totalLogsCompletelyRetrieved = 0;
     totalLogs2Process = request.apexLogList.length;
-    let logList = []
 
     request.apexLogList.every(async apexLog => {
       let completeUrl = request.sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
@@ -42,12 +45,15 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       let logDetail = await logInformation.response.response;
       logInformation.response.response = logDetail;
       logList.push(logInformation.response);
-
+      allLogsDownloaded.push(logInformation.response);
       totalLogsCompletelyRetrieved++;
-      if(request.apexLogList.length === totalLogsCompletelyRetrieved){
+
+      if(totalLogs2Process === totalLogsCompletelyRetrieved){
+        applyResetProperties();  
         setKeyValueLocalStorage('isDownloadInProgress', false);
-        sendResponse(logList);
+        sendResponse({logsDownloaded:true});
       }
+
       return true;
     });
 
@@ -55,16 +61,38 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 
   if(request.message === 'downloadProgressBar'){
-    sendResponse({totalLogsCompletelyRetrieved});
-    if(validateResetTotalLogsProcessed()){
-      applyResetProperties();  
+    sendResponse({totalLogsCompletelyRetrieved});    
+    return false; //Synchronously.
+  }
+
+  if(request.message === 'getLogsDownloaded'){
+    let batchLogs2Process = [];
+    for(const index in allLogsDownloaded){
+      batchLogs2Process.push(allLogsDownloaded[index]);
+      if(calculateArraySize(batchLogs2Process) > BYTES_SIZE_LIMIT){
+        break;
+      }
     }
+
+    allLogsDownloaded = allApexLogListProcessed(allLogsDownloaded, batchLogs2Process);
+
+    let continueProcess = allLogsDownloaded.length > 0;
     
+    sendResponse({batchLogs2Process, continueProcess});
     return false; //Synchronously.
   }
 
   return false; //Synchronously.
 });
+
+function calculateArraySize(array){
+  return new Blob([JSON.stringify(array)]).size;
+}
+
+function allApexLogListProcessed(apexLogList, logsProcessed){
+  let logIdsList = logsProcessed.map(log => log.id);
+  return apexLogList.filter( log => !logIdsList.includes(log.id));
+}
 
 function validateResetTotalLogsProcessed(){
   return totalLogs2Process === totalLogsCompletelyRetrieved;
