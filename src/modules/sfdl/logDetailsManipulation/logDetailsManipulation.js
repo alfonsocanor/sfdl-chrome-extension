@@ -1,24 +1,24 @@
 const fileLinesAnalyseFunctions = {
     removeHeapAllocateAndStatementExecute(line){
-        return line.includes('HEAP_ALLOCATE') || line.includes('STATEMENT_EXECUTE'); 
+        return line && (line.includes('HEAP_ALLOCATE') || line.includes('STATEMENT_EXECUTE')); 
     },
 
     extractSoqlLine(line){
-        return !line.includes('SOQL_EXECUTE');
+        return line && !line.includes('SOQL_EXECUTE');
     },
 
     isMethodEntryLine(line){
-        return line.includes('|METHOD_ENTRY|') || line.includes('|SYSTEM_METHOD_ENTRY|') || line.includes('|CONSTRUCTOR_ENTRY|');
+        return line && (line.includes('|METHOD_ENTRY|') || line.includes('|SYSTEM_METHOD_ENTRY|') || line.includes('|CONSTRUCTOR_ENTRY|'));
     },
 
     isMethodEntryExit(line){
-        return line.includes('|METHOD_EXIT|') || line.includes('|SYSTEM_METHOD_EXIT|') || line.includes('|CONSTRUCTOR_EXIT|');
+        return line && (line.includes('|METHOD_EXIT|') || line.includes('|SYSTEM_METHOD_EXIT|') || line.includes('|CONSTRUCTOR_EXIT|'));
     },
     isCodeUnitStarted(line){
-        return line.includes('|CODE_UNIT_STARTED|');
+        return line && line.includes('|CODE_UNIT_STARTED|');
     },
     isCodeUnitFinished(line){
-        return line.includes('|CODE_UNIT_FINISHED|');
+        return line && line.includes('|CODE_UNIT_FINISHED|');
     }
 }
 

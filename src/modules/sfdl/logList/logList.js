@@ -254,6 +254,10 @@ export default class LogList extends LightningElement{
         });
 
         if(message.logsDownloaded){
+            this.retrivingLogsInProgress = false;
+            setTimeout(() => {
+                this.disableDownloadButton(true);
+            }, 200);
             this.getLogsDownloadedFromWorkerBackground();
         }
     }
@@ -271,10 +275,7 @@ export default class LogList extends LightningElement{
     }
 
     logsProcessedResults(){
-        this.retrivingLogsInProgress = false;
-        setTimeout(() => {
-            this.disableDownloadButton(false);
-        }, 1000);
+        this.disableDownloadButton(false);
         this.sendLogList2Console(this.logList);
 
         showToastEvent('success', 'You can use compare now!', 'Compare Logs', true);
