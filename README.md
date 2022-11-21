@@ -1,3 +1,6 @@
+<p align="center">  
+	<img width="192" height="192" src="https://salesforcedebuglogs.com/resources/blueSoda_medium.png">  
+</p>
 # sfdl
 
 Currently this chrome extension is in progress and not public. Not all features from sfdl cli (https://github.com/alfonsocanor/sfdl) are available at this moment.
