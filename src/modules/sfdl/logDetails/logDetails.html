@@ -16,15 +16,17 @@
       </div>
     </div>
   </div>
-  <template if:true={showMonacoEditor}>
-      <!--Workaround: 99% allows automaticLayout property to rerender correctly the layout in transition from section hidden toggle. 
-          Sideeffect: A blink of the monaco editor minibrowser;
-          Cause: 100% doesn't rerender correctly in transition from section hidden toggle. Monaco editor minibrowser not rendered -->
-      <div style="width: 99% !important; height:100%">
-        <div class="sfdlMonacoEditor" style="height:92vh;"></div>
-      </div>
+  <template if:false={isProcessing}>
+    <template if:true={showMonacoEditor}>
+        <!--Workaround: 99% allows automaticLayout property to rerender correctly the layout in transition from section hidden toggle. 
+            Sideeffect: A blink of the monaco editor minibrowser;
+            Cause: 100% doesn't rerender correctly in transition from section hidden toggle. Monaco editor minibrowser not rendered -->
+        <div style="width: 99% !important; height:100%">
+          <div class="sfdlMonacoEditor" style="height:92vh;"></div>
+        </div>
+    </template>
   </template>
   <template if:true={isProcessing}>
-      <sfdl-spinner></sfdl-spinner>
+    <sfdl-spinner></sfdl-spinner>
   </template>
 </template>

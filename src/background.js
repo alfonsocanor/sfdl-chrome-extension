@@ -2,7 +2,6 @@
 
 let totalLogs2Process = 0;
 let totalLogsCompletelyRetrieved;
-let lastBatchExecuted = false;
 let allLogsDownloaded = [];
 const BYTES_SIZE_LIMIT = 22000000;
 let fetchAbortController = new AbortController();
@@ -27,6 +26,29 @@ chrome.tabs.onRemoved.addListener(()=>{
 });
 
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if(request.message === 'downloadApexLog') {
+    let apexLogArray = [request.apexLog];
+
+    apexLogArray.every(async apexLog => {
+      let completeUrl = request.sessionInformation.instanceUrl + apexLog.attributes.url + '/Body';
+      let apexLogWithBody;
+
+      try{
+        apexLogWithBody = await getInformationFromSalesforce(completeUrl, { fileName: apexLog.name }, request.sessionInformation, 'contentTypeText', apexLog.id)
+      } catch (e){
+        console.log('Download operation cancelled!');
+      } 
+
+      let logDetail = await apexLogWithBody.response.response;
+      apexLogWithBody.response.response = logDetail;
+
+      sendResponse({ apexLogWithBody });
+      return true; //Asynchronously.
+    });  
+
+    return true; //Asynchronously.
+  }
+
   if(request.message === 'downloadApexLogs'){
     let logList = [];
     totalLogsCompletelyRetrieved = 0;
@@ -68,10 +90,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if(request.message === 'getLogsDownloaded'){
     let batchLogs2Process = [];
     for(const index in allLogsDownloaded){
-      batchLogs2Process.push(allLogsDownloaded[index]);
-      if(calculateArraySize(batchLogs2Process) > BYTES_SIZE_LIMIT){
-        break;
-      }
+        if(allLogsDownloaded[index]) {
+          if(calculateArraySize(batchLogs2Process) > BYTES_SIZE_LIMIT){
+            break;
+          }
+
+          batchLogs2Process.push(allLogsDownloaded[index]);
+        }
     }
 
     allLogsDownloaded = allApexLogListProcessed(allLogsDownloaded, batchLogs2Process);
@@ -79,6 +104,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     let continueProcess = allLogsDownloaded.length > 0;
     
     sendResponse({batchLogs2Process, continueProcess});
+    return false; //Synchronously.
+  }
+
+  if(request.message === 'getApexLogList'){
+    let apexLogList = getApexLogList(request.apexLogList);
+
+    sendResponse({ apexLogList });
     return false; //Synchronously.
   }
 
@@ -92,10 +124,6 @@ function calculateArraySize(array){
 function allApexLogListProcessed(apexLogList, logsProcessed){
   let logIdsList = logsProcessed.map(log => log.id);
   return apexLogList.filter( log => !logIdsList.includes(log.id));
-}
-
-function validateResetTotalLogsProcessed(){
-  return totalLogs2Process === totalLogsCompletelyRetrieved;
 }
 
 function applyResetProperties(){
@@ -134,6 +162,22 @@ async function fetchLogsRecords(requestUrl, sessionInformation, function2Execute
     response.message = e.message;
   }
   return processResponseBasedOnContentType[function2Execute](response, logId, fileName);
+}
+
+function getApexLogList(apexLogList) {
+  let logList = [];
+  for(apexLog in apexLogList) {
+    logList.push(
+      {
+        id: apexLogList[apexLog].Id,
+        name: logName2Display(apexLogList[apexLog]),
+        attributes: apexLogList[apexLog].attributes,
+        response: ''
+      }
+    )
+  }
+
+  return logList;
 }
 
 function logName2Display(apexLog){

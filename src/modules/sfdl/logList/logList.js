@@ -81,20 +81,33 @@ export default class LogList extends LightningElement{
     }
 
     async logInfoAnalyseLogs(event){
+        this.logDetailProcessing();
         this.setIndexFocusFromOnClickLogSelection(event);
         this.removeboxShadowForAllTheLogDetails();
         this.boxShadowForTheLogDetailSelected(event, '0 0 0 3px #006bff40');
 
+        let logDetails = this.getLogByIdFromLogList(event.target.dataset.logid);
+
+        if(!logDetails.response) {
+            await this.processApexLog(this.sessionInformation, logDetails);
+        }
+
         this.dispatchEvent(new CustomEvent('logdetails',{
             detail: { 
                 logName: event.target.dataset.logname,
-                logDetails: this.getLogByIdFromLogList(event.target.dataset.logid)[0] 
+                logDetails: logDetails
             }
         }))
     }
 
+    logDetailProcessing(){
+        this.dispatchEvent(new CustomEvent('isloading',{
+            detail: {}
+        }))
+    }
+
     getLogByIdFromLogList(logId){
-        return this.logList.filter(log => log.id === logId);
+        return this.logList.find(log => log.id === logId);
     }
 
     async getLogInformation(event){
@@ -109,14 +122,10 @@ export default class LogList extends LightningElement{
 
     logInfoCompareLogs(event){
         let wasUnselected = this.unselectLogs2Compare(event);
-
-        console.log('wasUnselected@ ' + wasUnselected);
         
         if(!wasUnselected){
             this.selectLogs2Compare(event);
         }
-
-        console.log('@COMpare compareLogsColumns2LogDetails: ' , this.compareLogsColumns2LogDetails);
     }
 
     async selectLogs2Compare(event){
@@ -125,10 +134,8 @@ export default class LogList extends LightningElement{
             this.updateCompareLogsColumns2LogDetails('column1', event.target.dataset.logid, logInfo.logName, logInfo.logDetails);
             this.boxShadowForTheLogDetailSelected(event, '0 0 0 3px #006bff40');
         } else {
-            console.log('at else');
             for(const log2Compare in this.compareLogsColumns2LogDetails){
                 if(!this.compareLogsColumns2LogDetails[log2Compare].id){
-                    console.log('@log2Compare: ' + log2Compare);
                     this.updateCompareLogsColumns2LogDetails(log2Compare, event.target.dataset.logid, logInfo.logName, logInfo.logDetails);
                     this.boxShadowForTheLogDetailSelected(event, '0 0 0 3px #006bff40');
                     break;
@@ -156,7 +163,6 @@ export default class LogList extends LightningElement{
     unselectLogs2Compare(event){
         for(const log2Compare in this.compareLogsColumns2LogDetails){
             if(this.bothLogs2CompareSelected()){
-                console.log(this.template.querySelectorAll('.displayLogButton').length);
                 this.template.querySelectorAll('.displayLogButton').find(element => element.dataset.logid === this.compareLogsColumns2LogDetails.column2.id).style.boxShadow = 'none';
                 this.compareLogsColumns2LogDetails.column2.id = '';
                 this.compareLogsColumns2LogDetails.column2.logName = '';
@@ -199,12 +205,20 @@ export default class LogList extends LightningElement{
 
         if(apexLogList.response.length){
             this.thereAreLogsToDisplay = true;
-            this.processApexLogs(sessionInformation, apexLogList.response);
-            showToastEvent('success', 'Retrieving logs...', sessionInformation.instanceUrl);
+            let logResponse = await this.getApexLogList(apexLogList.response);
+            this.logList = logResponse.apexLogList;
+            this.disableDownloadButton(false)
+            showToastEvent('success', 'Let\'s start the analysis (:', sessionInformation.instanceUrl);
         } else {
             this.thereAreLogsToDisplay = false;
             showToastEvent('info', 'There are no logs to retrieve', sessionInformation.instanceUrl);
         }
+    }
+
+    getApexLogList(apexLogList) {
+        return chrome.runtime.sendMessage({
+            message: "getApexLogList", apexLogList
+        });
     }
 
     enableSearchQueryIcon(){
@@ -242,6 +256,17 @@ export default class LogList extends LightningElement{
         return processResponseBasedOnContentType[function2Execute](response, logId, fileName);
     }
 
+    async processApexLog(sessionInformation, apexLog) {
+        let message = await chrome.runtime.sendMessage({
+            message: "downloadApexLog", 
+            sessionInformation, apexLog
+        });
+
+        let apexLog2Update = this.logList.find( log => log.id === message.apexLogWithBody.response.id);
+
+        apexLog2Update.response = message.apexLogWithBody.response.response;
+    }
+
     async processApexLogs(sessionInformation, apexLogList) {
         setKeyValueLocalStorage('isDownloadInProgress', true);
         this.totalLogsToDownload = apexLogList.length;
@@ -267,7 +292,7 @@ export default class LogList extends LightningElement{
             message: "getLogsDownloaded"
         });
 
-        this.logList = this.logList.concat(message.batchLogs2Process);
+        this.logList.find( apexLog => apexLog.id === message.batchLogs2Producess[0].id) //this.logList.concat(message.batchLogs2Process);
 
         return message.continueProcess ? 
             this.getLogsDownloadedFromWorkerBackground() : //recursion

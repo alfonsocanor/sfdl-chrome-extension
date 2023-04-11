@@ -18,7 +18,6 @@ export default class DeleteAllLogs extends LightningElement{
     }
 
     async deleteAllLogs(){
-        console.log('@sessionInformation: ', this.sessionInformation);
         let response = {}; 
         try{
             response = await fetch(this.sessionInformation.instanceUrl + '/services/async/51.0/job',{
@@ -40,7 +39,5 @@ export default class DeleteAllLogs extends LightningElement{
         } catch(e){
             response.message = e.message;
         }
-
-        console.log('@response: ' , response);
     }
 }

@@ -1,3 +1,4 @@
+/*global chrome*/
 import { LightningElement, api } from 'lwc';
 import { manipulationDetailLogs } from 'sfdl/logDetailsManipulation';
 import * as JSZip from 'jszip';
@@ -7,6 +8,7 @@ import { showToastEvent } from 'sfdl/utils';
 export default class DownloadLogs extends LightningElement{
     @api logList;
     @api manipulationOptions;
+    @api sessionInformation;
 
     connectedCallback(){
         this.startDownloadProcess();
@@ -33,11 +35,22 @@ export default class DownloadLogs extends LightningElement{
     }
 
     async addDebugLogsToZipFolder(debugLogsZipFolder){
-        this.logList.forEach(async log => {
-            let logDetailFromPromise = await log.response;
+        for (const apexLog of this.logList) {
+            let message;
+
+            if(!apexLog.response) {
+                message = await chrome.runtime.sendMessage({
+                    message: "downloadApexLog", 
+                    sessionInformation: this.sessionInformation, apexLog
+                });
+            }
+
+            let logDetailFromPromise = apexLog.response ? apexLog.response : message.apexLogWithBody.response.response;
+
             let logDetail =  manipulationDetailLogs(logDetailFromPromise, this.manipulationOptions);
-            debugLogsZipFolder.file(this.createLogFileName(log), Promise.resolve(logDetail));
-        });
+
+            debugLogsZipFolder.file(this.createLogFileName(apexLog), Promise.resolve(logDetail));
+        }
     }
 
     createLogFileName(log){

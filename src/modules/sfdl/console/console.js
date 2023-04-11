@@ -64,6 +64,11 @@ export default class Console extends LightningElement {
         sfdlLogDetailsComponent.processLogsFromLogList(event.detail.logDetails, event.detail.logName);
     }
 
+    handleIsLoading(){
+        let sfdlLogDetailsComponent = this.template.querySelector('sfdl-log-details');
+        sfdlLogDetailsComponent.handleIsLoading();
+    }
+
     handleDisplayLogListSection(event){
         this.showLogListSection = !this.showLogListSection;
         this.template.querySelector('.sfdl-console-log-list-section').classList[event.detail.classAction]('slds-is-open');

@@ -126,4 +126,9 @@ export default class LogDetails extends LightningElement{
     getManipulationOptions(){
         return this.template.querySelector('sfdl-log-manipulation-menu').currentManipulationOptions();
     }
+
+    @api
+    handleIsLoading(){
+        this.isProcessing = true
+    }
 }
