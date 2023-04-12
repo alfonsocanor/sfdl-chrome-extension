@@ -39,6 +39,8 @@ export default class LogList extends LightningElement{
     isDownloading;
     firstRender = true;
 
+    closeIcon = '/slds/icons/utility/close.svg';
+
     compareLogsColumns2LogDetails = {
         column1:{id:'',logName:'', logDetails:''},
         column2:{id:'',logName:'', logDetails:''}
@@ -424,5 +426,11 @@ export default class LogList extends LightningElement{
                 return;
             }
         }
+    }
+
+    cancelDownload() {
+        this.template.querySelector('sfdl-download-logs').cancelDownload();
+        this.isDownloading = false;
+        showToastEvent('warning', 'sfdl', 'Download cancelled!');
     }
 }

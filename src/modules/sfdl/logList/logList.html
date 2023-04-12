@@ -13,11 +13,20 @@
                 Downloading...
             </div>
         </div> 
-        <div class="sfdl-process-bar" style="width:92%; margin-bottom: 8px;">
-            <sfdl-process-bar 
-                total={totalLogsToDownload}
-                placeholder="Downloading logs...">
-            </sfdl-process-bar>
+        <div class="slds-grid slds-wrap">
+            <div class="slds-col slds-size_11-of-12 sfdl-process-bar" style="margin-bottom: 8px;">
+                <sfdl-process-bar 
+                    total={totalLogsToDownload}
+                    placeholder="Downloading logs...">
+                </sfdl-process-bar>
+            </div>
+            <div class="slds-col slds-size_1-of-12 slds-align_absolute-center">
+                <button style="width:12px;height:12px; padding:2px;" onclick={cancelDownload} 
+                    class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" 
+                    title="cancel logs">
+                        <img src={closeIcon} alt="cancel download"/>
+                </button>
+            </div>
         </div>
         <sfdl-download-logs 
             log-list={logList}

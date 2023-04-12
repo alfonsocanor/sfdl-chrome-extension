@@ -10,6 +10,7 @@ export default class DownloadLogs extends LightningElement{
     @api manipulationOptions;
     @api sessionInformation;
     logsDownloaded = 0;
+    cancel = false;
 
     connectedCallback(){
         this.startDownloadProcess();
@@ -37,6 +38,11 @@ export default class DownloadLogs extends LightningElement{
 
     async addDebugLogsToZipFolder(debugLogsZipFolder){
         for (const apexLog of this.logList) {
+            if(this.cancel) {
+                this.cancel = false;
+                throw new Error('sfdl: Download called! :(');
+            }
+
             let message;
 
             if(!apexLog.response) {
@@ -78,5 +84,10 @@ export default class DownloadLogs extends LightningElement{
         this.dispatchEvent(new CustomEvent('downloadprocesscompleted',{
             detail:{}
         }));
+    }
+
+    @api
+    cancelDownload() {
+        this.cancel = true;
     }
 }
