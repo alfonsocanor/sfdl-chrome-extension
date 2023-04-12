@@ -25,6 +25,8 @@ export default class Console extends LightningElement {
     logList = [];
     isDownloadInProgress = false;
 
+    sectionStyle = 'background-color:#fafaf9;position:relative;height:80vh;overflow:hidden;display:flex;';
+
     @track picklistInformation = [];
     @track sessionInformation;
 

@@ -1,0 +1,15 @@
+<template>
+    <div class="slds-grid slds-grid_align-center">   
+        <template for:each={socialMediaList} for:item="socialMedia">
+            <div class="slds-col" key={socialMedia.url}>
+                <span class="slds-avatar slds-avatar_circle slds-m-horizontal_x-small">
+                    <a href={socialMedia.url} target="_blank">
+                        <span class="slds-icon_container slds-icon-standard-user" style="background:none;" title={socialMedia.title}>
+                            <img alt={socialMedia.alt} src={socialMedia.src} title={socialMedia.iconTitle} />
+                        </span>
+                    </a>
+                </span>
+            </div>
+        </template>
+    </div>
+</template>

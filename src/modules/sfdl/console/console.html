@@ -23,7 +23,7 @@
       </ul>
       <template if:true={openAnaliseLogs}>
         <div class="sfdl-analise-logs slds-tabs_scoped__content slds-show" style="padding:0; border-right:none;">
-          <div style="background-color:#fafaf9;position:relative;height:70vh;overflow:hidden;display:flex;">
+          <div style={sectionStyle}>
             <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
               <div class="slds-panel__header" style="padding:15px;">
                 <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
@@ -56,7 +56,7 @@
       </template>
       <template if:true={openCompareLogs}>
         <div class="sfdl-compare-logs slds-tabs_scoped__content slds-hide" style="padding:0; border-right:none;">
-          <div style="background-color:#fafaf9;position:relative;height:92vh;overflow:hidden;display:flex;">
+          <div style={sectionStyle}>
             <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
               <div class="slds-panel__header" style="padding:15px;">
                 <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
@@ -88,6 +88,9 @@
       <template if:true={openCompareOrgs}>
         <div class="sfdl-compare-orgs slds-tabs_scoped__content slds-hide" style="padding:0; border-right:none;">List Orgs</div>
       </template>
+    </div>
+    <div class="slds-modal__footer slds-p-around_x-small">
+      <sfdl-footer></sfdl-footer>
     </div>
   </div>
 </template>
