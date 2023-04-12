@@ -1,5 +1,5 @@
 <template>
-  <header class="demo-only-element slds-theme_default slds-border_bottom slds-p-around_small" style="z-index:1; padding-top:40px;">
+  <header class="demo-only-element slds-theme_default slds-border_bottom slds-p-around_small" style="z-index:1;">
     <sfdl-picklist 
       picklist={picklistInformation}
       onsessioninformation={handleSessionInformation}
@@ -23,7 +23,7 @@
       </ul>
       <template if:true={openAnaliseLogs}>
         <div class="sfdl-analise-logs slds-tabs_scoped__content slds-show" style="padding:0; border-right:none;">
-          <div style="background-color:#fafaf9;position:relative;height:92vh;overflow:hidden;display:flex;">
+          <div style="background-color:#fafaf9;position:relative;height:70vh;overflow:hidden;display:flex;">
             <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
               <div class="slds-panel__header" style="padding:15px;">
                 <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>

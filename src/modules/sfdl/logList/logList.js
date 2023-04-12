@@ -213,6 +213,8 @@ export default class LogList extends LightningElement{
             this.thereAreLogsToDisplay = false;
             showToastEvent('info', 'There are no logs to retrieve', sessionInformation.instanceUrl);
         }
+
+        this.enableSearchQueryIcon();
     }
 
     getApexLogList(apexLogList) {
@@ -223,11 +225,10 @@ export default class LogList extends LightningElement{
 
     enableSearchQueryIcon(){
          this.dispatchEvent(new CustomEvent('enablepicklistbuttons',{
-            detail:{
-                enableQuerySearch: true
-            }
+            detail:{}
         }))
     }
+
 
     async getInformationFromSalesforce(requestUrl, additionalOutputs, sessionInformation, function2Execute, logId) {
             const response = await this.fetchLogsRecords(requestUrl,sessionInformation, function2Execute, logId, additionalOutputs.fileName);
@@ -337,6 +338,7 @@ export default class LogList extends LightningElement{
     }
 
     handleOpenCloseSfdlDownload(){
+        this.totalLogsToDownload = this.logList.length;
         this.isDownloading = !this.isDownloading;
     }
 
@@ -372,6 +374,14 @@ export default class LogList extends LightningElement{
 
         return currentValue.totalLogsCompletelyRetrieved === this.totalLogsToDownload ? 
             currentValue.totalLogsCompletelyRetrieved : this.downloadProgressBar();
+    }
+
+    handleDownloadProgress(event) {
+        const sfdlProcessBar = this.template.querySelector('sfdl-process-bar');
+
+        if(sfdlProcessBar){
+            this.template.querySelector('sfdl-process-bar').updateProgressBar(event.detail.logsDownloaded);
+        }
     }
 
     onKeyArrowsPressed(event){

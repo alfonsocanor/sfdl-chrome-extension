@@ -16,6 +16,8 @@ export default class Picklist extends LightningElement {
         instanceUrl: ''
     };
 
+    futureFunctionality = true;
+    
     connectedCallback(){
         this.valueSelected = this.placeholper ? this.placeholper : 'Pick up an org...';
     }

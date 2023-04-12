@@ -4,7 +4,7 @@ export default class LogQueryFilter extends LightningElement{
     queryWhere = '';
     filterIcon = '/slds/icons/utility/database.svg';
     closeIcon = '/slds/icons/utility/close.svg';
-    placeholder = 'WHERE CreatedBy.Name = \'john wick\' LIMIT 10';
+    placeholder = 'WHERE CreatedBy.Name = \'john wick\' AND Operation IN (\'batch apex\', \'/aura\') LIMIT 10';
     isMenuOpen = true;
 
     handleOpenCloseMenu(){

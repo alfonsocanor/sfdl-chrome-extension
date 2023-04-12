@@ -8,20 +8,22 @@
         </div>
     </template>
     <template if:true={isDownloading}> 
-        <div class="slds-grid slds-wrap" style="margin-bottom:14px;">
-            <div class="slds-col slds-size_1-of-8" style="position:relative; padding-top:18px">
-                <sfdl-spinner
-                    assistive-text="downloading logs">
-                </sfdl-spinner>
-            </div>
+        <div class="slds-grid slds-wrap">
             <div style="color:rgb(127 127 127);" class="slds-col slds-size_7-of-8">
                 Downloading...
             </div>
         </div> 
+        <div class="sfdl-process-bar" style="width:92%; margin-bottom: 8px;">
+            <sfdl-process-bar 
+                total={totalLogsToDownload}
+                placeholder="Downloading logs...">
+            </sfdl-process-bar>
+        </div>
         <sfdl-download-logs 
             log-list={logList}
             session-information={sessionInformation}
             manipulation-options={manipulationOptions}
+            ondownloadprogress={handleDownloadProgress}
             ondownloadprocesscompleted={handleOpenCloseSfdlDownload}>
         </sfdl-download-logs>
     </template>

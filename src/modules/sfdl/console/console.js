@@ -97,11 +97,10 @@ export default class Console extends LightningElement {
     }
 
     async handleTabNavigation(event){
-        if(!this.openCompareLogs && this.noLogs2Compare(event)){
-            this.toastAction = this.isDownloadInProgress ? 'warning' : 'error';
-            this.toastHeader = 'Compare Logs';
-            this.toastMessage = this.isDownloadInProgress ? 'Retrieving logs in progress...' : 'There are no logs to compare, select an org with logs';
-            
+        if(event.target.dataset.tabname !== 'analyseLogs') {
+            this.toastAction = 'warning';
+            this.toastHeader = 'Not available';
+            this.toastMessage = 'Org team is working on this functionality. It will be available soon! (:';
             showToastEvent(this.toastAction, this.toastHeader, this.toastMessage);
             return;
         }

@@ -9,6 +9,7 @@ export default class DownloadLogs extends LightningElement{
     @api logList;
     @api manipulationOptions;
     @api sessionInformation;
+    logsDownloaded = 0;
 
     connectedCallback(){
         this.startDownloadProcess();
@@ -45,12 +46,24 @@ export default class DownloadLogs extends LightningElement{
                 });
             }
 
+            this.updateLogsDownloaded();
+
             let logDetailFromPromise = apexLog.response ? apexLog.response : message.apexLogWithBody.response.response;
 
             let logDetail =  manipulationDetailLogs(logDetailFromPromise, this.manipulationOptions);
 
             debugLogsZipFolder.file(this.createLogFileName(apexLog), Promise.resolve(logDetail));
         }
+    }
+
+    @api
+    updateLogsDownloaded() {
+        this.logsDownloaded++;
+        this.dispatchEvent(new CustomEvent('downloadprogress',{
+            detail:{
+                logsDownloaded: this.logsDownloaded
+            }
+        }));
     }
 
     createLogFileName(log){
