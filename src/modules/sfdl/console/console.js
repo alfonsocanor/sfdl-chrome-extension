@@ -9,6 +9,7 @@ const tabNavigation = {
 }
 
 export default class Console extends LightningElement {
+    firstRender = true;
     showLogListSection = true;
     renderLogList = false;
     
@@ -25,7 +26,7 @@ export default class Console extends LightningElement {
     logList = [];
     isDownloadInProgress = false;
 
-    sectionStyle = 'background-color:#fafaf9;position:relative;height:80vh;overflow:hidden;display:flex;';
+    sectionStyle = 'background-color:#fafaf9;position:relative;overflow:hidden;display:flex;';
 
     @track picklistInformation = [];
     @track sessionInformation;
@@ -45,6 +46,28 @@ export default class Console extends LightningElement {
 
     connectedCallback(){
         this.init();
+        window.addEventListener('resize', this.updateHeight.bind(this));
+    }
+
+    renderedCallback() {
+        if(this.firstRender) {
+            this.updateHeight()
+            this.firstRender = false;
+        }
+    }
+
+    updateHeight(){
+        let sfdlConsoleHeader = this.template.querySelector('.sfdl-console-header');
+        let sfdlFooterContainer = this.template.querySelector('.sfdl-footer-container');
+        let tabs = this.template.querySelector('.slds-tabs_scoped__nav');
+        let sfdlBodyTab = this.template.querySelector('.sfdl-body-tab');
+        var windowHeight = window.innerHeight;
+        
+        if(sfdlBodyTab) {
+            let sfdlBodyTabHeight = (windowHeight - sfdlConsoleHeader.clientHeight - sfdlFooterContainer.clientHeight - tabs.clientHeight - 10);
+            sfdlBodyTab.style.height = sfdlBodyTabHeight + 'px';
+            this.template.querySelector('sfdl-log-details').setMonacoEditorHeight(sfdlBodyTabHeight - 50);
+        }
     }
 
     async init(){

@@ -15,7 +15,7 @@
         "https://*.force.com/"
     ],
     "permissions": [
-        "cookies", "downloads", "storage"
+        "cookies", "downloads", "storage", "scripting", "activeTab"
     ],
     "icons": {
         "16": "/resources/sfdl16.png",

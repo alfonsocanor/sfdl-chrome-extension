@@ -24,6 +24,8 @@ export default class LogDetails extends LightningElement{
 
     isProcessing = false;
 
+    monacoEditorHeight = 'height: 0px';
+
     connectedCallback(){
         this.setMonacoNewLanguage('apexlog')
         this.setMonarchTokensProvider(tokenizerRoot);
@@ -130,5 +132,10 @@ export default class LogDetails extends LightningElement{
     @api
     handleIsLoading(){
         this.isProcessing = true
+    }
+
+    @api
+    setMonacoEditorHeight(monacoEditorHeight){
+        this.monacoEditorHeight = 'height: ' + monacoEditorHeight + 'px';
     }
 }

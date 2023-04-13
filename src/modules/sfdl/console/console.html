@@ -1,95 +1,97 @@
 <template>
-  <header class="demo-only-element slds-theme_default slds-border_bottom slds-p-around_small" style="z-index:1;">
-    <sfdl-picklist 
-      picklist={picklistInformation}
-      onsessioninformation={handleSessionInformation}
-      onenablepicklistbuttons={handleActivateActionButtons}
-      placeholder="Select your domain">
-    </sfdl-picklist> 
-  </header>
+  <div style="display: flex; flex-direction: column; min-height: 100vh;">
+    <header class="sfdl-console-header slds-theme_default slds-border_bottom slds-p-around_small" style="z-index:1;">
+      <sfdl-picklist 
+        picklist={picklistInformation}
+        onsessioninformation={handleSessionInformation}
+        onenablepicklistbuttons={handleActivateActionButtons}
+        placeholder="Select your domain">
+      </sfdl-picklist> 
+    </header>
 
-  <div class="slds-tabs_default__content slds-show" style="padding:0;">
-    <div class="slds-tabs_scoped slds-tabs_small">
-      <ul class="slds-tabs_scoped__nav" style="border-radius: 0; border-top: none; border-right: none;">
-        <li class="slds-tabs_scoped__item slds-is-active liElementAnalyseLogs" title="Analise Logs" style="width:7%;">
-          <a class="slds-tabs_scoped__link" data-tabname="analyseLogs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Analize Logs</a>
-        </li>
-        <li class="slds-tabs_scoped__item liElementCompareLogs" title="Compare Orgs" style="width:7%;">
-          <a class="slds-tabs_scoped__link" data-tabname="compareLogs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Compare Logs</a>
-        </li>
-        <li class="slds-tabs_scoped__item liElementCompareOrgs" title="Compare Orgs" style="width:7%;">
-          <a class="slds-tabs_scoped__link" data-tabname="compareOrgs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Compare Orgs</a>
-        </li>
-      </ul>
-      <template if:true={openAnaliseLogs}>
-        <div class="sfdl-analise-logs slds-tabs_scoped__content slds-show" style="padding:0; border-right:none;">
-          <div style={sectionStyle}>
-            <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
-              <div class="slds-panel__header" style="padding:15px;">
-                <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
+    <div class="slds-tabs_default__content slds-show" style="flex: 1; padding:0;">
+      <div class="slds-tabs_scoped slds-tabs_small">
+        <ul class="slds-tabs_scoped__nav" style="border-radius: 0; border-top: none; border-right: none;">
+          <li class="slds-tabs_scoped__item slds-is-active liElementAnalyseLogs" title="Analise Logs" style="width:7%;">
+            <a class="slds-tabs_scoped__link" data-tabname="analyseLogs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Analize Logs</a>
+          </li>
+          <li class="slds-tabs_scoped__item liElementCompareLogs" title="Compare Orgs" style="width:7%;">
+            <a class="slds-tabs_scoped__link" data-tabname="compareLogs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Compare Logs</a>
+          </li>
+          <li class="slds-tabs_scoped__item liElementCompareOrgs" title="Compare Orgs" style="width:7%;">
+            <a class="slds-tabs_scoped__link" data-tabname="compareOrgs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Compare Orgs</a>
+          </li>
+        </ul>
+        <template if:true={openAnaliseLogs}>
+          <div class="sfdl-analise-logs slds-tabs_scoped__content slds-show" style="padding:0; border-right:none;">
+            <div class="sfdl-body-tab" style={sectionStyle}>
+              <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
+                <div class="slds-panel__header" style="padding:15px;">
+                  <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
+                </div>
+                <div class="slds-panel__body">
+                  <template if:true={renderLogList}>
+                    <sfdl-log-list
+                      is-analise-logs="true"
+                      onlogdetails={handleLogDetails}
+                      onenablepicklistbuttons={handleActivateActionButtons}
+                      session-information={sessionInformation}
+                      onsendloglist={handleLogList}
+                      ondownloadinprogress2compare={handleDownloadInProgress2Compare}
+                      onisloading={handleIsLoading}>
+                    </sfdl-log-list>
+                  </template>
+                </div>
               </div>
-              <div class="slds-panel__body">
-                <template if:true={renderLogList}>
-                  <sfdl-log-list
-                    is-analise-logs="true"
-                    onlogdetails={handleLogDetails}
-                    onenablepicklistbuttons={handleActivateActionButtons}
-                    session-information={sessionInformation}
-                    onsendloglist={handleLogList}
-                    ondownloadinprogress2compare={handleDownloadInProgress2Compare}
-                    onisloading={handleIsLoading}>
-                  </sfdl-log-list>
-                </template>
+              <div class="slds-col" style="position:relative;">
+                <sfdl-log-details 
+                  is-analise-logs="true"
+                  show-log-list-section={showLogListSection}
+                  onenablepicklistbuttons={handleActivateActionButtons}
+                  ondisplayloglistsection={handleDisplayLogListSection}
+                  onmanipulationoptions={handleManipulationOptions}>
+                </sfdl-log-details>
               </div>
-            </div>
-            <div class="slds-col" style="position:relative;">
-              <sfdl-log-details 
-                is-analise-logs="true"
-                show-log-list-section={showLogListSection}
-                onenablepicklistbuttons={handleActivateActionButtons}
-                ondisplayloglistsection={handleDisplayLogListSection}
-                onmanipulationoptions={handleManipulationOptions}>
-              </sfdl-log-details>
             </div>
           </div>
-        </div>
-      </template>
-      <template if:true={openCompareLogs}>
-        <div class="sfdl-compare-logs slds-tabs_scoped__content slds-hide" style="padding:0; border-right:none;">
-          <div style={sectionStyle}>
-            <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
-              <div class="slds-panel__header" style="padding:15px;">
-                <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
+        </template>
+        <template if:true={openCompareLogs}>
+          <div class="sfdl-compare-logs slds-tabs_scoped__content slds-hide" style="padding:0; border-right:none;">
+            <div style={sectionStyle}>
+              <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
+                <div class="slds-panel__header" style="padding:15px;">
+                  <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
+                </div>
+                <div class="slds-panel__body">
+                  <template if:true={renderLogList}>
+                    <sfdl-log-list
+                      is-compare-logs="true"
+                      session-information={sessionInformation}
+                      logs-2-compare={logList}
+                      onlogdetails={handleLogDetails}
+                      onenablepicklistbuttons={handleActivateActionButtons}>
+                    </sfdl-log-list>
+                  </template>
+                </div>
               </div>
-              <div class="slds-panel__body">
-                <template if:true={renderLogList}>
-                  <sfdl-log-list
-                    is-compare-logs="true"
-                    session-information={sessionInformation}
-                    logs-2-compare={logList}
-                    onlogdetails={handleLogDetails}
-                    onenablepicklistbuttons={handleActivateActionButtons}>
-                  </sfdl-log-list>
-                </template>
+              <div class="slds-col" style="position:relative;">
+                <sfdl-log-details 
+                  is-compare-logs="true"
+                  onenablepicklistbuttons={handleActivateActionButtons}
+                  ondisplayloglistsection={handleDisplayLogListSection}
+                  onmanipulationoptions={handleManipulationOptions}
+                  onshowcomponent={showContentBasedOnTab}>
+                </sfdl-log-details>
               </div>
-            </div>
-            <div class="slds-col" style="position:relative;">
-              <sfdl-log-details 
-                is-compare-logs="true"
-                onenablepicklistbuttons={handleActivateActionButtons}
-                ondisplayloglistsection={handleDisplayLogListSection}
-                onmanipulationoptions={handleManipulationOptions}
-                onshowcomponent={showContentBasedOnTab}>
-              </sfdl-log-details>
             </div>
           </div>
-        </div>
-      </template>
-      <template if:true={openCompareOrgs}>
-        <div class="sfdl-compare-orgs slds-tabs_scoped__content slds-hide" style="padding:0; border-right:none;">List Orgs</div>
-      </template>
+        </template>
+        <template if:true={openCompareOrgs}>
+          <div class="sfdl-compare-orgs slds-tabs_scoped__content slds-hide" style="padding:0; border-right:none;">List Orgs</div>
+        </template>
+      </div>
     </div>
-    <div class="slds-modal__footer slds-p-around_x-small">
+    <div class="sfdl-footer-container" style="flex-shrink: 0; height: 40px;">
       <sfdl-footer></sfdl-footer>
     </div>
   </div>
