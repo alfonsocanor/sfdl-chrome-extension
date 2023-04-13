@@ -33,7 +33,8 @@
             session-information={sessionInformation}
             manipulation-options={manipulationOptions}
             ondownloadprogress={handleDownloadProgress}
-            ondownloadprocesscompleted={handleOpenCloseSfdlDownload}>
+            ondownloadprocesscompleted={handleOpenCloseSfdlDownload}
+            oninmemorylogdownloaded={handleInMemoryLogDownloaded}>
         </sfdl-download-logs>
     </template>
     <template if:true={thereAreLogsToDisplay}>

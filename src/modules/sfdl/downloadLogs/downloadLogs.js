@@ -50,16 +50,27 @@ export default class DownloadLogs extends LightningElement{
                     message: "downloadApexLog", 
                     sessionInformation: this.sessionInformation, apexLog
                 });
+
+                this.saveInMemoryLogDetail(apexLog, message.apexLogWithBody.response.response);
             }
 
             this.updateLogsDownloaded();
 
             let logDetailFromPromise = apexLog.response ? apexLog.response : message.apexLogWithBody.response.response;
 
-            let logDetail =  manipulationDetailLogs(logDetailFromPromise, this.manipulationOptions);
+            let logDetail = manipulationDetailLogs(logDetailFromPromise, this.manipulationOptions);
 
             debugLogsZipFolder.file(this.createLogFileName(apexLog), Promise.resolve(logDetail));
         }
+    }
+
+    saveInMemoryLogDetail(apexLog, response) {
+        this.dispatchEvent(new CustomEvent('inmemorylogdownloaded',{
+            detail: { 
+                logId: apexLog.id,
+                response: response
+            }
+        }))   
     }
 
     @api

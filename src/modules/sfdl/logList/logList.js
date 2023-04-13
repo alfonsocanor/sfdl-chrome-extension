@@ -433,4 +433,8 @@ export default class LogList extends LightningElement{
         this.isDownloading = false;
         showToastEvent('warning', 'sfdl', 'Download cancelled!');
     }
+
+    handleInMemoryLogDownloaded(event) {
+        this.logList.find( log => log.id === event.detail.logId).response = event.detail.response;
+    }
 }
