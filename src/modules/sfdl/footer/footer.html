@@ -1,4 +1,13 @@
 <template>
     <!-- <sfdl-donate></sfdl-donate> -->
-    <sfdl-social-media></sfdl-social-media>
+    <div class="slds-grid">
+        <div>
+            <sfdl-social-media-link
+                social-media-list={sfdlPage}>
+            </sfdl-social-media-link>
+        </div>
+        <div class="slds-col_bump-right">
+            <sfdl-social-media></sfdl-social-media>
+        </div>
+    </div>
 </template>
