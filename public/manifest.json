@@ -1,6 +1,6 @@
 {
     "name": "Salesforce Debug Logs (sfdl)",
-    "description": "Salesforce Debug Logs (sfdl)",
+    "description": "Increases productivity during debugging process Apex log analysis",
     "version": "0.1",
     "manifest_version": 3,
     "action": {

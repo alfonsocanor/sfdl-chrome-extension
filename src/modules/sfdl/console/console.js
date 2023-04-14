@@ -64,7 +64,7 @@ export default class Console extends LightningElement {
         var windowHeight = window.innerHeight;
         
         if(sfdlBodyTab) {
-            let sfdlBodyTabHeight = (windowHeight - sfdlConsoleHeader.clientHeight - sfdlFooterContainer.clientHeight - tabs.clientHeight - 10);
+            let sfdlBodyTabHeight = (windowHeight - sfdlConsoleHeader.clientHeight - sfdlFooterContainer.clientHeight - tabs.clientHeight - 4);
             sfdlBodyTab.style.height = sfdlBodyTabHeight + 'px';
             this.template.querySelector('sfdl-log-details').setMonacoEditorHeight(sfdlBodyTabHeight - 50);
         }

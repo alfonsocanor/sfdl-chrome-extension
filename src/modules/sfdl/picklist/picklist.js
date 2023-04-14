@@ -27,6 +27,12 @@ export default class Picklist extends LightningElement {
     }
 
     async openPicklistOptions(){
+        if(this.picklist.length === 0) {
+            showToastEvent(
+                'warning','No active org session :(', 'Login as usual to SF you want to analyse and come back. See you in a bit (:');
+            return;
+        }
+
         let isDownloadInProgress = await getValueLocalStorage('isDownloadInProgress');
         if(isDownloadInProgress){
             showToastEvent(

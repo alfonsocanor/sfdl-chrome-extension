@@ -3,15 +3,11 @@
         <sfdl-console></sfdl-console>
     </template>
     <template if:true={isPopup}>
-        <div class="slds-grid slds-wrap slds-align_absolute-center slds-p-around_x-small" style="width:250px; background:white; text-align:center;">
+        <div class="slds-grid slds-align_absolute-center slds-p-around_x-small" style="width:215px; background:white;">
             <div class="slds-size_1-of-1">
-                <p>
-                    <strong>Welcome to Salesforce Debug Logs</strong>
-                    <br/>Go to Station Console...
-                </p>
-            </div>
-            <div class="slds-m-top_small">
-                <button class="slds-button slds-button_brand" onclick={openSfdlAppInANewTab}>sfdl</button>
+                <button class="slds-button slds-button_brand" onclick={openSfdlAppInANewTab}>
+                    Launch sfdl Console Station
+                </button>
             </div>
         </div>
     </template>
