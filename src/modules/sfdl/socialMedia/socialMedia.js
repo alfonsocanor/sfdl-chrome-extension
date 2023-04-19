@@ -14,13 +14,6 @@ const socialMediaList = [
         src: './resources/vscode.png',
         alt: 'vscode logo',
         url: 'https://marketplace.visualstudio.com/items?itemName=sfdl.sfdl'
-    },
-    {
-        title: 'reference to lwc oss technology',
-        iconTitle:'lwc oss logo',
-        src: './resources/lwc.png',
-        alt: 'lwc oss logo',
-        url: 'https://lwc.dev'
     }
 ];
 export default class SocialMedia extends LightningElement{

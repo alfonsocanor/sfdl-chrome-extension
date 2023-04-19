@@ -65,8 +65,12 @@ export function manipulationDetailLogs(logDetails, manipulationOptions){
     }
 
     let logDetailsArrayOfLines = logDetails.split('\n');
-    let logDetailsFormatted; 
-    if(manipulationOptions){
+    let logDetailsFormatted;
+    let manipulationOptionsChecked = manipulationOptions?.reduce((itContainsCheckedOptions, value) => {
+        return value.checked || itContainsCheckedOptions;
+    }, false);
+
+    if(manipulationOptions && manipulationOptionsChecked){
         manipulationOptions.forEach((option) => {
             if(option.checked){
                 logDetailsFormatted = invokeFilterFormatFunctions(logDetailsFormatted ? logDetailsFormatted : logDetailsArrayOfLines, option.name);

@@ -37,14 +37,13 @@
         </sfdl-download-logs>
     </template>
     <template if:true={thereAreLogsToDisplay}>
-        <template if:false={retrivingLogsInProgress}>
+
             <template if:false={isDownloading}>
                 <div class="slds-size_1-of-1 slds-m-bottom_small slds-p-left_xx-small" style="text-align:left;">
                     <button style="width:22px; height:22px;" class="downloadLogsButton slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" onclick={handleOpenCloseSfdlDownload}><img src="/slds/icons/utility/download.svg" alt="start download process"/></button>
                     <span class="slds-p-left_x-small " style="color:rgb(127 127 127);">Download all logs</span>
                 </div>
             </template>
-        </template>
         <ul class="slds-has-dividers_around slds-has-block-links">
             <template for:each={logList} for:item="log">
                 <li key={log.id} class="slds-item">
@@ -61,8 +60,5 @@
                 </li>
             </template>
         </ul>
-    </template>
-    <template if:false={thereAreLogsToDisplay}>
-        <span>No Salesforce Debug Logs found</span>
     </template>
 </template>

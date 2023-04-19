@@ -1,30 +1,6 @@
 <template>
   <div class="slds-grid slds-grid_vertical-align-end">
-    <template if:false={futureFunctionality}>
-      <div class="slds-col slds-size_1-of-12" style="margin:0; width: 2% !important; margin-bottom: 4px;">
-        <button style="width:22px;height:22px; padding:2px;" onclick={handlerClearLocalStorage} class=" slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Filter ApexLog query">
-          <img src={localStorageIcon} alt="menu filter manipulation options"/>
-        </button>
-      </div>
-      <div class="slds-col slds-size_1-of-12" style="margin:0; width: 2% !important; margin-bottom: 4px;">
-        <sfdl-delete-all-logs
-          session-information={sessionInformation}>
-        </sfdl-delete-all-logs>
-      </div>
-    </template>
-
-    <div class="slds-col slds-size_1-of-12" style="margin:0; width: 2% !important; margin-bottom: 4px;">
-      <sfdl-log-query-filter
-        onquerywhere={handleQueryWhere}>
-      </sfdl-log-query-filter>
-    </div>
-    <div class="slds-col slds-size_1-of-12" style="margin:0; width: 2% !important; margin-bottom: 4px;">
-      <button style="width:22px;height:22px; padding:2px;" onclick={queryLogs} disabled class="actionButtons slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Search for ApexLogs">
-        <img src={searchIcon} alt="menu filter manipulation options"/>
-      </button>
-    </div>
-
-    <div class="slds-col slds-form-element slds-size_6-of-12">
+    <div class="slds-form-element">
       <label class="slds-form-element__label" for="combobox-id-1" id="combobox-label-id-27">Organization Instances</label>
       <div class="slds-form-element__control">
         <div class="slds-combobox_container slds-size_large">
@@ -51,6 +27,30 @@
           </div>
         </div>
       </div>
+    </div>
+
+    <template if:false={futureFunctionality}>
+      <div class="slds-col slds-size_1-of-12" style="margin:0; width: 2% !important; margin-bottom: 4px;">
+        <button style="width:22px;height:22px; padding:2px;" onclick={handlerClearLocalStorage} class=" slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Filter ApexLog query">
+          <img src={localStorageIcon} alt="menu filter manipulation options"/>
+        </button>
+      </div>
+      <div class="slds-col slds-size_1-of-12" style="margin:0; width: 2% !important; margin-bottom: 4px;">
+        <sfdl-delete-all-logs
+          session-information={sessionInformation}>
+        </sfdl-delete-all-logs>
+      </div>
+    </template>
+
+    <div class="slds-m-horizontal_medium slds-m-bottom_xx-small">
+      <button style="width:22px;height:22px; padding:2px;" onclick={queryLogs} disabled class="actionButtons slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Search for ApexLogs">
+        <img src={searchIcon} alt="menu filter manipulation options"/>
+      </button>
+    </div>
+    <div class="slds-m-bottom_xx-small">
+      <sfdl-log-query-filter
+        onquerywhere={handleQueryWhere}>
+      </sfdl-log-query-filter>
     </div>
   </div>
 </template>

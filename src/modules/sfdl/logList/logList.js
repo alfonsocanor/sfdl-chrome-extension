@@ -10,7 +10,7 @@ const KEYBOARD_ARROW_DOWN_CODE = 40;
 
 const processResponseBasedOnContentType = {
     httpError(response){
-        return {hasError: true, error: response.message};
+        return {hasError: true, error: response.error, message: response.message};
     },
     async contentTypeJson(response){
         const logsInformation = await response.json()
@@ -35,7 +35,7 @@ export default class LogList extends LightningElement{
 
     @track logList = [];
     
-    thereAreLogsToDisplay = true;
+    thereAreLogsToDisplay = false;
     isDownloading;
     firstRender = true;
 
@@ -59,13 +59,6 @@ export default class LogList extends LightningElement{
             this.getApexLogsInformation(this.sessionInformation);
         } else if(this.isCompareLogs){
             this.logList = this.logs2Compare;
-        }
-    }
-
-    renderedCallback(){
-        if(this.firstRender){
-            this.disableDownloadButton(true);
-            this.firstRender = false;
         }
     }
 
@@ -201,7 +194,8 @@ export default class LogList extends LightningElement{
         const apexLogList = await this.getInformationFromSalesforce(url2GetApexLogIds, {}, sessionInformation, 'contentTypeJson');
 
         if(apexLogList.response.hasError){
-            showToastEvent('error', apexLogList.response.error, sessionInformation.instanceUrl);
+            this.enableSearchQueryIcon();
+            showToastEvent('error', apexLogList.response.error, apexLogList.response.message);
             return;
         }
 
@@ -248,14 +242,22 @@ export default class LogList extends LightningElement{
                 }
             });
 
-            if(response.status !== 200){
+            if(response.status === 400) {
                 function2Execute = 'httpError';
+                response.error = 'Invalid query :('; 
+                response.message = requestUrl.split('q=')[1];
+            } else if (response.status === 401) {
+                function2Execute = 'httpError';
+                response.error = 'Invalid session :('; 
+                response.message = sessionInformation.instanceUrl;
                 response.message = response.status === 401 ? response.statusText + ': Invalid session' : response.message;
+            } else if (response.status !== 200) {
+                function2Execute = 'httpError';
+                response.error = 'Error :('; 
+                response.message = response.statusText;
             }
-        } catch(e){
-            function2Execute = 'httpError';
-            response.message = e.message;
-        }
+        } catch(e){}
+
         return processResponseBasedOnContentType[function2Execute](response, logId, fileName);
     }
 

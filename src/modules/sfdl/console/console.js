@@ -123,9 +123,9 @@ export default class Console extends LightningElement {
 
     async handleTabNavigation(event){
         if(event.target.dataset.tabname !== 'analyseLogs') {
-            this.toastAction = 'warning';
+            this.toastAction = 'info';
             this.toastHeader = 'Not available';
-            this.toastMessage = 'Org team is working on this functionality. It will be available soon! (:';
+            this.toastMessage = 'We are working on new features. Available soon! (:';
             showToastEvent(this.toastAction, this.toastHeader, this.toastMessage);
             return;
         }
