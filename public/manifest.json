@@ -1,7 +1,7 @@
 {
     "name": "Salesforce Debug Logs (sfdl)",
     "description": "Increases productivity during debugging process Apex log analysis",
-    "version": "0.1",
+    "version": "0.2",
     "manifest_version": 3,
     "action": {
         "default_popup": "popup.html"
@@ -15,7 +15,7 @@
         "https://*.force.com/"
     ],
     "permissions": [
-        "cookies", "storage", "activeTab"
+        "cookies", "storage"
     ],
     "icons": {
         "16": "/resources/sfdl16.png",
