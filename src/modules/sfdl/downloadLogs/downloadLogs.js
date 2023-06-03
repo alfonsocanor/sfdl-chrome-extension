@@ -73,7 +73,12 @@ export default class DownloadLogs extends LightningElement{
     }
 
     createLogFileName(log){
-        return log.name.replaceAll('/','-') + ' | ' + log.id + '.log';
+        return 'sfdl/' + log.name
+            .replaceAll('/','-')
+            .replaceAll('<','')
+            .replaceAll('>','')
+            .replaceAll('|','') + 
+            ' - ' + log.id + '.log';
     }
 
     saveDebugLogsZipFile(content){
