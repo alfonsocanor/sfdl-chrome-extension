@@ -73,7 +73,8 @@ export default class LogDetails extends LightningElement{
                 value: formatLogDetails,
                 automaticLayout: true,
                 language: 'apexlog',
-                theme: 'customDawn'
+                theme: 'customDawn',
+                fontLigatures: ''
             });
         }
     }
