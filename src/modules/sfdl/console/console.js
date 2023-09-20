@@ -76,12 +76,26 @@ export default class Console extends LightningElement {
     }
 
     async createCookiesSession4SfdlPicklist(allSalesforceCookies){
-        allSalesforceCookies.forEach(async cookie => {
+        
+        allSalesforceCookies.forEach(async (cookie, index) => {
             let isAValidSession = await isSessionInformationValid(cookie);
             if(isAValidSession){
                 this.picklistInformation.push({ label: 'https://' + cookie.domain, value:cookie.value });
             }
+
+            if(index === allSalesforceCookies.length - 1) {
+                this.setPicklistValues();
+            }
         });
+
+        //Send empty picklist values even if there are no sessions stored in cookies
+        if(!allSalesforceCookies.length) {
+            this.setPicklistValues();    
+        }
+    }
+
+    setPicklistValues() {
+        this.template.querySelector('sfdl-picklist').setPicklistValues(this.picklistInformation);
     }
 
     async handleLogDetails(event){

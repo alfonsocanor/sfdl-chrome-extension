@@ -5,11 +5,12 @@ export default class Picklist extends LightningElement {
     searchIcon = '/slds/icons/utility/search.svg';
     localStorageIcon = '/slds/icons/utility/bucket.svg';
 
-    @api picklist;
+    picklist;
     areOptionsOpened = false;
     @api placeholper;
     valueSelected;
     queryWhere = '';
+    customDisable = 'pointer-events: none; opacity: 0.4;';
 
     sessionInformation = {
         authToken: '',
@@ -27,7 +28,7 @@ export default class Picklist extends LightningElement {
     }
 
     async openPicklistOptions(){
-        if(this.picklist.length === 0) {
+        if(!this.picklist.length) {
             showToastEvent(
                 'warning','No active org session :(', 'Login as usual to SF you want to analyse and come back. See you in a bit (:');
             return;
@@ -94,5 +95,11 @@ export default class Picklist extends LightningElement {
         this.template.querySelectorAll('.actionButtons').forEach( buttonElement => {
             buttonElement.disabled = isDisable;
         })
+    }
+
+    @api
+    async setPicklistValues(picklistValues) {
+        this.picklist = picklistValues;
+        this.customDisable = '';
     }
 }
