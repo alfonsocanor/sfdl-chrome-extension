@@ -48,11 +48,8 @@ const invokeLinesFormatting = {
 }
 
 function tabs2Add2Line(numberOfTabs){
-    let tabs2Return = numberOfTabs === 0 ? '' : '\t';
-    for(let counter = 1; counter < numberOfTabs; counter++){
-        tabs2Return = tabs2Return + '\t';
-    }
-    return tabs2Return;
+    let tab = '\t';
+    return tab.repeat(numberOfTabs);
 }
 
 function invokeFilterFormatFunctions(logDetailsArrayOfLines, function2Execute){
