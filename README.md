@@ -1,9 +1,9 @@
 <p align="center">  
-	<img width="192" height="192" src="https://salesforcedebuglogs.com/resources/blueSoda_medium.png">  
+	<img width="192" height="192" src="src/resources/sfdl.png">  
 </p>
 # sfdl
 
-Currently this chrome extension is in progress and not public. Not all features from sfdl cli (https://github.com/alfonsocanor/sfdl) are available at this moment.
+Boosts productivity during debugging process Apex log analysis
 
 ## Install as a unpacked extension?
 
@@ -18,4 +18,4 @@ Currently this chrome extension is in progress and not public. Not all features 
 - Click on Load unpackaged button
 - Navigate to the repository cloned and select the folder dist
 
-## ![Built using lwc oss](https://raw.githubusercontent.com/Confirm4Crit/awesome-lwc/main/src/resources/sfdlFavicon.ico)
+## ![Built using lwc oss](https://developer.salesforce.com/docs/platform/lwc/guide/get-started-oss.html)
