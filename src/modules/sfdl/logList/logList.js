@@ -3,7 +3,7 @@ import { track, api, LightningElement  } from 'lwc';
 import { showToastEvent, setKeyValueLocalStorage } from 'sfdl/utils';
 
 const APEX_LOG_IDS_QUERY_URL = '/services/data/v51.0/tooling/query/?q=';
-const APEX_LOG_IDS_QUERY_URL_SELECT_FROM = 'SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation FROM ApexLog ';
+const APEX_LOG_IDS_QUERY_URL_SELECT_FROM = 'SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation, Status FROM ApexLog ';
 const APEX_LOG_IDS_QUERY_URL_ORDER_BY = ' ORDER BY LastModifiedDate DESC';
 const KEYBOARD_ARROW_UP_CODE = 38;
 const KEYBOARD_ARROW_DOWN_CODE = 40;

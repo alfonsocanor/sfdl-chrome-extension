@@ -184,7 +184,8 @@ function logName2Display(apexLog){
   return  apexLog.LogUser.Name + ' | ' + 
           createOperationFormat(apexLog.Operation) + ' | ' +
           apexLog.LogLength + 'bytes | ' +
-          createDatetimeFormat(new Date(apexLog.LastModifiedDate));
+          createDatetimeFormat(new Date(apexLog.LastModifiedDate)) + ' | ' +
+          apexLog.Status;
 }
 
 function createOperationFormat(operation){
