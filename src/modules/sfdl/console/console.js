@@ -110,7 +110,18 @@ export default class Console extends LightningElement {
 
     handleDisplayLogListSection(event){
         this.showLogListSection = !this.showLogListSection;
-        this.template.querySelector('.sfdl-console-log-list-section').classList[event.detail.classAction]('slds-is-open');
+        const leftPanel = this.template.querySelector('.sfdl-console-log-list-section');
+
+        if(event.detail.classAction === 'remove') {
+            leftPanel.style.opacity = 0;
+            leftPanel.style.transitionProperty = 'width, display, opacity';
+            leftPanel.style.transitionDuration = '0.2s';
+            leftPanel.style.transitionBehavior = 'allow-discrete';
+            leftPanel.classList[event.detail.classAction]('slds-is-open');
+        } else {
+            leftPanel.style.opacity = 1;
+            leftPanel.classList[event.detail.classAction]('slds-is-open');
+        }
     }
 
     hideMonacoEditor(){
