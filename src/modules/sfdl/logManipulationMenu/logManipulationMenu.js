@@ -5,12 +5,12 @@ export default class DropdownMenu extends LightningElement{
         {
             label: 'ENTRY/EXIT',
             name: 'methodEntryExitCodeUnitStartedFinished2Hierarchy',
-            checked: false
+            checked: true
         },
         {
             label: 'HEAP_ALLOCATE/STATEMENT_EXECUTE',
             name: 'removeHeapAllocateAndStatementExecute',
-            checked:false
+            checked: true
         }
     ];
     
