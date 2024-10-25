@@ -58,13 +58,15 @@ export default class Picklist extends LightningElement {
         this.template.querySelector('.slds-combobox').classList[action](htmlClassName);
     }
 
-    updateSessionInformation(event){
+    async updateSessionInformation(event){
         this.valueSelected = event.target.dataset.domain;
         this.sessionInformation = {
             authToken: event.target.dataset.sid,
             instanceUrl: this.valueSelected,
             queryWhere: this.queryWhere
         }
+
+        await this.queryLogs();
 
         this.disableActionButtons(false);
     }
