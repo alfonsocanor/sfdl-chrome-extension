@@ -1,6 +1,7 @@
 import { LightningElement, track } from 'lwc';
 import { getAllCookiesFromSalesforceDomain, isSessionInformationValid } from 'sfdl/authentication';
 import { showToastEvent } from 'sfdl/utils';
+import { css } from './consoleCss';
 
 const tabNavigation = {
     analyseLogs:{tab:'.liElementAnalyseLogs', body:'.sfdl-analise-logs', open:'openAnaliseLogs'},
@@ -37,7 +38,7 @@ export default class Console extends LightningElement {
         this.manipulationOptions = {};
         this.openAnaliseLogs=true;
         this.openCompareLogs=false;
-        this.openCompareOrgs=true;
+        this.openCompareOrgs=false;
         this.logList = [];
         this.isDownloadInProgress = false;
         this.picklistInformation = [];
@@ -71,8 +72,18 @@ export default class Console extends LightningElement {
     }
 
     async init(){
+        this.initializeCustomCss();
         const allSalesforceCookies = await getAllCookiesFromSalesforceDomain();
         this.createCookiesSession4SfdlPicklist(allSalesforceCookies);
+    }
+
+    initializeCustomCss() { 
+        // Check if the custom CSS is already loaded
+        if (!document.adoptedStyleSheets.some(sheet => sheet instanceof CSSStyleSheet && sheet.replaceSync === css.replaceSync)) {
+            const sheet = new CSSStyleSheet();
+            sheet.replaceSync(css);
+            document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+        }
     }
 
     async createCookiesSession4SfdlPicklist(allSalesforceCookies){
@@ -109,19 +120,23 @@ export default class Console extends LightningElement {
     }
 
     handleDisplayLogListSection(event){
-        this.showLogListSection = !this.showLogListSection;
-        const leftPanel = this.template.querySelector('.sfdl-console-log-list-section');
+        this.initializeCustomCss();
 
-        if(event.detail.classAction === 'remove') {
-            leftPanel.style.opacity = 0;
-            leftPanel.style.transitionProperty = 'width, display, opacity';
-            leftPanel.style.transitionDuration = '0.2s';
-            leftPanel.style.transitionBehavior = 'allow-discrete';
-            leftPanel.classList[event.detail.classAction]('slds-is-open');
-        } else {
-            leftPanel.style.opacity = 1;
-            leftPanel.classList[event.detail.classAction]('slds-is-open');
-        }
+        setTimeout(() => {
+            this.showLogListSection = !this.showLogListSection;
+            const logListPanel = this.template.querySelector('.sfdl-console-log-list-section');
+            if(event.detail.classAction === 'remove') {
+                logListPanel.classList.add('log-list-is-closed');
+                setTimeout(() => {
+                    logListPanel.classList[event.detail.classAction]('slds-is-open');
+                },50);            
+            } else {
+                logListPanel.classList[event.detail.classAction]('slds-is-open');
+                setTimeout(() => {
+                    logListPanel.classList.remove('log-list-is-closed');
+                },50);    
+            }
+        },50);
     }
 
     hideMonacoEditor(){
