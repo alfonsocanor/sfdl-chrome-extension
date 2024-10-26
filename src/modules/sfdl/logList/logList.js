@@ -1,6 +1,7 @@
 /*global chrome*/
 import { track, api, LightningElement  } from 'lwc';
 import { showToastEvent, setKeyValueLocalStorage } from 'sfdl/utils';
+import { css } from './logListCss';
 
 const APEX_LOG_IDS_QUERY_URL = '/services/data/v51.0/tooling/query/?q=';
 const APEX_LOG_IDS_QUERY_URL_SELECT_FROM = 'SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation, Status FROM ApexLog ';
@@ -60,6 +61,26 @@ export default class LogList extends LightningElement{
         } else if(this.isCompareLogs){
             this.logList = this.logs2Compare;
         }
+    }
+
+    renderedCallback() {
+        this.initializeCustomCss();
+    }
+    
+    initializeCustomCss() { 
+        // Check if the custom CSS is already loaded
+        if (!document.adoptedStyleSheets.some(sheet => sheet instanceof CSSStyleSheet && sheet.replaceSync === css.replaceSync)) {
+            const sheet = new CSSStyleSheet();
+            sheet.replaceSync(css);
+            document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
+        }
+    }
+
+    showAllLogs() {
+        this.template.querySelectorAll('.slds-item').forEach(element => {
+            console.log('here');
+            element.classList.remove('custom-animation');
+        });
     }
 
     saveFirstAndLastLogIdsFromLogList(){
@@ -205,6 +226,9 @@ export default class LogList extends LightningElement{
             this.logList = logResponse.apexLogList;
             this.disableDownloadButton(false)
             showToastEvent('success', 'Let\'s start the analysis (:', sessionInformation.instanceUrl);
+            setTimeout(() => {
+                this.showAllLogs();
+            }, 500);
         } else {
             this.thereAreLogsToDisplay = false;
             showToastEvent('info', 'There are no logs to retrieve', sessionInformation.instanceUrl);
