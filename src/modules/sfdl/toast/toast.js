@@ -1,4 +1,5 @@
 import { LightningElement, api } from 'lwc';
+import { css } from './toastCss';
 
 const SLDS_TOAST_THEME = {
     success: {
@@ -27,8 +28,15 @@ export default class Toast extends LightningElement{
     firstRender = true;
     iconAction;
 
+    connectedCallback() {
+        const sheet = new CSSStyleSheet();
+        sheet.replaceSync(css);
+        document.adoptedStyleSheets = [sheet];
+    }
+
     renderedCallback(){
         if(this.firstRender){
+            this.initializeAnimation();
             let actionSldsHtmlClass = this.determineSldsHtmlClassToApply(this.action);
             this.determineSldsIconAction(this.action);
             this.addSldsHtmlClassThemeNotification(actionSldsHtmlClass);
@@ -48,7 +56,22 @@ export default class Toast extends LightningElement{
         this.template.querySelector('.slds-notify_toast').classList.add(actionSldsHtmlClass);
     }
 
+    initializeAnimation() {
+        setTimeout(() => {
+            this.template.querySelector('.slds-notify_container').classList.add('animation-in');
+        }, 50);
+    }
+
+    @api
+    finalizeAnimation() {
+        this.template.querySelector('.slds-notify_container').classList.remove('animation-in');
+        this.template.querySelector('.slds-notify_container').classList.add('animation-out');
+    }
+
     closeToast(){
-        this.showToast = false;
+        this.template.querySelector('.slds-notify_container').classList.add('blip');
+/*         setTimeout(() => {
+            this.showToast = false;
+        }, 70); */
     }
 }

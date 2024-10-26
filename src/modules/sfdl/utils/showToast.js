@@ -22,15 +22,18 @@ function createToastComponent(action, header, message){
 function removeAllToastEventsFromDOM(){
     const allToastComponent = document.querySelectorAll('sfdl-toast');
 
-    allToastComponent.forEach(element => {
-        element.remove();
+    allToastComponent.forEach(toast => {
+        toast.remove();
     });
 }
 
 function removeToastEventFromDOM(timeInMilliseconds){
     toastCloseSetTimeoutId = setTimeout(() => {  
-        const toastComponent = document.querySelector('sfdl-toast');  
-        toastComponent.remove();
+        const toast = document.querySelector('sfdl-toast');  
+        toast.finalizeAnimation();
+        setTimeout(() => {  
+            toast.remove();
+        },1000);
     }, timeInMilliseconds);
 }
 
