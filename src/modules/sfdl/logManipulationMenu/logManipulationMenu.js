@@ -3,13 +3,18 @@ import { LightningElement, api } from 'lwc';
 export default class DropdownMenu extends LightningElement{
     manipulationOptions = [
         {
-            label: 'ENTRY/EXIT',
+            label: 'ENTRY/EXIT/END/BEGIN',
             name: 'methodEntryExitCodeUnitStartedFinished2Hierarchy',
             checked: true
         },
         {
             label: 'HEAP_ALLOCATE/STATEMENT_EXECUTE',
             name: 'removeHeapAllocateAndStatementExecute',
+            checked: true
+        },
+        {
+            label: 'FLOW/LIMIT/INTERVIEW',
+            name: 'removeFlowNoise',
             checked: true
         }
     ];

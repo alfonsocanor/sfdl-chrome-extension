@@ -3,20 +3,39 @@ const fileLinesAnalyseFunctions = {
         return line && (line.includes('HEAP_ALLOCATE') || line.includes('STATEMENT_EXECUTE')); 
     },
 
+    removeFlowNoise(line){
+        return line && (line.includes('FLOW_CREATE_INTERVIEW_BEGIN') 
+            || line.includes('FLOW_CREATE_INTERVIEW_END')
+            || line.includes('FLOW_START_INTERVIEW_LIMIT_USAGE')
+            || line.includes('FLOW_ELEMENT_LIMIT_USAGE')
+            || line.includes('FLOW_INTERVIEW_FINISHED')
+            || line.includes('FLOW_INTERVIEW_FINISHED_LIMIT_USAGE')); 
+    },
+
     extractSoqlLine(line){
         return line && !line.includes('SOQL_EXECUTE');
     },
 
     isMethodEntryLine(line){
-        return line && (line.includes('|METHOD_ENTRY|') || line.includes('|SYSTEM_METHOD_ENTRY|') || line.includes('|CONSTRUCTOR_ENTRY|'));
+        return line && (line.includes('|METHOD_ENTRY|') 
+            || line.includes('|SYSTEM_METHOD_ENTRY|') 
+            || line.includes('|CONSTRUCTOR_ENTRY|')
+            || line.includes('|FLOW_START_INTERVIEW_BEGIN|')
+            || line.includes('|FLOW_ELEMENT_BEGIN|'));
     },
 
     isMethodEntryExit(line){
-        return line && (line.includes('|METHOD_EXIT|') || line.includes('|SYSTEM_METHOD_EXIT|') || line.includes('|CONSTRUCTOR_EXIT|'));
+        return line && (line.includes('|METHOD_EXIT|') 
+            || line.includes('|SYSTEM_METHOD_EXIT|') 
+            || line.includes('|CONSTRUCTOR_EXIT|')
+            || line.includes('|FLOW_START_INTERVIEW_END|')
+            || line.includes('|FLOW_ELEMENT_END|'));
     },
+
     isCodeUnitStarted(line){
         return line && line.includes('|CODE_UNIT_STARTED|');
     },
+
     isCodeUnitFinished(line){
         return line && line.includes('|CODE_UNIT_FINISHED|');
     }
