@@ -6,7 +6,7 @@ const sfdlPage = [
         iconTitle:'sfdl logo',
         src: './resources/sfdl.png',
         alt: 'sfdl logo',
-        url: 'https://salesforcedebuglogs.com'
+        url: 'https://salesforce.omltt.net/sfdl'
     }
 ];
 export default class Footer extends LightningElement{
