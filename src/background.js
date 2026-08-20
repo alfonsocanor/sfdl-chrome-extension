@@ -166,7 +166,7 @@ async function fetchLogsRecords(requestUrl, sessionInformation, function2Execute
 
 function getApexLogList(apexLogList) {
   let logList = [];
-  for(apexLog in apexLogList) {
+  for(const apexLog in apexLogList) {
     logList.push(
       {
         id: apexLogList[apexLog].Id,

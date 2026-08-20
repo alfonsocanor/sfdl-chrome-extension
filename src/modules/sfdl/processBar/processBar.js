@@ -4,7 +4,7 @@ export default class ProcessBar extends LightningElement{
     progressBarValue = 'width:0%';
     currentValue = 0;
     @api total;
-    @api planceholder;
+    @api placeholder;
 
     @api
     updateProgressBar(value){

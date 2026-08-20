@@ -1,9 +1,13 @@
 /*global chrome*/
 import { LightningElement, api } from 'lwc';
 import { manipulationDetailLogs } from 'sfdl/logDetailsManipulation';
-import * as JSZip from 'jszip';
+import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import { showToastEvent } from 'sfdl/utils';
+
+const ZIP_FOLDER_NAME = 'Salesforce Debug Logs';
+const ZIP_FILE_NAME = 'sfdl-ApexLog.zip';
+const DOWNLOAD_CANCELLED = 'sfdl: Download cancelled!';
 
 export default class DownloadLogs extends LightningElement{
     @api logList;
@@ -17,6 +21,46 @@ export default class DownloadLogs extends LightningElement{
     }
 
     async startDownloadProcess(){
+        try{
+            if(this.isSingleLogDownload()){
+                await this.downloadSingleLog();
+            } else {
+                await this.downloadLogsAsZipFile();
+            }
+        } catch(error){
+            this.sendDownloadProcessCompletedAlert();
+
+            if(error.message !== DOWNLOAD_CANCELLED){
+                showToastEvent('error', 'sfdl', 'The download could not be completed: ' + error.message);
+            }
+
+            return;
+        }
+
+        this.sendDownloadProcessCompletedAlert();
+
+        showToastEvent('success', 'sfdl', this.downloadCompletedMessage());
+    }
+
+    isSingleLogDownload(){
+        return this.logList && this.logList.length === 1;
+    }
+
+    downloadCompletedMessage(){
+        return this.isSingleLogDownload() ?
+            'Log downloaded, validate in your local directory.' :
+            'Logs download, validate in your local directory.';
+    }
+
+    async downloadSingleLog(){
+        const apexLog = this.logList[0];
+        const logDetail = await this.getApexLogDetail(apexLog);
+
+        this.updateLogsDownloaded();
+        this.saveDebugLogFile(logDetail, this.createLogFileName(apexLog));
+    }
+
+    async downloadLogsAsZipFile(){
         let zip = new JSZip();
 
         let debugLogsZipFolder = this.createZipFolder(zip);
@@ -24,42 +68,41 @@ export default class DownloadLogs extends LightningElement{
 
         let content = await debugLogsZipFolder.generateAsync({type:"blob"});
 
-
         this.saveDebugLogsZipFile(content);
-        this.sendDownloadProcessCompletedAlert();
-
-        showToastEvent('success', 'sfdl', 'Logs download, validate in your local directory.');
-
     }
 
     createZipFolder(zip){
-        return zip.folder("Salesforce Debug Logs");
+        return zip.folder(ZIP_FOLDER_NAME);
     }
 
     async addDebugLogsToZipFolder(debugLogsZipFolder){
         for (const apexLog of this.logList) {
             if(this.cancel) {
                 this.cancel = false;
-                throw new Error('sfdl: Download called! :(');
+                throw new Error(DOWNLOAD_CANCELLED);
             }
 
-            let message;
-
-            if(!apexLog.response) {
-                message = await chrome.runtime.sendMessage({
-                    message: "downloadApexLog", 
-                    sessionInformation: this.sessionInformation, apexLog
-                });
-            }
+            let logDetail = await this.getApexLogDetail(apexLog);
 
             this.updateLogsDownloaded();
 
-            let logDetailFromPromise = apexLog.response ? apexLog.response : message.apexLogWithBody.response.response;
-
-            let logDetail =  manipulationDetailLogs(logDetailFromPromise, this.manipulationOptions);
-
-            debugLogsZipFolder.file(this.createLogFileName(apexLog), Promise.resolve(logDetail));
+            debugLogsZipFolder.file(this.createZipEntryName(apexLog), Promise.resolve(logDetail));
         }
+    }
+
+    async getApexLogDetail(apexLog){
+        let logDetailFromPromise = apexLog.response;
+
+        if(!logDetailFromPromise) {
+            let message = await chrome.runtime.sendMessage({
+                message: "downloadApexLog", 
+                sessionInformation: this.sessionInformation, apexLog
+            });
+
+            logDetailFromPromise = message.apexLogWithBody.response.response;
+        }
+
+        return manipulationDetailLogs(await logDetailFromPromise, this.manipulationOptions);
     }
 
     @api
@@ -73,7 +116,7 @@ export default class DownloadLogs extends LightningElement{
     }
 
     createLogFileName(log){
-        return 'sfdl/' + log.name
+        return log.name
             .replaceAll('/','-')
             .replaceAll('<','')
             .replaceAll('>','')
@@ -81,8 +124,16 @@ export default class DownloadLogs extends LightningElement{
             ' - ' + log.id + '.log';
     }
 
+    createZipEntryName(log){
+        return 'sfdl/' + this.createLogFileName(log);
+    }
+
+    saveDebugLogFile(logDetail, fileName){
+        saveAs(new Blob([logDetail], {type:'text/plain;charset=utf-8'}), fileName);
+    }
+
     saveDebugLogsZipFile(content){
-        saveAs(content, "sfdl-ApexLog.zip");
+        saveAs(content, ZIP_FILE_NAME);
     }
 
     sendDownloadProcessCompletedAlert(){

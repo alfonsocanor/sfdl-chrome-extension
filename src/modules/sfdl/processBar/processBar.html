@@ -2,7 +2,7 @@
     <div style="color:rgb(127 127 127);">
         {currentValue} / {total}
     </div>
-    <div class="slds-progress-bar" aria-valuemin="0" aria-valuemax={maxValue} aria-valuenow={valueNow} aria-label={placeholder} role="progressbar">
+    <div class="slds-progress-bar" aria-valuemin="0" aria-valuemax={total} aria-valuenow={currentValue} aria-label={placeholder} role="progressbar">
         <span class="slds-progress-bar__value" style={progressBarValue}>
         <span class="slds-assistive-text">Processing...</span>
         </span>

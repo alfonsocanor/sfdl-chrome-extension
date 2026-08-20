@@ -8,6 +8,8 @@ const APEX_LOG_IDS_QUERY_URL_SELECT_FROM = 'SELECT Id, LastModifiedDate, LogLeng
 const APEX_LOG_IDS_QUERY_URL_ORDER_BY = ' ORDER BY LastModifiedDate DESC';
 const KEYBOARD_ARROW_UP_CODE = 38;
 const KEYBOARD_ARROW_DOWN_CODE = 40;
+const DOWNLOAD_ICON = '/slds/icons/utility/download.svg';
+const CLOSE_ICON = '/slds/icons/utility/close.svg';
 
 const processResponseBasedOnContentType = {
     httpError(response){
@@ -40,7 +42,11 @@ export default class LogList extends LightningElement{
     isDownloading;
     firstRender = true;
 
-    closeIcon = '/slds/icons/utility/close.svg';
+    closeIcon = CLOSE_ICON;
+    downloadIcon = DOWNLOAD_ICON;
+
+    @track logs2Download = [];
+    downloadButtonDisabled = false;
 
     compareLogsColumns2LogDetails = {
         column1:{id:'',logName:'', logDetails:''},
@@ -55,11 +61,41 @@ export default class LogList extends LightningElement{
 
     index4NavigationFocusOn;
 
+    get selectedLogs(){
+        return this.logList.filter(log => log.isSelected);
+    }
+
+    get selectedLogsCount(){
+        return this.selectedLogs.length;
+    }
+
+    get areAllLogsSelected(){
+        return this.logList.length > 0 && this.selectedLogsCount === this.logList.length;
+    }
+
+    get thereAreSelectedLogs(){
+        return this.selectedLogsCount > 0;
+    }
+
+    get downloadLabel(){
+        return this.thereAreSelectedLogs ?
+            'Download selected logs (' + this.selectedLogsCount + ')' :
+            'Download all logs';
+    }
+
+    get downloadButtonTitle(){
+        return this.thereAreSelectedLogs ? 'Download the selected logs' : 'Download all logs';
+    }
+
+    get selectAllTitle(){
+        return this.areAllLogsSelected ? 'Clear the selection' : 'Select all logs';
+    }
+
     connectedCallback(){
         if(this.isAnaliseLogs){
             this.getApexLogsInformation(this.sessionInformation);
         } else if(this.isCompareLogs){
-            this.logList = this.logs2Compare;
+            this.logList = this.addSelectionFlag2LogList(this.logs2Compare);
         }
     }
 
@@ -97,12 +133,17 @@ export default class LogList extends LightningElement{
     }
 
     async logInfoAnalyseLogs(event){
+        // event.target is no longer readable once this handler awaits, so the
+        // log information is read upfront.
+        const logId = event.target.dataset.logid;
+        const logName = event.target.dataset.logname;
+
         this.logDetailProcessing();
         this.setIndexFocusFromOnClickLogSelection(event);
         this.removeboxShadowForAllTheLogDetails();
         this.boxShadowForTheLogDetailSelected(event, '0 0 0 3px #006bff40');
 
-        let logDetails = this.getLogByIdFromLogList(event.target.dataset.logid);
+        let logDetails = this.getLogByIdFromLogList(logId);
 
         if(!logDetails.response) {
             await this.processApexLog(this.sessionInformation, logDetails);
@@ -110,7 +151,7 @@ export default class LogList extends LightningElement{
 
         this.dispatchEvent(new CustomEvent('logdetails',{
             detail: { 
-                logName: event.target.dataset.logname,
+                logName,
                 logDetails: logDetails
             }
         }))
@@ -223,7 +264,7 @@ export default class LogList extends LightningElement{
         if(apexLogList.response.length){
             this.thereAreLogsToDisplay = true;
             let logResponse = await this.getApexLogList(apexLogList.response);
-            this.logList = logResponse.apexLogList;
+            this.logList = this.addSelectionFlag2LogList(logResponse.apexLogList);
             this.disableDownloadButton(false)
             showToastEvent('success', 'Let\'s start the analysis (:', sessionInformation.instanceUrl);
             setTimeout(() => {
@@ -365,13 +406,57 @@ export default class LogList extends LightningElement{
         return numberValue.toString().padStart(padLength, padString);
     }
 
-    handleOpenCloseSfdlDownload(){
-        this.totalLogsToDownload = this.logList.length;
-        this.isDownloading = !this.isDownloading;
+    addSelectionFlag2LogList(apexLogList){
+        return (apexLogList ? apexLogList : []).map(apexLog => {
+            return { ...apexLog, isSelected: false };
+        });
+    }
+
+    handleLogSelection(event){
+        const log2Select = this.getLogByIdFromLogList(event.currentTarget.dataset.logid);
+
+        if(log2Select){
+            log2Select.isSelected = event.currentTarget.checked;
+        }
+    }
+
+    handleSelectAllLogs(event){
+        const isSelected = event.currentTarget.checked;
+        this.logList.forEach(log => { log.isSelected = isSelected; });
+    }
+
+    handleDownloadLogs(){
+        //Nothing ticked means the whole list, the way it behaved before the
+        //checkboxes were introduced.
+        this.startDownloadProcess(this.thereAreSelectedLogs ? this.selectedLogs : this.logList);
+    }
+
+    handleDownloadSingleLog(event){
+        const log2Download = this.getLogByIdFromLogList(event.currentTarget.dataset.logid);
+
+        if(log2Download){
+            this.startDownloadProcess([log2Download]);
+        }
+    }
+
+    startDownloadProcess(logs2Download){
+        if(this.isDownloading){
+            showToastEvent('info', 'sfdl', 'There is a download in progress, wait for it to finish.');
+            return;
+        }
+
+        this.logs2Download = logs2Download;
+        this.totalLogsToDownload = logs2Download.length;
+        this.isDownloading = true;
+    }
+
+    handleDownloadProcessCompleted(){
+        this.isDownloading = false;
+        this.logs2Download = [];
     }
 
     disableDownloadButton(isDisable){
-        this.template.querySelector('.downloadLogsButton').disabled = isDisable;
+        this.downloadButtonDisabled = isDisable;
     }
 
     @api
@@ -456,7 +541,7 @@ export default class LogList extends LightningElement{
 
     cancelDownload() {
         this.template.querySelector('sfdl-download-logs').cancelDownload();
-        this.isDownloading = false;
+        this.handleDownloadProcessCompleted();
         showToastEvent('warning', 'sfdl', 'Download cancelled!');
     }
 }

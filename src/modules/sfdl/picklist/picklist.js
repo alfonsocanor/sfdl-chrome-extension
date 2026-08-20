@@ -5,9 +5,9 @@ export default class Picklist extends LightningElement {
     searchIcon = '/slds/icons/utility/search.svg';
     localStorageIcon = '/slds/icons/utility/bucket.svg';
 
-    picklist;
+    picklist = [];
     areOptionsOpened = false;
-    @api placeholper;
+    @api placeholder;
     valueSelected;
     queryWhere = '';
     customDisable = 'pointer-events: none; opacity: 0.4;';
@@ -20,7 +20,7 @@ export default class Picklist extends LightningElement {
     futureFunctionality = true;
     
     connectedCallback(){
-        this.valueSelected = this.placeholper ? this.placeholper : 'Pick up an org...';
+        this.valueSelected = this.placeholder ? this.placeholder : 'Pick up an org...';
     }
 
     handlerClearLocalStorage(){
