@@ -19,6 +19,9 @@ node_modules
 # Jest coverage folder
 /coverage
 
+# Chrome Web Store upload packages
+/*.zip
+
 # MacOS system files
 .DS_Store
 
