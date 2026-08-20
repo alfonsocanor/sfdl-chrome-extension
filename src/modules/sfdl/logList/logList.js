@@ -254,13 +254,24 @@ export default class LogList extends LightningElement{
         return false;
     }
 
+    //The log name button is only one cell of the row, so the highlight belongs
+    //to the row that holds it, the checkbox and the download icon.
+    getLogRowFromLogButton(logButton){
+        return logButton && logButton.closest ? logButton.closest('.sfdl-log-row') : null;
+    }
+
     boxShadowForTheLogDetailSelected(event, color){
-        event.target.style.boxShadow = color;
-        event.target.style.outline = '-webkit-focus-ring-color auto 1px';
+        const logRow = this.getLogRowFromLogButton(event.target);
+
+        if(logRow){
+            logRow.style.boxShadow = color;
+            logRow.style.outline = color === 'none' ? 'none' : '-webkit-focus-ring-color auto 1px';
+        }
+
         event.target.focus();
     }
     removeboxShadowForAllTheLogDetails(){
-        this.template.querySelectorAll('.displayLogButton').forEach(element => {
+        this.template.querySelectorAll('.sfdl-log-row').forEach(element => {
             element.style.boxShadow = 'none';
             element.style.outline = 'none';
 

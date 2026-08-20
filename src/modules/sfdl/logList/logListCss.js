@@ -35,6 +35,10 @@ export const css = `
         cursor: pointer;
     }
 
+    .sfdl-log-row .displayLogButton:focus {
+        outline: none;
+    }
+
     .sfdl-log-row .downloadSingleLogButton {
         flex: 0 0 auto;
         display: flex;
@@ -46,11 +50,12 @@ export const css = `
         background: transparent;
         border: none;
         box-shadow: none;
-        opacity: 0.3;
+        cursor: pointer;
+        opacity: 0.7;
         transition: opacity 0.2s ease-in-out;
     }
 
-    .sfdl-log-row:hover .downloadSingleLogButton,
+    .sfdl-log-row .downloadSingleLogButton:hover,
     .sfdl-log-row .downloadSingleLogButton:focus {
         opacity: 1;
     }
@@ -62,9 +67,7 @@ export const css = `
         margin: 0 auto;
     }
 
-    .sfdl-log-row .downloadSingleLogButton:hover img {
-        filter: brightness(0.85);
-    }
+
 
     .sfdl-log-checkbox {
         flex: 0 0 auto;

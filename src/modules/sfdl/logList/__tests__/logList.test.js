@@ -346,6 +346,45 @@ describe('sfdl-log-list', () => {
             );
         });
 
+        it('highlights the whole row, not just the log name', async () => {
+            resolveApexLogBodies();
+            const element = await createLogList();
+
+            click(logButtons(element)[1]);
+            await flushPromises();
+
+            expect(rows(element)[1].style.boxShadow).toBeTruthy();
+            expect(rows(element)[1].style.outline).toBeTruthy();
+            expect(logButtons(element)[1].style.boxShadow).toBeFalsy();
+        });
+
+        it('moves the highlight to the row that was opened last', async () => {
+            resolveApexLogBodies();
+            const element = await createLogList();
+            click(logButtons(element)[0]);
+            await flushPromises();
+
+            click(logButtons(element)[1]);
+            await flushPromises();
+
+            expect(rows(element)[0].style.boxShadow).toBe('none');
+            expect(rows(element)[1].style.boxShadow).toBeTruthy();
+            expect(rows(element)[1].style.boxShadow).not.toBe('none');
+        });
+
+        it('highlights the row reached with the arrow keys', async () => {
+            resolveApexLogBodies();
+            const element = await createLogList();
+            click(logButtons(element)[0]);
+            await flushPromises();
+
+            pressArrow(logButtons(element)[0], 40);
+            await flushPromises();
+
+            expect(rows(element)[0].style.boxShadow).toBe('none');
+            expect(rows(element)[1].style.boxShadow).not.toBe('none');
+        });
+
         it('walks the list with the arrow keys', async () => {
             resolveApexLogBodies();
             const element = await createLogList();
