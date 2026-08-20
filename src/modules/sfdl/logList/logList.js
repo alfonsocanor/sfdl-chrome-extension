@@ -77,6 +77,10 @@ export default class LogList extends LightningElement{
         return this.selectedLogsCount > 0;
     }
 
+    get isPartialSelection(){
+        return this.thereAreSelectedLogs && !this.areAllLogsSelected;
+    }
+
     get downloadLabel(){
         return this.thereAreSelectedLogs ?
             'Download selected logs (' + this.selectedLogsCount + ')' :
@@ -88,7 +92,7 @@ export default class LogList extends LightningElement{
     }
 
     get selectAllTitle(){
-        return this.areAllLogsSelected ? 'Clear the selection' : 'Select all logs';
+        return this.areAllLogsSelected ? 'Unselect every log' : 'Select all logs';
     }
 
     connectedCallback(){
@@ -101,6 +105,18 @@ export default class LogList extends LightningElement{
 
     renderedCallback() {
         this.initializeCustomCss();
+        this.syncSelectAllCheckbox();
+    }
+
+    //indeterminate is a dom property with no template binding, and the checked
+    //state can go stale when the selection is cleared while it is unchecked.
+    syncSelectAllCheckbox(){
+        const selectAllCheckbox = this.template.querySelector('.selectAllLogsCheckbox');
+
+        if(selectAllCheckbox){
+            selectAllCheckbox.checked = this.areAllLogsSelected;
+            selectAllCheckbox.indeterminate = this.isPartialSelection;
+        }
     }
     
     initializeCustomCss() { 
@@ -421,7 +437,14 @@ export default class LogList extends LightningElement{
     }
 
     handleSelectAllLogs(event){
-        const isSelected = event.currentTarget.checked;
+        this.selectEveryLog(event.currentTarget.checked);
+    }
+
+    handleClearSelection(){
+        this.selectEveryLog(false);
+    }
+
+    selectEveryLog(isSelected){
         this.logList.forEach(log => { log.isSelected = isSelected; });
     }
 

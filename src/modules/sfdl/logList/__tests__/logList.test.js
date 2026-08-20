@@ -110,6 +110,8 @@ const downloadAllButton = (element) =>
     element.shadowRoot.querySelector('.downloadLogsButton');
 const selectAllCheckbox = (element) =>
     element.shadowRoot.querySelector('.selectAllLogsCheckbox');
+const clearSelectionButton = (element) =>
+    element.shadowRoot.querySelector('.clearSelectionButton');
 const downloadLabel = (element) =>
     element.shadowRoot.querySelector('.sfdl-download-label').textContent;
 const downloadLogsComponent = (element) =>
@@ -173,7 +175,9 @@ describe('sfdl-log-list', () => {
         it('starts with nothing selected and offers to download everything', async () => {
             const element = await createLogList();
 
-            expect([...rowCheckboxes(element)].some((box) => box.checked)).toBe(false);
+            expect([...rowCheckboxes(element)].some((box) => box.checked)).toBe(
+                false
+            );
             expect(selectAllCheckbox(element).checked).toBe(false);
             expect(downloadLabel(element)).toBe('Download all logs');
         });
@@ -357,6 +361,72 @@ describe('sfdl-log-list', () => {
         });
     });
 
+    describe('clearing the selection', () => {
+        it('offers a clear link only while something is selected', async () => {
+            const element = await createLogList();
+            expect(clearSelectionButton(element)).toBeNull();
+
+            check(rowCheckboxes(element)[0], true);
+            await flushPromises();
+
+            expect(clearSelectionButton(element)).not.toBeNull();
+        });
+
+        it('unticks every log from a partial selection', async () => {
+            const element = await createLogList();
+            check(rowCheckboxes(element)[0], true);
+            await flushPromises();
+
+            click(clearSelectionButton(element));
+            await flushPromises();
+
+            expect([...rowCheckboxes(element)].some((box) => box.checked)).toBe(
+                false
+            );
+            expect(downloadLabel(element)).toBe('Download all logs');
+            expect(clearSelectionButton(element)).toBeNull();
+        });
+
+        it('resets the select all checkbox when it clears a partial selection', async () => {
+            const element = await createLogList();
+            check(rowCheckboxes(element)[0], true);
+            await flushPromises();
+
+            click(clearSelectionButton(element));
+            await flushPromises();
+
+            expect(selectAllCheckbox(element).checked).toBe(false);
+            expect(selectAllCheckbox(element).indeterminate).toBe(false);
+        });
+
+        it('unticks every log from a full selection', async () => {
+            const element = await createLogList();
+            check(selectAllCheckbox(element), true);
+            await flushPromises();
+
+            click(clearSelectionButton(element));
+            await flushPromises();
+
+            expect([...rowCheckboxes(element)].some((box) => box.checked)).toBe(
+                false
+            );
+            expect(selectAllCheckbox(element).checked).toBe(false);
+        });
+
+        it('goes back to downloading the whole list after a reset', async () => {
+            const element = await createLogList();
+            check(rowCheckboxes(element)[1], true);
+            await flushPromises();
+            click(clearSelectionButton(element));
+            await flushPromises();
+
+            click(downloadAllButton(element));
+            await flushPromises();
+
+            expect(downloadLogsComponent(element).logList.length).toBe(2);
+        });
+    });
+
     describe('download feedback', () => {
         it('shows how many logs have been retrieved so far', async () => {
             const element = await createLogList();
@@ -469,12 +539,16 @@ describe('sfdl-log-list', () => {
 
             check(selectAllCheckbox(element), true);
             await flushPromises();
-            expect([...rowCheckboxes(element)].every((box) => box.checked)).toBe(true);
+            expect(
+                [...rowCheckboxes(element)].every((box) => box.checked)
+            ).toBe(true);
             expect(downloadLabel(element)).toBe('Download selected logs (2)');
 
             check(selectAllCheckbox(element), false);
             await flushPromises();
-            expect([...rowCheckboxes(element)].some((box) => box.checked)).toBe(false);
+            expect([...rowCheckboxes(element)].some((box) => box.checked)).toBe(
+                false
+            );
             expect(downloadLabel(element)).toBe('Download all logs');
         });
 
@@ -488,6 +562,37 @@ describe('sfdl-log-list', () => {
             check(rowCheckboxes(element)[1], true);
             await flushPromises();
             expect(selectAllCheckbox(element).checked).toBe(true);
+        });
+
+        it('marks the select all checkbox as indeterminate on a partial selection', async () => {
+            const element = await createLogList();
+
+            check(rowCheckboxes(element)[0], true);
+            await flushPromises();
+
+            expect(selectAllCheckbox(element).indeterminate).toBe(true);
+            expect(selectAllCheckbox(element).checked).toBe(false);
+        });
+
+        it('drops the indeterminate mark once every log is ticked', async () => {
+            const element = await createLogList();
+
+            check(selectAllCheckbox(element), true);
+            await flushPromises();
+
+            expect(selectAllCheckbox(element).indeterminate).toBe(false);
+            expect(selectAllCheckbox(element).checked).toBe(true);
+        });
+
+        it('ticks the rest of the logs when the select all is used on a partial selection', async () => {
+            const element = await createLogList();
+            check(rowCheckboxes(element)[0], true);
+            await flushPromises();
+
+            check(selectAllCheckbox(element), true);
+            await flushPromises();
+
+            expect(downloadLabel(element)).toBe('Download selected logs (2)');
         });
 
         it('unticking a log brings the label back to the whole list', async () => {
