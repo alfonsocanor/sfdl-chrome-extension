@@ -55,16 +55,14 @@ export const css = `
         opacity: 1;
     }
 
-    .sfdl-log-row .downloadSingleLogButton img,
-    .sfdl-log-list-actions .downloadLogsButton img {
+    .sfdl-log-row .downloadSingleLogButton img {
         display: block;
         width: 100%;
         height: 100%;
         margin: 0 auto;
     }
 
-    .sfdl-log-row .downloadSingleLogButton:hover img,
-    .sfdl-log-list-actions .downloadLogsButton:hover img {
+    .sfdl-log-row .downloadSingleLogButton:hover img {
         filter: brightness(0.85);
     }
 
@@ -86,24 +84,48 @@ export const css = `
         padding-left: 7px;
     }
 
-    /* Both download controls sit on the background of the panel and of the log
-       line, rather than on a filled chip of their own. */
+    /* The icon and the count are one control: clicking either starts the same
+       download, and both go blue together on hover. */
     .sfdl-log-list-actions .downloadLogsButton {
-        flex: 0 0 auto;
+        flex: 0 1 auto;
         display: flex;
         align-items: center;
-        justify-content: center;
-        width: 18px;
-        height: 18px;
+        gap: 6px;
+        min-width: 0;
         padding: 0;
         background: transparent;
         border: none;
         box-shadow: none;
+        cursor: pointer;
+        font: inherit;
+        text-align: left;
+    }
+
+    .sfdl-download-action-icon {
+        flex: 0 0 auto;
+        display: block;
+        width: 18px;
+        height: 18px;
+        /* The glyph file is #0176d3, so grey is the resting state and hover
+           just drops the filter to get the blue back. */
+        filter: grayscale(1) brightness(1.15);
+    }
+
+    .sfdl-log-list-actions .downloadLogsButton:hover .sfdl-download-action-icon,
+    .sfdl-log-list-actions .downloadLogsButton:focus .sfdl-download-action-icon {
+        filter: none;
+    }
+
+    .sfdl-log-list-actions .downloadLogsButton:hover .sfdl-download-label,
+    .sfdl-log-list-actions .downloadLogsButton:focus .sfdl-download-label {
+        color: #0176d3;
+        text-decoration: underline;
     }
 
     .sfdl-log-list-actions .sfdl-download-label {
         flex: 0 1 auto;
         min-width: 0;
+        color: #747474;
     }
 
     .sfdl-clear-selection {

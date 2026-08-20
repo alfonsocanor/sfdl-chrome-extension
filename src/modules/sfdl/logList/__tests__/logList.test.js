@@ -112,8 +112,9 @@ const selectAllCheckbox = (element) =>
     element.shadowRoot.querySelector('.selectAllLogsCheckbox');
 const clearSelectionButton = (element) =>
     element.shadowRoot.querySelector('.clearSelectionButton');
-const downloadLabel = (element) =>
-    element.shadowRoot.querySelector('.sfdl-download-label').textContent;
+const downloadLabelElement = (element) =>
+    element.shadowRoot.querySelector('.sfdl-download-label');
+const downloadLabel = (element) => downloadLabelElement(element).textContent;
 const downloadLogsComponent = (element) =>
     element.shadowRoot.querySelector('sfdl-download-logs');
 
@@ -270,6 +271,28 @@ describe('sfdl-log-list', () => {
             await flushPromises();
 
             expect(downloadLogsComponent(element).logList.length).toBe(2);
+        });
+
+        it('starts the same download from the label next to the icon', async () => {
+            const element = await createLogList();
+
+            click(downloadLabelElement(element));
+            await flushPromises();
+
+            expect(downloadLogsComponent(element).logList.length).toBe(2);
+        });
+
+        it('starts the selected download from the label too', async () => {
+            const element = await createLogList();
+            check(rowCheckboxes(element)[0], true);
+            await flushPromises();
+
+            click(downloadLabelElement(element));
+            await flushPromises();
+
+            const downloadLogs = downloadLogsComponent(element);
+            expect(downloadLogs.logList.length).toBe(1);
+            expect(downloadLogs.logList[0].id).toBe('07L1');
         });
     });
 
