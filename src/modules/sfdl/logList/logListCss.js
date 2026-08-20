@@ -21,6 +21,8 @@ export const css = `
         width: 100%;
         gap: 6px;
         padding: 4px 6px;
+        background: #fafaf9;
+        border-radius: 0.25rem;
     }
 
     /* A bare button paints the browser default button-face grey. The row owns
@@ -53,22 +55,17 @@ export const css = `
         opacity: 1;
     }
 
-    /* The slds icon files are white shapes, which used to be readable only
-       because slds-is-selected painted the button #0176d3 behind them. Without
-       that chip they have to be recoloured here: invert(54.5%) turns #ffffff
-       into the #747474 slds uses for its icons. */
     .sfdl-log-row .downloadSingleLogButton img,
     .sfdl-log-list-actions .downloadLogsButton img {
         display: block;
         width: 100%;
         height: 100%;
         margin: 0 auto;
-        filter: invert(54.5%);
     }
 
-    .sfdl-log-row:hover .downloadSingleLogButton img,
+    .sfdl-log-row .downloadSingleLogButton:hover img,
     .sfdl-log-list-actions .downloadLogsButton:hover img {
-        filter: invert(70%);
+        filter: brightness(0.85);
     }
 
     .sfdl-log-checkbox {
@@ -105,7 +102,7 @@ export const css = `
     }
 
     .sfdl-log-list-actions .sfdl-download-label {
-        flex: 1 1 auto;
+        flex: 0 1 auto;
         min-width: 0;
     }
 

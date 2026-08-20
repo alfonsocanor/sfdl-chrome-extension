@@ -8,7 +8,9 @@ const APEX_LOG_IDS_QUERY_URL_SELECT_FROM = 'SELECT Id, LastModifiedDate, LogLeng
 const APEX_LOG_IDS_QUERY_URL_ORDER_BY = ' ORDER BY LastModifiedDate DESC';
 const KEYBOARD_ARROW_UP_CODE = 38;
 const KEYBOARD_ARROW_DOWN_CODE = 40;
-const DOWNLOAD_ICON = '/slds/icons/utility/download.svg';
+//The slds utility icons are white shapes, only readable on a filled button.
+//This one is the same glyph in the #0176d3 the rest of the buttons use.
+const DOWNLOAD_ICON = '/resources/downloadBlue.svg';
 const CLOSE_ICON = '/slds/icons/utility/close.svg';
 
 const processResponseBasedOnContentType = {

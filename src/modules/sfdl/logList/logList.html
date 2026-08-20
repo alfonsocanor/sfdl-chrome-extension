@@ -43,7 +43,7 @@
                 <button class="downloadLogsButton slds-button slds-button_icon" onclick={handleDownloadLogs} title={downloadButtonTitle}><img src={downloadIcon} alt="start download process"/></button>
                 <span class="sfdl-download-label" style="color:rgb(127 127 127);">{downloadLabel}</span>
                 <template if:true={thereAreSelectedLogs}>
-                    <button class="clearSelectionButton sfdl-clear-selection" onclick={handleClearSelection} title="Unselect every log">clear</button>
+                    <button class="clearSelectionButton sfdl-clear-selection" onclick={handleClearSelection} title="Unselect every log">unselect</button>
                 </template>
             </div>
         </template>
