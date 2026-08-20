@@ -40,8 +40,8 @@
         <template if:false={isDownloading}>
             <div class="sfdl-log-list-actions slds-size_1-of-1 slds-m-bottom_small slds-p-left_xx-small" style="text-align:left;">
                 <input type="checkbox" class="selectAllLogsCheckbox sfdl-log-checkbox" checked={areAllLogsSelected} onchange={handleSelectAllLogs} title={selectAllTitle}/>
-                <button style="width:22px; height:22px;" class="downloadLogsButton slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" onclick={handleDownloadLogs} title={downloadButtonTitle}><img src={downloadIcon} alt="start download process"/></button>
-                <span class="sfdl-download-label slds-p-left_x-small" style="color:rgb(127 127 127);">{downloadLabel}</span>
+                <button class="downloadLogsButton slds-button slds-button_icon" onclick={handleDownloadLogs} title={downloadButtonTitle}><img src={downloadIcon} alt="start download process"/></button>
+                <span class="sfdl-download-label" style="color:rgb(127 127 127);">{downloadLabel}</span>
                 <template if:true={thereAreSelectedLogs}>
                     <button class="clearSelectionButton sfdl-clear-selection" onclick={handleClearSelection} title="Unselect every log">clear</button>
                 </template>
@@ -69,7 +69,7 @@
                             {log.name}
                         </button>
                         <button 
-                            class="downloadSingleLogButton slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                            class="downloadSingleLogButton slds-button slds-button_icon"
                             data-logid={log.id}
                             onclick={handleDownloadSingleLog}
                             title="Download this log">
