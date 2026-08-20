@@ -38,7 +38,7 @@
     </template>
     <template if:true={thereAreLogsToDisplay}>
         <template if:false={isDownloading}>
-            <div class="sfdl-log-list-actions slds-size_1-of-1 slds-m-bottom_small slds-p-left_xx-small" style="text-align:left;">
+            <div class="sfdl-log-list-actions slds-size_1-of-1 slds-m-bottom_small" style="text-align:left;">
                 <input type="checkbox" class="selectAllLogsCheckbox sfdl-log-checkbox" checked={areAllLogsSelected} onchange={handleSelectAllLogs} title={selectAllTitle}/>
                 <button class="downloadLogsButton slds-button slds-button_icon" onclick={handleDownloadLogs} title={downloadButtonTitle}><img src={downloadIcon} alt="start download process"/></button>
                 <span class="sfdl-download-label" style="color:rgb(127 127 127);">{downloadLabel}</span>
