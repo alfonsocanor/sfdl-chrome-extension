@@ -609,4 +609,118 @@ describe('sfdl-compare-logs', () => {
             expect(sideList(element, 'left').leftLogId).toBe('07L1');
         });
     });
+
+    describe('swapping and folding', () => {
+        const GLOBEX = {
+            instanceUrl: 'https://globex.my.salesforce.com',
+            authToken: 'sid-globex'
+        };
+        const swapButton = (element) =>
+            element.shadowRoot.querySelector('.sfdl-compare-logs__swap');
+        const sideList = (element, side) =>
+            element.shadowRoot.querySelector(
+                `.sfdl-compare-logs__${side}-panel sfdl-compare-log-list`
+            );
+
+        it('cannot swap before a log is picked', async () => {
+            const element = await createCompareLogs();
+
+            expect(swapButton(element).disabled).toBe(true);
+        });
+
+        it('swaps the logs of both sides', async () => {
+            const element = await createCompareLogs();
+            await selectLog(pairList(element), LOG_ONE);
+            await selectLog(pairList(element), LOG_TWO);
+
+            swapButton(element).click();
+            await wait();
+
+            expect(selection(element)).toEqual(['07L2', '07L1']);
+            expect(diffViewer(element).leftLabel).toBe(LOG_TWO.name);
+        });
+
+        it('swaps a lonely log to the other side', async () => {
+            const element = await createCompareLogs();
+            await selectLog(pairList(element), LOG_ONE);
+
+            swapButton(element).click();
+            await wait();
+
+            expect(selection(element)).toEqual([undefined, '07L1']);
+        });
+
+        it('swaps the orgs along with the logs between two orgs', async () => {
+            const element = await createCompareLogs();
+            modeButton(element, 'twoOrgs').click();
+            await wait();
+            element.shadowRoot
+                .querySelector('.sfdl-compare-logs__right-panel sfdl-combobox')
+                .dispatchEvent(
+                    new CustomEvent('change', {
+                        detail: { value: GLOBEX.instanceUrl }
+                    })
+                );
+            await wait();
+            await selectLog(sideList(element, 'left'), LOG_ONE, 'left');
+
+            swapButton(element).click();
+            await wait();
+
+            expect(sideList(element, 'left').sessionInformation).toEqual(
+                GLOBEX
+            );
+            expect(
+                sideList(element, 'right').sessionInformation.instanceUrl
+            ).toBe(ACME.instanceUrl);
+            expect(sideList(element, 'right').rightLogId).toBe('07L1');
+            expect(diffViewer(element).rightLabel).toBe(
+                'acme \u00b7 ' + LOG_ONE.name
+            );
+        });
+
+        it('folds the log list and gives the room to the diff', async () => {
+            const element = await createCompareLogs();
+            const logsPanel =
+                element.shadowRoot.querySelector('sfdl-side-panel');
+
+            logsPanel.shadowRoot
+                .querySelector('.sfdl-side-panel__collapse')
+                .click();
+            await wait();
+
+            expect(
+                logsPanel.shadowRoot
+                    .querySelector('.sfdl-side-panel__content')
+                    .classList.contains('slds-hide')
+            ).toBe(true);
+            expect(pairList(element)).not.toBeNull();
+        });
+
+        it('folds either side of two orgs on its own', async () => {
+            const element = await createCompareLogs();
+            modeButton(element, 'twoOrgs').click();
+            await wait();
+            const panel = (side) =>
+                element.shadowRoot.querySelector(
+                    `.sfdl-compare-logs__${side}-panel`
+                );
+
+            panel('right')
+                .shadowRoot.querySelector('.sfdl-side-panel__collapse')
+                .click();
+            await wait();
+
+            expect(
+                panel('right')
+                    .shadowRoot.querySelector('.sfdl-side-panel__content')
+                    .classList.contains('slds-hide')
+            ).toBe(true);
+            expect(
+                panel('left')
+                    .shadowRoot.querySelector('.sfdl-side-panel__content')
+                    .classList.contains('slds-hide')
+            ).toBe(false);
+        });
+    });
 });

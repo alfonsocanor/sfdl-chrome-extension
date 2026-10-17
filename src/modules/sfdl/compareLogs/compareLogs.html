@@ -10,6 +10,16 @@
                 oncheckboxselection={handleOptionsChange}>
             </sfdl-log-manipulation-menu>
             <span class="sfdl-compare-logs__hint">{hint}</span>
+            <div class="sfdl-compare-logs__actions">
+                <button
+                    class="sfdl-compare-logs__swap slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                    style="width:22px;height:22px;padding:2px;"
+                    title={swapTitle}
+                    disabled={isSwapDisabled}
+                    onclick={handleSwap}>
+                    <img src={swapIcon} alt="swap sides"/>
+                </button>
+            </div>
         </div>
         <div class="sfdl-compare-logs__body">
             <template if:true={isSameOrg}>

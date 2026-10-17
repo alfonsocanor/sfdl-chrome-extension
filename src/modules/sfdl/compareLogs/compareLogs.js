@@ -11,6 +11,7 @@ const TWO_ORGS = 'twoOrgs';
 const LEFT = 'left';
 const RIGHT = 'right';
 const BUTTON_CLASS = 'slds-button';
+const SWAP_ICON = '/slds/icons/utility/switch.svg';
 const COMPARE_OPTION_NAMES = compareOptions().map(({ name }) => name);
 //Debug logs run to megabytes, only the latest ones are kept around.
 const LOG_BODIES_TO_KEEP = 20;
@@ -82,6 +83,7 @@ export default class CompareLogs extends LightningElement{
     leftBody;
     rightBody;
     comparisonSequence = 0;
+    swapIcon = SWAP_ICON;
 
     connectedCallback(){
         adoptStyleSheet(css);
@@ -213,6 +215,28 @@ export default class CompareLogs extends LightningElement{
 
             this.clearSides();
         }
+    }
+
+    get isSwapDisabled(){
+        return this.isTwoOrgs ?
+            !this.left && !this.right && !this.leftOrgSession && !this.rightOrgSession :
+            !this.left && !this.right;
+    }
+
+    get swapTitle(){
+        return this.isTwoOrgs ? 'Swap the orgs and the logs of both sides' : 'Swap the logs of both sides';
+    }
+
+    //Each side keeps its colour, what moves is the content: the logs and, when
+    //comparing two orgs, the orgs they come from.
+    handleSwap(){
+        [this.left, this.right] = [this.right, this.left];
+
+        if(this.isTwoOrgs){
+            [this.leftOrgSession, this.rightOrgSession] = [this.rightOrgSession, this.leftOrgSession];
+        }
+
+        this.refreshComparison();
     }
 
     handleOrgChange(event){
