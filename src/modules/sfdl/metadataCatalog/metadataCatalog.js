@@ -88,7 +88,9 @@ const LANGUAGE_BY_EXTENSION = {
     css: 'css',
     json: 'json',
     svg: 'xml',
-    xml: 'xml'
+    xml: 'xml',
+    //The documents the custom settings are written out as read like yaml.
+    setting: 'yaml'
 };
 
 //The editor language of a file, by its extension, and xml for the many

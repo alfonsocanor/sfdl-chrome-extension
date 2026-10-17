@@ -133,7 +133,8 @@ describe('metadataCatalog', () => {
             ['lwc/invoiceList/invoiceList.js', 'javascript'],
             ['lwc/invoiceList/invoiceList.css', 'css'],
             ['aura/Invoice/Invoice.cmp', 'html'],
-            ['classes/AccountService.cls-meta.xml', 'xml']
+            ['classes/AccountService.cls-meta.xml', 'xml'],
+            ['customSettings/Integration__c.setting', 'yaml']
         ])('reads %s as %s', (path, language) => {
             expect(languageForFile(path)).toBe(language);
         });
