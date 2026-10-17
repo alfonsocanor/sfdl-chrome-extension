@@ -402,35 +402,6 @@ export default class LogList extends LightningElement{
         this.enableSearchQueryIcon();
     }
 
-    logName2Display(apexLog){
-        return  apexLog.LogUser.Name + ' | ' + 
-                this.createOperationFormat(apexLog.Operation) + ' | ' +
-                apexLog.LogLength + 'bytes | ' +
-                this.createDatetimeFormat(new Date(apexLog.LastModifiedDate));
-    }
-
-    createOperationFormat(operation){
-        let regex = new RegExp('/', 'g');
-
-        if(operation.includes('__')){
-            return operation.replace(regex, '').split('__')[1];
-        }
-
-        return operation.replace(regex, '');
-    }
-
-    createDatetimeFormat(date){
-        return  this.padNumberValues(date.getDay(), 2,'0') + '/' +
-                this.padNumberValues(date.getMonth(), 2, '0') + ' ' +
-                this.padNumberValues(date.getHours(), 2, '0') + 'h' + 
-                this.padNumberValues(date.getMinutes(), 2, '0') + 'm' +
-                this.padNumberValues(date.getSeconds(), 2, '0') + 's';
-    }
-
-    padNumberValues(numberValue, padLength, padString){
-        return numberValue.toString().padStart(padLength, padString);
-    }
-
     addSelectionFlag2LogList(apexLogList){
         return (apexLogList ? apexLogList : []).map(apexLog => {
             return { ...apexLog, isSelected: false };

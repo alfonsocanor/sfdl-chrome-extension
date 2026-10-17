@@ -199,8 +199,8 @@ function createOperationFormat(operation){
 }
 
 function createDatetimeFormat(date){
-  return  padNumberValues(date.getDay(), 2,'0') + '/' +
-          padNumberValues(date.getMonth(), 2, '0') + ' ' +
+  return  padNumberValues(date.getDate(), 2,'0') + '/' +
+          padNumberValues(date.getMonth() + 1, 2, '0') + ' ' +
           padNumberValues(date.getHours(), 2, '0') + 'h' + 
           padNumberValues(date.getMinutes(), 2, '0') + 'm' +
           padNumberValues(date.getSeconds(), 2, '0') + 's';

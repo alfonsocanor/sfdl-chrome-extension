@@ -71,6 +71,36 @@ describe('background service worker', () => {
             );
         });
 
+        it('dates the log with its day of the month and its month', () => {
+            const { onMessage } = loadBackgroundWorker();
+            const sendResponse = jest.fn();
+            // 2026-10-17 is a Saturday: the weekday and a zero based month
+            // used to read 06/09 instead.
+            const lastModifiedDate = '2026-10-17T10:20:30.000Z';
+            const localDate = new Date(lastModifiedDate);
+            const pad = (value) => String(value).padStart(2, '0');
+
+            onMessage(
+                {
+                    message: 'getApexLogList',
+                    apexLogList: [
+                        apexLogRecord({ LastModifiedDate: lastModifiedDate })
+                    ]
+                },
+                {},
+                sendResponse
+            );
+
+            const [{ apexLogList }] = sendResponse.mock.calls[0];
+            expect(apexLogList[0].name).toContain(
+                '| ' +
+                    pad(localDate.getDate()) +
+                    '/' +
+                    pad(localDate.getMonth() + 1) +
+                    ' '
+            );
+        });
+
         it('keeps only the managed package suffix of a namespaced operation', () => {
             const { onMessage } = loadBackgroundWorker();
             const sendResponse = jest.fn();
