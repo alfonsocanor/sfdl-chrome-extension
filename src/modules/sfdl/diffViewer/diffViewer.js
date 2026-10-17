@@ -9,6 +9,8 @@ import { css } from './diffViewerCss';
 //theme would repaint whichever editor was created first.
 const THEME = 'customDawn';
 const APEX_LOG_LANGUAGE = 'apexlog';
+const PREVIOUS_ICON = '/slds/icons/utility/chevronup.svg';
+const NEXT_ICON = '/slds/icons/utility/chevrondown.svg';
 
 const DIFF_EDITOR_OPTIONS = {
     theme: THEME,
@@ -39,12 +41,27 @@ function prepareMonaco(){
     monaco.editor.defineTheme(THEME, monacoThemes[THEME]);
 }
 
+function linesOf(startLineNumber, endLineNumber){
+    //An end line of 0 means the change has no line on that side.
+    return endLineNumber ? endLineNumber - startLineNumber + 1 : 0;
+}
+
+function plural(count, word){
+    return count + ' ' + word + (count === 1 ? '' : 's');
+}
+
 //Shows the left content against the right content. A side left undefined is
 //not there at all, an empty string is a side that is there and empty.
 export default class DiffViewer extends LightningElement{
     @api emptyMessage = 'Pick what to compare';
     @api loading = false;
     @api height;
+    @api leftLabel;
+    @api rightLabel;
+    //A line about the comparison itself, shown above the diff.
+    @api notice;
+    //Replaces the explanation that follows "No differences."
+    @api identicalMessage;
 
     @api
     get leftContent(){
@@ -84,6 +101,16 @@ export default class DiffViewer extends LightningElement{
     originalModel;
     modifiedModel;
 
+    lineChanges = null;
+    isComputing = false;
+    currentChangeIndex = -1;
+    shouldRevealFirstChange = false;
+    isInline = false;
+    ignoreWhitespace = false;
+
+    previousIcon = PREVIOUS_ICON;
+    nextIcon = NEXT_ICON;
+
     connectedCallback(){
         this.isComponentConnected = true;
         adoptStyleSheet(css);
@@ -117,6 +144,67 @@ export default class DiffViewer extends LightningElement{
         return this._language || 'plaintext';
     }
 
+    get leftLabelToDisplay(){
+        return this.leftLabel || 'Left';
+    }
+
+    get rightLabelToDisplay(){
+        return this.rightLabel || 'Right';
+    }
+
+    get changeCount(){
+        return this.lineChanges ? this.lineChanges.length : 0;
+    }
+
+    get hasNoDifferences(){
+        return !this.isComputing && this.lineChanges !== null && this.changeCount === 0;
+    }
+
+    get isNavigationDisabled(){
+        return this.isComputing || !this.changeCount;
+    }
+
+    get changesLabel(){
+        if(this.isComputing || this.lineChanges === null){
+            return 'Comparing...';
+        }
+
+        if(!this.changeCount){
+            return 'No differences';
+        }
+
+        return this.currentChangeIndex >= 0 ?
+            (this.currentChangeIndex + 1) + ' of ' + plural(this.changeCount, 'difference') :
+            plural(this.changeCount, 'difference');
+    }
+
+    get changesTitle(){
+        if(!this.changeCount){
+            return '';
+        }
+
+        const leftLines = this.lineChanges.reduce((total, change) =>
+            total + linesOf(change.originalStartLineNumber, change.originalEndLineNumber), 0);
+        const rightLines = this.lineChanges.reduce((total, change) =>
+            total + linesOf(change.modifiedStartLineNumber, change.modifiedEndLineNumber), 0);
+
+        return plural(leftLines, 'line') + ' on the left and ' + plural(rightLines, 'line') + ' on the right differ';
+    }
+
+    get noDifferencesDetail(){
+        if(this.identicalMessage){
+            return this.identicalMessage;
+        }
+
+        if((this._leftContent || '') === (this._rightContent || '')){
+            return 'Both sides are identical.';
+        }
+
+        return this.ignoreWhitespace ?
+            'The sides only differ in whitespace.' :
+            'Both sides match line by line.';
+    }
+
     //A new content does not always render the template again, the template
     //only reads the sides it needs to tell whether there is anything to show.
     markContentStale(){
@@ -143,9 +231,19 @@ export default class DiffViewer extends LightningElement{
             prepareMonaco();
             this.diffEditor = monaco.editor.createDiffEditor(
                 this.template.querySelector('.sfdl-diff-editor'),
-                DIFF_EDITOR_OPTIONS
+                {
+                    ...DIFF_EDITOR_OPTIONS,
+                    renderSideBySide: !this.isInline,
+                    ignoreTrimWhitespace: this.ignoreWhitespace
+                }
             );
+            this.diffEditor.onDidUpdateDiff(() => this.handleDiffUpdated());
         }
+
+        this.lineChanges = null;
+        this.isComputing = true;
+        this.currentChangeIndex = -1;
+        this.shouldRevealFirstChange = true;
 
         const previousModels = [this.originalModel, this.modifiedModel];
 
@@ -155,6 +253,68 @@ export default class DiffViewer extends LightningElement{
 
         //Only once the editor holds the new models, or it would render disposed ones.
         previousModels.forEach(model => model && model.dispose());
+    }
+
+    handleDiffUpdated(){
+        const lineChanges = this.diffEditor && this.diffEditor.getLineChanges();
+
+        //Monaco reports the diff before it is computed as well.
+        if(!lineChanges){
+            return;
+        }
+
+        this.lineChanges = lineChanges;
+        this.isComputing = false;
+        this.currentChangeIndex = -1;
+
+        //A new comparison opens on its first difference.
+        if(this.shouldRevealFirstChange && lineChanges.length){
+            this.shouldRevealFirstChange = false;
+            this.goToChange(0);
+        }
+    }
+
+    handleNextChange(){
+        this.goToChange(this.currentChangeIndex < 0 ? 0 : this.currentChangeIndex + 1);
+    }
+
+    handlePreviousChange(){
+        this.goToChange(this.currentChangeIndex < 0 ? this.changeCount - 1 : this.currentChangeIndex - 1);
+    }
+
+    goToChange(index){
+        if(!this.changeCount){
+            return;
+        }
+
+        this.currentChangeIndex = (index + this.changeCount) % this.changeCount;
+
+        //The right side has every line of the diff in both layouts: in the
+        //inline one it is the only editor, and a change that only removed lines
+        //starts on the line right before the removed ones.
+        const change = this.lineChanges[this.currentChangeIndex];
+        const lineNumber = Math.max(1, change.modifiedStartLineNumber);
+        const modifiedEditor = this.diffEditor.getModifiedEditor();
+
+        modifiedEditor.revealLineInCenter(lineNumber);
+        modifiedEditor.setPosition({ lineNumber, column: 1 });
+    }
+
+    handleInlineChange(event){
+        this.isInline = event.target.checked;
+
+        if(this.diffEditor){
+            this.diffEditor.updateOptions({ renderSideBySide: !this.isInline });
+        }
+    }
+
+    handleWhitespaceChange(event){
+        this.ignoreWhitespace = event.target.checked;
+
+        if(this.diffEditor){
+            this.isComputing = true;
+            this.diffEditor.updateOptions({ ignoreTrimWhitespace: this.ignoreWhitespace });
+        }
     }
 
     disposeEditor(){
