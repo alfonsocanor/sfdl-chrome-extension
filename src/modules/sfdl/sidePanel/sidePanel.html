@@ -1,0 +1,46 @@
+<template>
+    <section class={panelClass} style={panelStyle}>
+        <template if:true={collapsed}>
+            <div class="sfdl-side-panel__strip">
+                <button
+                    class="sfdl-side-panel__expand slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                    style="width:22px;height:22px;padding:2px;"
+                    title={expandTitle}
+                    onclick={handleToggle}>
+                    <img src={expandIcon} alt={expandTitle}/>
+                </button>
+                <span class="sfdl-side-panel__strip-title" title={title}>{title}</span>
+            </div>
+        </template>
+        <!-- Hidden rather than removed while collapsed, so the content keeps
+             its state and its scroll position. -->
+        <div class={contentClass}>
+            <div class="slds-panel__header sfdl-side-panel__header">
+                <div class="sfdl-side-panel__titles">
+                    <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title={title}>
+                        <template if:true={side}>
+                            <span class={swatchClass}></span>
+                        </template>
+                        {title}
+                    </h2>
+                    <template if:true={subtitle}>
+                        <p class="sfdl-side-panel__subtitle slds-truncate" title={subtitle}>{subtitle}</p>
+                    </template>
+                </div>
+                <div class="sfdl-side-panel__actions">
+                    <slot name="actions"></slot>
+                    <button
+                        class="sfdl-side-panel__collapse slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                        style="width:22px;height:22px;padding:2px;"
+                        title={collapseTitle}
+                        onclick={handleToggle}>
+                        <img src={collapseIcon} alt={collapseTitle}/>
+                    </button>
+                </div>
+            </div>
+            <div class="sfdl-side-panel__body">
+                <slot></slot>
+            </div>
+        </div>
+    </section>
+</template>
