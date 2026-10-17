@@ -1,4 +1,8 @@
-import { manipulationDetailLogs } from 'sfdl/logDetailsManipulation';
+import {
+    manipulationDetailLogs,
+    compareOptions,
+    normalizeLogForCompare
+} from 'sfdl/logDetailsManipulation';
 
 const option = (name, checked = true) => ({ label: name, name, checked });
 
@@ -136,5 +140,120 @@ describe('manipulationDetailLogs', () => {
             '\t|USER_DEBUG|[2]|DEBUG|inside',
             '|CODE_UNIT_FINISHED|MyTrigger'
         ]);
+    });
+});
+
+describe('normalizeLogForCompare', () => {
+    const only = (name) =>
+        compareOptions().map((compareOption) => ({
+            ...compareOption,
+            checked: compareOption.name === name
+        }));
+
+    it('returns an empty string when there are no log details', () => {
+        expect(normalizeLogForCompare(undefined, compareOptions())).toBe('');
+    });
+
+    it('returns the log untouched without options', () => {
+        expect(normalizeLogForCompare('10:00:00.1 (1)|USER_DEBUG', [])).toBe(
+            '10:00:00.1 (1)|USER_DEBUG'
+        );
+    });
+
+    it('ignores timestamps by default, ids and addresses too, but not line numbers', () => {
+        expect(
+            compareOptions().map(({ name, checked }) => [name, checked])
+        ).toEqual([
+            ['ignoreTimestamps', true],
+            ['ignoreIdsAndAddresses', true],
+            ['ignoreLineNumbers', false]
+        ]);
+    });
+
+    it('drops the timestamp that opens each line and keeps the indentation', () => {
+        const logDetails = [
+            '60.0 APEX_CODE,FINEST;APEX_PROFILING,INFO',
+            '14:30:01.123 (123456789)|CODE_UNIT_STARTED|[EXTERNAL]|execute_anonymous_apex',
+            '\t14:30:01.125 (125000000)|USER_DEBUG|[2]|DEBUG|hello',
+            'a second line of the same debug message'
+        ].join('\n');
+
+        expect(
+            normalizeLogForCompare(logDetails, only('ignoreTimestamps'))
+        ).toBe(
+            [
+                '60.0 APEX_CODE,FINEST;APEX_PROFILING,INFO',
+                'CODE_UNIT_STARTED|[EXTERNAL]|execute_anonymous_apex',
+                '\tUSER_DEBUG|[2]|DEBUG|hello',
+                'a second line of the same debug message'
+            ].join('\n')
+        );
+    });
+
+    it('replaces record ids but keeps their key prefix', () => {
+        const logDetails =
+            'SOQL_EXECUTE_END|[4]|Rows:1 001xx000003DGbYAAW 0035g00000AbCdE';
+
+        expect(
+            normalizeLogForCompare(logDetails, only('ignoreIdsAndAddresses'))
+        ).toBe('SOQL_EXECUTE_END|[4]|Rows:1 001<id> 003<id>');
+    });
+
+    it('leaves words and long numbers that only look like ids alone', () => {
+        const logDetails =
+            'METHOD_ENTRY|[1]|01p5g00000AbCdE|AccountService.recalculate 123450123456789 ABCDE0FGHIJKLMNOPQRSTUV';
+
+        expect(
+            normalizeLogForCompare(logDetails, only('ignoreIdsAndAddresses'))
+        ).toBe(
+            'METHOD_ENTRY|[1]|01p<id>|AccountService.recalculate 123450123456789 ABCDE0FGHIJKLMNOPQRSTUV'
+        );
+    });
+
+    it('replaces heap addresses', () => {
+        expect(
+            normalizeLogForCompare(
+                'VARIABLE_ASSIGNMENT|[7]|this|{}|0x7d7d4e32',
+                only('ignoreIdsAndAddresses')
+            )
+        ).toBe('VARIABLE_ASSIGNMENT|[7]|this|{}|0x<address>');
+    });
+
+    it('replaces the code line numbers when asked to', () => {
+        expect(
+            normalizeLogForCompare(
+                'USER_DEBUG|[12]|DEBUG|value [3]',
+                only('ignoreLineNumbers')
+            )
+        ).toBe('USER_DEBUG|[n]|DEBUG|value [3]');
+    });
+
+    it('makes two runs of the same transaction identical', () => {
+        const run = (time, nanos, recordId, address) =>
+            [
+                time +
+                    ' (' +
+                    nanos +
+                    ')|DML_BEGIN|[8]|Op:Insert|Type:Account|Rows:1',
+                time +
+                    ' (' +
+                    nanos +
+                    ')|VARIABLE_ASSIGNMENT|[9]|a|' +
+                    recordId +
+                    '|' +
+                    address
+            ].join('\n');
+
+        expect(
+            normalizeLogForCompare(
+                run('09:00:00.100', '1000', '001xx000003DGbYAAW', '0x1a2b'),
+                compareOptions()
+            )
+        ).toBe(
+            normalizeLogForCompare(
+                run('17:45:12.987', '98765', '001xx000004XyZaAAW', '0x9f9f'),
+                compareOptions()
+            )
+        );
     });
 });

@@ -97,3 +97,49 @@ export function manipulationDetailLogs(logDetails, manipulationOptions){
     
     return logDetailsFormatted ? logDetailsFormatted.join('\n') : logDetails;
 }
+
+//Two runs of the same transaction never share a timestamp, a record id or a
+//heap address, so compared as they are every line of one log differs from the
+//other. Each option rewrites the part of the line that can only ever differ.
+const LOG_LINE_TIMESTAMP = /^(\t*)\d{1,2}:\d{2}:\d{2}\.\d+ \(\d+\)\|/gm;
+//15 or 18 characters, the sixth one reserved and always 0, and at least one
+//letter so a long number is not taken for an id. The key prefix is kept, it
+//tells which object the record belongs to.
+const SALESFORCE_ID = /(?<![a-zA-Z0-9])(?=[0-9]*[a-zA-Z])([a-zA-Z0-9]{3})[a-zA-Z0-9]{2}0[a-zA-Z0-9]{9}(?:[a-zA-Z0-9]{3})?(?![a-zA-Z0-9])/g;
+const HEAP_ADDRESS = /\b0x[0-9a-f]+\b/gi;
+const CODE_LINE_NUMBER = /\|\[\d+\]\|/g;
+
+const compareNormalizations = {
+    ignoreTimestamps(logDetails){
+        return logDetails.replace(LOG_LINE_TIMESTAMP, '$1');
+    },
+
+    ignoreIdsAndAddresses(logDetails){
+        return logDetails
+            .replace(SALESFORCE_ID, '$1<id>')
+            .replace(HEAP_ADDRESS, '0x<address>');
+    },
+
+    ignoreLineNumbers(logDetails){
+        return logDetails.replace(CODE_LINE_NUMBER, '|[n]|');
+    }
+}
+
+export function compareOptions(){
+    return [
+        { label: 'Ignore timestamps', name: 'ignoreTimestamps', checked: true },
+        { label: 'Ignore record Ids and heap addresses', name: 'ignoreIdsAndAddresses', checked: true },
+        { label: 'Ignore code line numbers', name: 'ignoreLineNumbers', checked: false }
+    ];
+}
+
+export function normalizeLogForCompare(logDetails, options){
+    if(!logDetails){
+        return '';
+    }
+
+    return (options || []).reduce((normalizedLog, option) => {
+        const normalization = compareNormalizations[option.name];
+        return option.checked && normalization ? normalization(normalizedLog) : normalizedLog;
+    }, logDetails);
+}
