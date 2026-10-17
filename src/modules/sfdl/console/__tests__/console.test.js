@@ -134,6 +134,57 @@ describe('sfdl-console', () => {
             expect(setPicklistValues).toHaveBeenCalledWith([]);
         });
 
+        it('waits for every session before publishing the list', async () => {
+            const cookies = [
+                { domain: 'slow.my.salesforce.com', value: 'sid-slow' },
+                { domain: 'fast.my.salesforce.com', value: 'sid-fast' }
+            ];
+            chrome.cookies.getAll.mockImplementation(
+                () =>
+                    new Promise((resolve) =>
+                        setTimeout(() => resolve(cookies), 0)
+                    )
+            );
+            // The last cookie answers first, which used to publish a list that
+            // was still missing the slow org.
+            global.fetch = jest.fn(
+                (url) =>
+                    new Promise((resolve) =>
+                        setTimeout(
+                            () => resolve({ status: 200 }),
+                            url.includes('slow') ? 30 : 0
+                        )
+                    )
+            );
+            const { setPicklistValues } = spyOnPicklistValues();
+
+            await wait(50);
+
+            expect(setPicklistValues).toHaveBeenCalledTimes(1);
+            expect(setPicklistValues).toHaveBeenCalledWith([
+                { label: 'https://slow.my.salesforce.com', value: 'sid-slow' },
+                { label: 'https://fast.my.salesforce.com', value: 'sid-fast' }
+            ]);
+        });
+
+        it('offers each domain once even when it holds several sessions', async () => {
+            mockOrgSessions(
+                [
+                    { domain: 'acme.my.salesforce.com', value: 'sid-old' },
+                    { domain: 'acme.my.salesforce.com', value: 'sid-new' }
+                ],
+                ['acme.my.salesforce.com']
+            );
+            const { setPicklistValues } = spyOnPicklistValues();
+
+            await wait();
+            await wait();
+
+            expect(setPicklistValues).toHaveBeenCalledWith([
+                { label: 'https://acme.my.salesforce.com', value: 'sid-old' }
+            ]);
+        });
+
         it('renders the log list for the org that was picked', async () => {
             const element = await createConsole();
 

@@ -77,23 +77,29 @@ export default class Console extends LightningElement {
         }
     }
 
+    //Every cookie is validated at once and the list is published when the last
+    //answer is in. Publishing from inside each validation raced: whichever
+    //answer came back for the last cookie published the list, even when the
+    //others were still on their way.
     async createCookiesSession4SfdlPicklist(allSalesforceCookies){
-        
-        allSalesforceCookies.forEach(async (cookie, index) => {
-            let isAValidSession = await isSessionInformationValid(cookie);
-            if(isAValidSession){
-                this.picklistInformation.push({ label: 'https://' + cookie.domain, value:cookie.value });
-            }
+        const validatedCookies = await Promise.all(allSalesforceCookies.map(async cookie => ({
+            cookie,
+            isAValidSession: await isSessionInformationValid(cookie)
+        })));
 
-            if(index === allSalesforceCookies.length - 1) {
-                this.setPicklistValues();
-            }
-        });
+        //A domain can hold more than one sid cookie, the first valid one is enough.
+        const domains = new Set();
+        this.picklistInformation = validatedCookies
+            .filter(({ cookie, isAValidSession }) => {
+                if(!isAValidSession || domains.has(cookie.domain)){
+                    return false;
+                }
+                domains.add(cookie.domain);
+                return true;
+            })
+            .map(({ cookie }) => ({ label: 'https://' + cookie.domain, value: cookie.value }));
 
-        //Send empty picklist values even if there are no sessions stored in cookies
-        if(!allSalesforceCookies.length) {
-            this.setPicklistValues();    
-        }
+        this.setPicklistValues();
     }
 
     setPicklistValues() {
