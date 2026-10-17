@@ -1,4 +1,11 @@
 export const css = `
+    sfdl-side-panel {
+        display: block;
+        flex: 0 0 auto;
+        height: 100%;
+        min-height: 0;
+    }
+
     .sfdl-side-panel {
         display: flex;
         flex: 0 0 auto;

@@ -1,3 +1,36 @@
 <template>
-    
+    <div class="sfdl-compare-logs" style={containerStyle}>
+        <div class="sfdl-compare-logs__toolbar">
+            <div class="slds-button-group" role="group">
+                <button class={sameOrgButtonClass} data-mode="sameOrg" aria-pressed={isSameOrgPressed} onclick={handleModeChange}>Same org</button>
+                <button class={twoOrgsButtonClass} data-mode="twoOrgs" aria-pressed={isTwoOrgsPressed} onclick={handleModeChange}>Two orgs</button>
+            </div>
+            <span class="sfdl-compare-logs__hint">{hint}</span>
+        </div>
+        <div class="sfdl-compare-logs__body">
+            <template if:true={isSameOrg}>
+                <sfdl-side-panel class="sfdl-compare-logs__pair-panel" title="Logs" subtitle={headerOrgLabel} dock="left">
+                    <sfdl-compare-log-list
+                        mode="pair"
+                        session-information={sessionInformation}
+                        left-log-id={leftLogId}
+                        right-log-id={rightLogId}
+                        no-session-message="Pick an org in Organization Instances above"
+                        onlogselect={handleLogSelect}>
+                    </sfdl-compare-log-list>
+                </sfdl-side-panel>
+            </template>
+            <div class="sfdl-compare-logs__diff">
+                <sfdl-diff-viewer
+                    language="apexlog"
+                    left-label={leftLabel}
+                    right-label={rightLabel}
+                    left-content={leftContent}
+                    right-content={rightContent}
+                    loading={isLoadingLogs}
+                    empty-message={emptyMessage}>
+                </sfdl-diff-viewer>
+            </div>
+        </div>
+    </div>
 </template>

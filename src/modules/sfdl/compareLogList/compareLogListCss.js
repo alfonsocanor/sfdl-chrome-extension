@@ -1,4 +1,8 @@
 export const css = `
+    sfdl-compare-log-list {
+        display: block;
+    }
+
     .sfdl-compare-log-list {
         display: flex;
         flex-direction: column;

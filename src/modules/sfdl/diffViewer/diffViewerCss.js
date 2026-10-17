@@ -1,4 +1,9 @@
 export const css = `
+    sfdl-diff-viewer {
+        display: block;
+        min-width: 0;
+    }
+
     .sfdl-diff-viewer {
         display: flex;
         flex-direction: column;
