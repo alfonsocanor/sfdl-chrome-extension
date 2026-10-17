@@ -29,8 +29,6 @@ module.exports = {
         '!src/prismjs/**',
         '!src/**/__tests__/**',
         '!src/**/*Css.js',
-        '!src/modules/util/monacoThemes/**',
-        // Dead module: it exports a name it never defines, so it cannot be parsed.
-        '!src/modules/sfdl/salesforceConnection/**'
+        '!src/modules/util/monacoThemes/**'
     ]
 };
