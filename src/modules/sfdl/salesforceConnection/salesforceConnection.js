@@ -110,6 +110,16 @@ export async function getCommonApiVersion(...sessions){
     return commonVersions[commonVersions.length - 1];
 }
 
+//The fields the log names are built from, see logName2Display in background.js.
+const APEX_LOG_SELECT = 'SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation, Status FROM ApexLog ';
+const APEX_LOG_ORDER_BY = 'ORDER BY LastModifiedDate DESC';
+
+//The where clause of the header filter replaces the default order, the way
+//the analyse log list reads it.
+export function getApexLogs(sessionInformation){
+    return queryAll(sessionInformation, APEX_LOG_SELECT + (sessionInformation.queryWhere || APEX_LOG_ORDER_BY), { tooling: true });
+}
+
 export function describeGlobal(sessionInformation, apiVersion){
     return salesforceRequest(sessionInformation, dataApiPath(apiVersion) + '/sobjects/');
 }

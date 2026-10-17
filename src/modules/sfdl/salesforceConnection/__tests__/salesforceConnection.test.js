@@ -6,6 +6,7 @@ import {
     getCommonApiVersion,
     describeGlobal,
     describeSObject,
+    getApexLogs,
     mapWithConcurrency
 } from 'sfdl/salesforceConnection';
 
@@ -190,6 +191,35 @@ describe('salesforceConnection', () => {
                     encodeURIComponent(
                         "SELECT Id FROM ApexLog WHERE Status = 'Success'"
                     )
+            );
+        });
+    });
+
+    describe('getApexLogs', () => {
+        it('queries the logs on the tooling api, newest first', async () => {
+            global.fetch = jest.fn(() =>
+                jsonResponse({ done: true, records: [{ Id: '07L1' }] })
+            );
+
+            await expect(getApexLogs(ACME)).resolves.toEqual([{ Id: '07L1' }]);
+            expect(decodeURIComponent(fetch.mock.calls[0][0])).toBe(
+                'https://acme.my.salesforce.com/services/data/v51.0/tooling/query/?q=' +
+                    'SELECT Id, LastModifiedDate, LogLength, LogUser.Name, Operation, Status FROM ApexLog ORDER BY LastModifiedDate DESC'
+            );
+        });
+
+        it('takes the where clause of the session instead of the default order', async () => {
+            global.fetch = jest.fn(() =>
+                jsonResponse({ done: true, records: [] })
+            );
+
+            await getApexLogs({
+                ...ACME,
+                queryWhere: 'WHERE LogLength > 1000'
+            });
+
+            expect(decodeURIComponent(fetch.mock.calls[0][0])).toMatch(
+                /FROM ApexLog WHERE LogLength > 1000$/
             );
         });
     });

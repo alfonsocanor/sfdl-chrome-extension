@@ -1,0 +1,55 @@
+<template>
+    <div class="sfdl-compare-log-list">
+        <div class="sfdl-compare-log-list__toolbar">
+            <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left sfdl-compare-log-list__filter">
+                <img class="slds-input__icon slds-input__icon_left sfdl-compare-log-list__filter-icon" src={searchIcon} alt=""/>
+                <input
+                    type="search"
+                    class="slds-input sfdl-compare-log-filter"
+                    placeholder="Filter by user, operation, date..."
+                    value={filterText}
+                    disabled={isFilterDisabled}
+                    oninput={handleFilter}/>
+            </div>
+            <button
+                class="sfdl-compare-log-refresh slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                style="width:22px;height:22px;padding:2px;"
+                title="Query the logs again"
+                disabled={isRefreshDisabled}
+                onclick={handleRefresh}>
+                <img src={refreshIcon} alt="query the logs again"/>
+            </button>
+        </div>
+        <template if:true={countLabel}>
+            <p class="sfdl-compare-log-list__count">{countLabel}</p>
+        </template>
+        <template if:true={message}>
+            <p class={messageClass}>{message}</p>
+        </template>
+        <div class="sfdl-compare-log-list__logs">
+            <template if:true={isLoading}>
+                <sfdl-spinner></sfdl-spinner>
+            </template>
+            <ul class="slds-has-dividers_around slds-has-block-links">
+                <template for:each={visibleLogs} for:item="log">
+                    <li key={log.id} class="slds-item">
+                        <div class={log.rowClass}>
+                            <button
+                                class="sfdl-compare-log-name"
+                                data-logid={log.id}
+                                title={log.title}
+                                onclick={handleRowClick}
+                                onkeydown={handleRowKeyDown}>
+                                {log.name}
+                            </button>
+                            <template if:true={isPairMode}>
+                                <button class={log.leftPillClass} data-logid={log.id} data-side="left" title="Compare this log on the left" onclick={handlePillClick}>L</button>
+                                <button class={log.rightPillClass} data-logid={log.id} data-side="right" title="Compare this log on the right" onclick={handlePillClick}>R</button>
+                            </template>
+                        </div>
+                    </li>
+                </template>
+            </ul>
+        </div>
+    </div>
+</template>
