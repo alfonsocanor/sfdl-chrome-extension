@@ -1,6 +1,7 @@
 /*global chrome*/
 import { track, api, LightningElement  } from 'lwc';
 import { showToastEvent, setKeyValueLocalStorage } from 'sfdl/utils';
+import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { css } from './logListCss';
 
 const APEX_LOG_IDS_QUERY_URL = '/services/data/v51.0/tooling/query/?q=';
@@ -121,13 +122,8 @@ export default class LogList extends LightningElement{
         }
     }
     
-    initializeCustomCss() { 
-        // Check if the custom CSS is already loaded
-        if (!document.adoptedStyleSheets.some(sheet => sheet instanceof CSSStyleSheet && sheet.replaceSync === css.replaceSync)) {
-            const sheet = new CSSStyleSheet();
-            sheet.replaceSync(css);
-            document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-        }
+    initializeCustomCss() {
+        adoptStyleSheet(css);
     }
 
     showAllLogs() {

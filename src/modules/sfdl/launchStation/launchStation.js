@@ -1,5 +1,6 @@
 /*global chrome*/
 import { LightningElement } from 'lwc';
+import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { css } from './launchStationCss';
 
 export default class App extends LightningElement {
@@ -28,13 +29,8 @@ export default class App extends LightningElement {
         }, 50);
     }
 
-    initializeCustomCss() { 
-        // Check if the custom CSS is already loaded
-        if (!document.adoptedStyleSheets.some(sheet => sheet instanceof CSSStyleSheet && sheet.replaceSync === css.replaceSync)) {
-            const sheet = new CSSStyleSheet();
-            sheet.replaceSync(css);
-            document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-        }
+    initializeCustomCss() {
+        adoptStyleSheet(css);
     }
 
     openSfdlAppInANewTab(){

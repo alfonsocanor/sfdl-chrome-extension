@@ -183,6 +183,17 @@ describe('sfdl-log-list', () => {
             expect(downloadLabel(element)).toBe('Download all logs');
         });
 
+        it('adopts its stylesheet once however often it renders', async () => {
+            const element = await createLogList();
+
+            check(rowCheckboxes(element)[0], true);
+            await flushPromises();
+            check(rowCheckboxes(element)[1], true);
+            await flushPromises();
+
+            expect(document.adoptedStyleSheets).toHaveLength(1);
+        });
+
         it('informs the user when the org has no logs', async () => {
             mockSalesforceFetch([]);
 

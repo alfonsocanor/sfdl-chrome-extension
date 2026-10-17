@@ -1,5 +1,6 @@
 import { createElement } from 'lwc';
 import Toast from 'sfdl/toast';
+import { adoptStyleSheet } from 'sfdl/styleSheets';
 
 function createToast(action = 'success') {
     const element = createElement('sfdl-toast', { is: Toast });
@@ -39,6 +40,15 @@ describe('sfdl-toast', () => {
                 element.shadowRoot.querySelector('.slds-icon_container img').src
             ).toContain(icon);
         });
+    });
+
+    it('keeps the stylesheets the other components adopted', () => {
+        const consoleSheet = adoptStyleSheet('.sfdl-console {}');
+
+        createToast();
+
+        expect(document.adoptedStyleSheets).toContain(consoleSheet);
+        expect(document.adoptedStyleSheets).toHaveLength(2);
     });
 
     it('animates in shortly after being rendered', () => {

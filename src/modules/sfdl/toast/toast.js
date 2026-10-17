@@ -1,4 +1,5 @@
 import { LightningElement, api } from 'lwc';
+import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { css } from './toastCss';
 
 const SLDS_TOAST_THEME = {
@@ -29,9 +30,7 @@ export default class Toast extends LightningElement{
     iconAction;
 
     connectedCallback() {
-        const sheet = new CSSStyleSheet();
-        sheet.replaceSync(css);
-        document.adoptedStyleSheets = [sheet];
+        adoptStyleSheet(css);
     }
 
     renderedCallback(){

@@ -1,5 +1,6 @@
 import { LightningElement, track } from 'lwc';
 import { getAllCookiesFromSalesforceDomain, isSessionInformationValid } from 'sfdl/authentication';
+import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { css } from './consoleCss';
 
 const ANALYSE_LOGS_TAB = 'analyseLogs';
@@ -68,13 +69,8 @@ export default class Console extends LightningElement {
         this.createCookiesSession4SfdlPicklist(allSalesforceCookies);
     }
 
-    initializeCustomCss() { 
-        // Check if the custom CSS is already loaded
-        if (!document.adoptedStyleSheets.some(sheet => sheet instanceof CSSStyleSheet && sheet.replaceSync === css.replaceSync)) {
-            const sheet = new CSSStyleSheet();
-            sheet.replaceSync(css);
-            document.adoptedStyleSheets = [...document.adoptedStyleSheets, sheet];
-        }
+    initializeCustomCss() {
+        adoptStyleSheet(css);
     }
 
     //Every cookie is validated at once and the list is published when the last
