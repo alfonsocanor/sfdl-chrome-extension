@@ -74,6 +74,12 @@ export const css = `
         color: var(--sfdl-right-text);
     }
 
+    /* slds has no swap glyph: its sort arrows, turned on their side, point
+       to both sides. */
+    .sfdl-swap-icon {
+        transform: rotate(90deg);
+    }
+
     .sfdl-status-badge {
         display: inline-block;
         flex: 0 0 auto;

@@ -8,7 +8,7 @@ import { css } from './compareOrgsCss';
 
 const LEFT = 'left';
 const RIGHT = 'right';
-const SWAP_ICON = '/slds/icons/utility/switch.svg';
+const SWAP_ICON = '/slds/icons/utility/sort.svg';
 const REFRESH_ICON = '/slds/icons/utility/refresh.svg';
 
 function domainOf(instanceUrl){

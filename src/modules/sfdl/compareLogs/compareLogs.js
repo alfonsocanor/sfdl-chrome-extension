@@ -11,7 +11,7 @@ const TWO_ORGS = 'twoOrgs';
 const LEFT = 'left';
 const RIGHT = 'right';
 const BUTTON_CLASS = 'slds-button';
-const SWAP_ICON = '/slds/icons/utility/switch.svg';
+const SWAP_ICON = '/slds/icons/utility/sort.svg';
 const COMPARE_OPTION_NAMES = compareOptions().map(({ name }) => name);
 //Debug logs run to megabytes, only the latest ones are kept around.
 const LOG_BODIES_TO_KEEP = 20;
