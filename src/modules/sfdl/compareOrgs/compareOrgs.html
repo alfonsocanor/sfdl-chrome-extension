@@ -53,6 +53,35 @@
             </label>
         </div>
         <div class="sfdl-compare-orgs__body">
+            <sfdl-side-panel class="sfdl-compare-orgs__results-panel" title="Components" subtitle={resultsSubtitle} dock="left" width="24rem">
+                <template if:true={showProgress}>
+                    <div class="sfdl-compare-orgs__progress">
+                        <template for:each={sideProgress} for:item="progress">
+                            <div key={progress.side} class="sfdl-compare-orgs__progress-row" data-side={progress.side}>
+                                <span class={progress.swatchClass}></span>
+                                <span class="sfdl-compare-orgs__progress-org" title={progress.orgName}>{progress.orgName}</span>
+                                <span class={progress.statusClass} title={progress.statusTitle}>{progress.statusLabel}</span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
+                <template if:true={errorMessage}>
+                    <p class="sfdl-compare-orgs__error">{errorMessage}</p>
+                </template>
+                <template if:true={hasCompared}>
+                    <sfdl-compare-results
+                        entries={entries}
+                        selected-path={selectedPath}
+                        type-label={typeLabel}
+                        left-name={leftOrgName}
+                        right-name={rightOrgName}
+                        oncomponentselect={handleComponentSelect}>
+                    </sfdl-compare-results>
+                </template>
+                <template if:true={showPanelHint}>
+                    <p class="sfdl-compare-orgs__hint">{panelHint}</p>
+                </template>
+            </sfdl-side-panel>
             <div class="sfdl-compare-orgs__diff">
                 <sfdl-diff-viewer
                     left-label={leftOrgName}

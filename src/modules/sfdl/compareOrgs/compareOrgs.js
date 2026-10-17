@@ -15,6 +15,14 @@ function domainOf(instanceUrl){
     return instanceUrl ? instanceUrl.replace('https://', '') : '';
 }
 
+//What the Metadata API and the custom settings reader report, in words.
+const STATUS_LABELS = {
+    Pending: 'Queued in the org',
+    InProgress: 'Retrieving',
+    Succeeded: 'Retrieved',
+    'Already retrieved': 'Retrieved earlier, refresh to retrieve again'
+};
+
 function emptySideState(){
     return { status: '', error: undefined, problems: [] };
 }
@@ -52,6 +60,7 @@ export default class CompareOrgs extends LightningElement{
     errorMessage;
     apiVersion;
     entries = [];
+    selectedPath;
     leftState = emptySideState();
     rightState = emptySideState();
 
@@ -108,6 +117,60 @@ export default class CompareOrgs extends LightningElement{
         return countByStatus(this.entries);
     }
 
+    get typeLabel(){
+        return this.selectedType ? this.selectedType.label : 'components';
+    }
+
+    get resultsSubtitle(){
+        if(!this.selectedType){
+            return 'Nothing compared yet';
+        }
+
+        return this.selectedType.label + (this.apiVersion ? ' \u00b7 API ' + this.apiVersion : '');
+    }
+
+    get sideProgress(){
+        return [LEFT, RIGHT].map(side => {
+            const state = this[side + 'State'];
+            const problemCount = state.problems.length;
+            let statusLabel = STATUS_LABELS[state.status] || state.status || 'Waiting';
+            let statusClass = 'sfdl-compare-orgs__progress-status';
+            let statusTitle = statusLabel;
+
+            if(state.error){
+                statusLabel = state.error;
+                statusTitle = state.error;
+                statusClass += ' sfdl-compare-orgs__progress-status_error';
+            } else if(problemCount && !this.isComparing){
+                statusLabel = problemCount + (problemCount === 1 ? ' component' : ' components') + ' could not be retrieved';
+                statusTitle = state.problems.join('\n');
+                statusClass += ' sfdl-compare-orgs__progress-status_warning';
+            }
+
+            return {
+                side,
+                orgName: this[side + 'OrgName'],
+                swatchClass: 'sfdl-side-swatch sfdl-side-swatch_' + side,
+                statusLabel,
+                statusTitle,
+                statusClass
+            };
+        });
+    }
+
+    //While retrieving, and afterwards when an org failed or left components out.
+    get showProgress(){
+        return this.isComparing || [this.leftState, this.rightState].some(state => state.error || state.problems.length);
+    }
+
+    get showPanelHint(){
+        return !!this.panelHint && !this.isComparing && !this.hasCompared && !this.errorMessage;
+    }
+
+    get panelHint(){
+        return this.canCompare ? '' : this.emptyMessage;
+    }
+
     get emptyMessage(){
         if(!this.leftOrgSession || !this.rightOrgSession){
             return 'Pick the two orgs to compare.';
@@ -155,8 +218,13 @@ export default class CompareOrgs extends LightningElement{
         this.runComparison();
     }
 
+    handleComponentSelect(event){
+        this.selectedPath = event.detail.path;
+    }
+
     resetResults(){
         this.entries = [];
+        this.selectedPath = undefined;
         this.errorMessage = undefined;
         this.hasCompared = false;
         this.leftState = emptySideState();

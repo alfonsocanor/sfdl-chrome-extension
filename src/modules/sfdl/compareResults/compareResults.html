@@ -1,0 +1,52 @@
+<template>
+    <div class="sfdl-compare-results">
+        <template if:true={summaryMessage}>
+            <div class={summaryClass} role="status">{summaryMessage}</div>
+        </template>
+        <div class="sfdl-compare-results__filters" role="group" aria-label="Show the components by status">
+            <template for:each={statusFilters} for:item="filter">
+                <button
+                    key={filter.value}
+                    class={filter.buttonClass}
+                    data-filter={filter.value}
+                    aria-pressed={filter.ariaPressed}
+                    title={filter.title}
+                    onclick={handleStatusFilter}>
+                    {filter.label} {filter.count}
+                </button>
+            </template>
+        </div>
+        <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left sfdl-compare-results__search">
+            <img class="slds-input__icon slds-input__icon_left sfdl-compare-results__search-icon" src={searchIcon} alt=""/>
+            <input
+                type="search"
+                class="slds-input sfdl-compare-results__filter"
+                placeholder="Filter by name or folder"
+                value={searchText}
+                oninput={handleSearch}/>
+        </div>
+        <template if:true={emptyListMessage}>
+            <p class="sfdl-compare-results__empty">{emptyListMessage}</p>
+        </template>
+        <ul class="sfdl-compare-results__list">
+            <template for:each={visibleRows} for:item="row">
+                <li key={row.path}>
+                    <button
+                        class={row.rowClass}
+                        data-path={row.path}
+                        title={row.title}
+                        onclick={handleRowClick}
+                        onkeydown={handleRowKeyDown}>
+                        <span class={row.badgeClass}>{row.statusLabel}</span>
+                        <span class="sfdl-compare-results__path">
+                            <span class="sfdl-compare-results__folder">{row.folder}</span>{row.fileName}
+                        </span>
+                    </button>
+                </li>
+            </template>
+        </ul>
+        <template if:true={hasMoreRows}>
+            <button class="sfdl-compare-results__more" onclick={handleShowMore}>{showMoreLabel}</button>
+        </template>
+    </div>
+</template>

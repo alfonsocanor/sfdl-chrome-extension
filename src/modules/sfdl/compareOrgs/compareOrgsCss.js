@@ -56,6 +56,59 @@ export const css = `
         min-height: 0;
     }
 
+    .sfdl-compare-orgs__progress {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 8px;
+        padding: 6px 8px;
+        border: 1px solid var(--sfdl-neutral-border);
+        border-radius: 0.25rem;
+        background: #ffffff;
+        font-size: 12px;
+    }
+
+    .sfdl-compare-orgs__progress-row {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0;
+    }
+
+    .sfdl-compare-orgs__progress-org {
+        flex: 1 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sfdl-compare-orgs__progress-status {
+        flex: 0 1 auto;
+        min-width: 0;
+        color: #747474;
+        text-align: right;
+    }
+
+    .sfdl-compare-orgs__progress-status_error {
+        color: #b33a3a;
+    }
+
+    .sfdl-compare-orgs__progress-status_warning {
+        color: #8c4b02;
+    }
+
+    .sfdl-compare-orgs__error {
+        margin-bottom: 8px;
+        color: #b33a3a;
+    }
+
+    .sfdl-compare-orgs__hint {
+        padding: 8px;
+        color: #747474;
+        text-align: center;
+    }
+
     .sfdl-compare-orgs__diff {
         flex: 1 1 auto;
         min-width: 0;

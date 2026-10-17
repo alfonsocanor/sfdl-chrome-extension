@@ -288,4 +288,208 @@ describe('sfdl-compare-orgs', () => {
             );
         });
     });
+
+    describe('results', () => {
+        const results = (element) =>
+            element.shadowRoot.querySelector('sfdl-compare-results');
+        const resultsPanel = (element) =>
+            element.shadowRoot.querySelector(
+                '.sfdl-compare-orgs__results-panel'
+            );
+        const progressRows = (element) => [
+            ...element.shadowRoot.querySelectorAll(
+                '.sfdl-compare-orgs__progress-row'
+            )
+        ];
+        const progressText = (element) =>
+            progressRows(element).map((row) =>
+                [
+                    row.dataset.side,
+                    row.querySelector('.sfdl-compare-orgs__progress-org')
+                        .textContent,
+                    row.querySelector('.sfdl-compare-orgs__progress-status')
+                        .textContent
+                ].join(' | ')
+            );
+
+        async function compare(type = 'ApexClass') {
+            const element = await createCompareOrgs();
+            await pick(element, 'right-org', GLOBEX.instanceUrl);
+            await pick(element, 'type', type);
+            return element;
+        }
+
+        it('lists every component of both orgs with its status', async () => {
+            mockOrgFiles({
+                [ACME.instanceUrl]: {
+                    'classes/A.cls': text('same'),
+                    'classes/B.cls': text('left')
+                },
+                [GLOBEX.instanceUrl]: {
+                    'classes/A.cls': text('same'),
+                    'classes/B.cls': text('right'),
+                    'classes/C.cls': text('new')
+                }
+            });
+
+            const element = await compare();
+
+            expect(
+                results(element).entries.map(
+                    ({ path, status }) => path + ' ' + status
+                )
+            ).toEqual([
+                'classes/A.cls identical',
+                'classes/B.cls different',
+                'classes/C.cls right'
+            ]);
+            expect(results(element).typeLabel).toBe('Apex Classes');
+            expect(results(element).leftName).toBe('acme.my.salesforce.com');
+            expect(resultsPanel(element).subtitle).toBe(
+                'Apex Classes \u00b7 API 60.0'
+            );
+        });
+
+        it('shows how far each org got while retrieving', async () => {
+            retrieveOrgFiles.mockImplementation(
+                (session, type, apiVersion, options) => {
+                    options.onStatus(
+                        session.instanceUrl === ACME.instanceUrl
+                            ? 'InProgress'
+                            : 'Pending'
+                    );
+                    return new Promise(() => {});
+                }
+            );
+
+            const element = await compare();
+
+            expect(progressText(element)).toEqual([
+                'left | acme.my.salesforce.com | Retrieving',
+                'right | globex.my.salesforce.com | Queued in the org'
+            ]);
+            expect(results(element)).toBeNull();
+        });
+
+        it('shows why an org could not be retrieved', async () => {
+            retrieveOrgFiles.mockImplementation((session) =>
+                session.instanceUrl === GLOBEX.instanceUrl
+                    ? Promise.reject(
+                          new Error('INVALID_SESSION_ID: Invalid Session ID')
+                      )
+                    : Promise.resolve({ files: new Map(), problems: [] })
+            );
+
+            const element = await compare();
+
+            expect(progressText(element)[1]).toBe(
+                'right | globex.my.salesforce.com | INVALID_SESSION_ID: Invalid Session ID'
+            );
+            expect(
+                progressRows(element)[1]
+                    .querySelector('.sfdl-compare-orgs__progress-status')
+                    .classList.contains(
+                        'sfdl-compare-orgs__progress-status_error'
+                    )
+            ).toBe(true);
+            expect(results(element)).toBeNull();
+        });
+
+        it('says which components an org could not hand back', async () => {
+            retrieveOrgFiles.mockImplementation((session) =>
+                Promise.resolve({
+                    files: new Map([['classes/A.cls', text('a')]]),
+                    problems:
+                        session.instanceUrl === ACME.instanceUrl
+                            ? [
+                                  'Entity of type ApexClass named Gone cannot be found',
+                                  'Another one'
+                              ]
+                            : []
+                })
+            );
+
+            const element = await compare();
+            const leftStatus = progressRows(element)[0].querySelector(
+                '.sfdl-compare-orgs__progress-status'
+            );
+
+            expect(leftStatus.textContent).toBe(
+                '2 components could not be retrieved'
+            );
+            expect(leftStatus.title).toBe(
+                'Entity of type ApexClass named Gone cannot be found\nAnother one'
+            );
+            expect(results(element)).not.toBeNull();
+        });
+
+        it('shows why the orgs could not be compared at all', async () => {
+            getCommonApiVersion.mockRejectedValue(
+                new Error('The orgs do not share any api version')
+            );
+
+            const element = await compare();
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-compare-orgs__error')
+                    .textContent
+            ).toBe('The orgs do not share any api version');
+        });
+
+        it('drops a comparison that a newer one overtook', async () => {
+            const pendingApexClasses = [];
+            retrieveOrgFiles.mockImplementation((session, type) =>
+                type.key === 'ApexClass'
+                    ? new Promise((resolve) =>
+                          pendingApexClasses.push(() =>
+                              resolve({
+                                  files: new Map([
+                                      ['classes/Old.cls', text('a')]
+                                  ]),
+                                  problems: []
+                              })
+                          )
+                      )
+                    : Promise.resolve({
+                          files: new Map([['triggers/New.trigger', text('b')]]),
+                          problems: []
+                      })
+            );
+            const element = await compare('ApexClass');
+
+            await pick(element, 'type', 'ApexTrigger');
+            pendingApexClasses.forEach((finish) => finish());
+            await wait();
+
+            expect(results(element).entries.map(({ path }) => path)).toEqual([
+                'triggers/New.trigger'
+            ]);
+        });
+
+        it('marks the component picked in the list', async () => {
+            mockOrgFiles({
+                [ACME.instanceUrl]: { 'classes/A.cls': text('a') }
+            });
+            const element = await compare();
+
+            results(element).dispatchEvent(
+                new CustomEvent('componentselect', {
+                    detail: { path: 'classes/A.cls' }
+                })
+            );
+            await wait();
+
+            expect(results(element).selectedPath).toBe('classes/A.cls');
+        });
+
+        it('explains in the panel what is missing before comparing', async () => {
+            const element = await createCompareOrgs();
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-compare-orgs__hint')
+                    .textContent
+            ).toBe('Pick the two orgs to compare.');
+            expect(resultsPanel(element).subtitle).toBe('Nothing compared yet');
+        });
+    });
 });
