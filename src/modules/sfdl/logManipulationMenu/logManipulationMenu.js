@@ -1,4 +1,5 @@
 import { LightningElement, api } from 'lwc';
+import { compareOptions } from 'sfdl/logDetailsManipulation';
 
 export default class DropdownMenu extends LightningElement{
     manipulationOptions = [
@@ -19,9 +20,18 @@ export default class DropdownMenu extends LightningElement{
         }
     ];
     
+    //The compare tabs add the options that only make sense between two logs.
+    @api withCompareOptions = false;
+
     filterIcon = '/slds/icons/utility/filterList.svg';
     closeIcon = '/slds/icons/utility/close.svg';
     isMenuOpen = true;
+
+    connectedCallback(){
+        if(this.withCompareOptions){
+            this.manipulationOptions = [...this.manipulationOptions, ...compareOptions()];
+        }
+    }
 
     handleOpenCloseMenu(){
         this.isMenuOpen = !this.isMenuOpen;

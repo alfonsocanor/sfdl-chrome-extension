@@ -5,6 +5,10 @@
                 <button class={sameOrgButtonClass} data-mode="sameOrg" aria-pressed={isSameOrgPressed} onclick={handleModeChange}>Same org</button>
                 <button class={twoOrgsButtonClass} data-mode="twoOrgs" aria-pressed={isTwoOrgsPressed} onclick={handleModeChange}>Two orgs</button>
             </div>
+            <sfdl-log-manipulation-menu
+                with-compare-options="true"
+                oncheckboxselection={handleOptionsChange}>
+            </sfdl-log-manipulation-menu>
             <span class="sfdl-compare-logs__hint">{hint}</span>
         </div>
         <div class="sfdl-compare-logs__body">

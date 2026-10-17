@@ -120,6 +120,10 @@ export function getApexLogs(sessionInformation){
     return queryAll(sessionInformation, APEX_LOG_SELECT + (sessionInformation.queryWhere || APEX_LOG_ORDER_BY), { tooling: true });
 }
 
+export function getApexLogBody(sessionInformation, apexLog){
+    return salesforceRequest(sessionInformation, apexLog.attributes.url + '/Body', { responseType: 'text' });
+}
+
 export function describeGlobal(sessionInformation, apiVersion){
     return salesforceRequest(sessionInformation, dataApiPath(apiVersion) + '/sobjects/');
 }

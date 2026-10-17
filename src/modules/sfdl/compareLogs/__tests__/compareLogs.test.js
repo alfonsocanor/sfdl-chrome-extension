@@ -1,5 +1,8 @@
 import { createElement } from 'lwc';
 import CompareLogs from 'sfdl/compareLogs';
+import { showToastEvent } from 'sfdl/utils';
+
+jest.mock('sfdl/utils', () => ({ showToastEvent: jest.fn() }));
 
 const ACME = {
     instanceUrl: 'https://acme.my.salesforce.com',
@@ -228,6 +231,210 @@ describe('sfdl-compare-logs', () => {
             await wait();
 
             expect(selection(element)).toEqual([undefined, undefined]);
+        });
+    });
+
+    describe('comparing the bodies', () => {
+        // The bodies are cached for the whole session, every test gets logs
+        // of its own.
+        let logCount = 0;
+        function newLog() {
+            logCount++;
+            const id = '07LB' + logCount;
+            return {
+                id,
+                name: 'log ' + id,
+                attributes: {
+                    url: '/services/data/v51.0/tooling/sobjects/ApexLog/' + id
+                }
+            };
+        }
+
+        function mockBodies(bodies, { failing = [], delays = {} } = {}) {
+            global.fetch = jest.fn((url) => {
+                const logId = Object.keys(bodies).find((id) =>
+                    url.endsWith('/' + id + '/Body')
+                );
+                if (!logId) {
+                    return Promise.resolve({
+                        status: 200,
+                        json: () => Promise.resolve({ done: true, records: [] })
+                    });
+                }
+                const response = failing.includes(logId)
+                    ? {
+                          status: 404,
+                          statusText: 'Not Found',
+                          json: () =>
+                              Promise.resolve([
+                                  { message: 'The log was deleted' }
+                              ])
+                      }
+                    : {
+                          status: 200,
+                          text: () => Promise.resolve(bodies[logId])
+                      };
+                return new Promise((resolve) =>
+                    setTimeout(() => resolve(response), delays[logId] || 0)
+                );
+            });
+        }
+
+        const bodyDownloads = () =>
+            fetch.mock.calls.filter(([url]) => url.endsWith('/Body'));
+
+        it('compares both logs once both are picked', async () => {
+            const [one, two] = [newLog(), newLog()];
+            mockBodies({
+                [one.id]: '10:00:00.1 (1)|USER_DEBUG|[1]|DEBUG|same',
+                [two.id]: '11:30:00.9 (999)|USER_DEBUG|[1]|DEBUG|same'
+            });
+            const element = await createCompareLogs();
+
+            await selectLog(pairList(element), one);
+            expect(diffViewer(element).leftContent).toBeUndefined();
+
+            await selectLog(pairList(element), two);
+            await wait();
+
+            expect(diffViewer(element).leftContent).toBe(
+                'USER_DEBUG|[1]|DEBUG|same'
+            );
+            expect(diffViewer(element).rightContent).toBe(
+                'USER_DEBUG|[1]|DEBUG|same'
+            );
+            expect(diffViewer(element).language).toBe('apexlog');
+        });
+
+        it('starts downloading the first log before the second one is picked', async () => {
+            const [one] = [newLog()];
+            mockBodies({ [one.id]: 'body' });
+            const element = await createCompareLogs();
+
+            await selectLog(pairList(element), one);
+
+            expect(bodyDownloads()).toHaveLength(1);
+        });
+
+        it('shows the spinner while the bodies download', async () => {
+            const [one, two] = [newLog(), newLog()];
+            mockBodies(
+                { [one.id]: 'a', [two.id]: 'b' },
+                { delays: { [two.id]: 30 } }
+            );
+            const element = await createCompareLogs();
+
+            await selectLog(pairList(element), one);
+            await selectLog(pairList(element), two);
+            expect(diffViewer(element).loading).toBe(true);
+
+            await wait(50);
+            expect(diffViewer(element).loading).toBe(false);
+        });
+
+        it('downloads a log only once', async () => {
+            const [one, two, three] = [newLog(), newLog(), newLog()];
+            mockBodies({ [one.id]: 'a', [two.id]: 'b', [three.id]: 'c' });
+            const element = await createCompareLogs();
+
+            await selectLog(pairList(element), one);
+            await selectLog(pairList(element), two);
+            await selectLog(pairList(element), three);
+            await selectLog(pairList(element), two, 'right');
+            await wait();
+
+            expect(bodyDownloads()).toHaveLength(3);
+            expect(diffViewer(element).rightContent).toBe('b');
+        });
+
+        it('filters both logs again when an option changes, without downloading them', async () => {
+            const [one, two] = [newLog(), newLog()];
+            const body = [
+                '10:00:00.1 (1)|HEAP_ALLOCATE|[5]|Bytes:3',
+                '10:00:00.2 (2)|USER_DEBUG|[6]|DEBUG|hello'
+            ].join('\n');
+            mockBodies({ [one.id]: body, [two.id]: body });
+            const element = await createCompareLogs();
+            await selectLog(pairList(element), one);
+            await selectLog(pairList(element), two);
+            await wait();
+
+            expect(diffViewer(element).leftContent).toBe(
+                'USER_DEBUG|[6]|DEBUG|hello'
+            );
+
+            const menu = element.shadowRoot.querySelector(
+                'sfdl-log-manipulation-menu'
+            );
+            menu.shadowRoot.querySelector('sfdl-checkbox').dispatchEvent(
+                new CustomEvent('checkboxselection', {
+                    detail: {
+                        function2Execute:
+                            'removeHeapAllocateAndStatementExecute',
+                        checked: false
+                    }
+                })
+            );
+            menu.shadowRoot.querySelector('sfdl-checkbox').dispatchEvent(
+                new CustomEvent('checkboxselection', {
+                    detail: {
+                        function2Execute: 'ignoreTimestamps',
+                        checked: false
+                    }
+                })
+            );
+            await wait();
+
+            expect(diffViewer(element).leftContent).toBe(body);
+            expect(bodyDownloads()).toHaveLength(2);
+        });
+
+        it('takes a log off and says why when it cannot be downloaded', async () => {
+            const [one, two] = [newLog(), newLog()];
+            mockBodies({ [one.id]: 'a', [two.id]: 'b' }, { failing: [two.id] });
+            const element = await createCompareLogs();
+
+            await selectLog(pairList(element), one);
+            await selectLog(pairList(element), two);
+            await wait();
+
+            expect(showToastEvent).toHaveBeenCalledWith(
+                'error',
+                'The log could not be downloaded',
+                'The log was deleted'
+            );
+            expect(selection(element)).toEqual([one.id, undefined]);
+            expect(diffViewer(element).loading).toBe(false);
+        });
+
+        it('shows the latest pick when an earlier download comes back late', async () => {
+            const [one, slow, fast] = [newLog(), newLog(), newLog()];
+            mockBodies(
+                { [one.id]: 'a', [slow.id]: 'slow', [fast.id]: 'fast' },
+                { delays: { [slow.id]: 40 } }
+            );
+            const element = await createCompareLogs();
+
+            await selectLog(pairList(element), one);
+            await selectLog(pairList(element), slow);
+            await selectLog(pairList(element), fast);
+            await wait(60);
+
+            expect(diffViewer(element).rightContent).toBe('fast');
+        });
+
+        it('empties the diff when a side is taken off', async () => {
+            const [one, two] = [newLog(), newLog()];
+            mockBodies({ [one.id]: 'a', [two.id]: 'b' });
+            const element = await createCompareLogs();
+            await selectLog(pairList(element), one);
+            await selectLog(pairList(element), two);
+            await wait();
+
+            await selectLog(pairList(element), two);
+
+            expect(diffViewer(element).leftContent).toBeUndefined();
+            expect(diffViewer(element).rightContent).toBeUndefined();
         });
     });
 });

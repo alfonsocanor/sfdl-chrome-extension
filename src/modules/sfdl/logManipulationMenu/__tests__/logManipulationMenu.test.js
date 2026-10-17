@@ -1,10 +1,11 @@
 import { createElement } from 'lwc';
 import LogManipulationMenu from 'sfdl/logManipulationMenu';
 
-function createMenu() {
+function createMenu(properties = {}) {
     const element = createElement('sfdl-log-manipulation-menu', {
         is: LogManipulationMenu
     });
+    Object.assign(element, properties);
     document.body.appendChild(element);
     return element;
 }
@@ -23,6 +24,21 @@ describe('sfdl-log-manipulation-menu', () => {
                 checked: true
             }),
             expect.objectContaining({ name: 'removeFlowNoise', checked: true })
+        ]);
+    });
+
+    it('adds the compare options when the compare tab asks for them', () => {
+        const element = createMenu({ withCompareOptions: true });
+
+        expect(
+            element.currentManipulationOptions().map(({ name }) => name)
+        ).toEqual([
+            'methodEntryExitCodeUnitStartedFinished2Hierarchy',
+            'removeHeapAllocateAndStatementExecute',
+            'removeFlowNoise',
+            'ignoreTimestamps',
+            'ignoreIdsAndAddresses',
+            'ignoreLineNumbers'
         ]);
     });
 

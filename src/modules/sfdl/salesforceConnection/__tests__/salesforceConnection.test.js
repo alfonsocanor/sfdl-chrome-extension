@@ -7,6 +7,7 @@ import {
     describeGlobal,
     describeSObject,
     getApexLogs,
+    getApexLogBody,
     mapWithConcurrency
 } from 'sfdl/salesforceConnection';
 
@@ -220,6 +221,28 @@ describe('salesforceConnection', () => {
 
             expect(decodeURIComponent(fetch.mock.calls[0][0])).toMatch(
                 /FROM ApexLog WHERE LogLength > 1000$/
+            );
+        });
+    });
+
+    describe('getApexLogBody', () => {
+        it('downloads the body of the log as text', async () => {
+            global.fetch = jest.fn(() =>
+                Promise.resolve({
+                    status: 200,
+                    text: () => Promise.resolve('body')
+                })
+            );
+
+            await expect(
+                getApexLogBody(ACME, {
+                    attributes: {
+                        url: '/services/data/v51.0/tooling/sobjects/ApexLog/07L1'
+                    }
+                })
+            ).resolves.toBe('body');
+            expect(fetch.mock.calls[0][0]).toBe(
+                'https://acme.my.salesforce.com/services/data/v51.0/tooling/sobjects/ApexLog/07L1/Body'
             );
         });
     });
