@@ -1,7 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import { getCommonApiVersion } from 'sfdl/salesforceConnection';
-import { getMetadataType, metadataTypeOptions } from 'sfdl/metadataCatalog';
-import { compareFileSets, countByStatus, retrieveOrgFiles } from 'sfdl/orgCompare';
+import { getMetadataType, metadataTypeOptions, languageForFile } from 'sfdl/metadataCatalog';
+import { compareFileSets, countByStatus, retrieveOrgFiles, IDENTICAL } from 'sfdl/orgCompare';
 import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { adoptCompareTheme } from 'sfdl/compareTheme';
 import { css } from './compareOrgsCss';
@@ -22,6 +22,17 @@ const STATUS_LABELS = {
     Succeeded: 'Retrieved',
     'Already retrieved': 'Retrieved earlier, refresh to retrieve again'
 };
+
+//A binary file cannot be shown, its size stands for it in the diff.
+function contentOf(file){
+    if(!file){
+        return undefined;
+    }
+
+    return file.isBinary ?
+        'Binary file of ' + Math.round(file.content.length * 3 / 4) + ' bytes' :
+        file.content;
+}
 
 function emptySideState(){
     return { status: '', error: undefined, problems: [] };
@@ -115,6 +126,55 @@ export default class CompareOrgs extends LightningElement{
 
     get counts(){
         return countByStatus(this.entries);
+    }
+
+    get selectedEntry(){
+        return this.entries.find(entry => entry.path === this.selectedPath);
+    }
+
+    get leftContent(){
+        return this.selectedEntry ? contentOf(this.selectedEntry.left) : undefined;
+    }
+
+    get rightContent(){
+        return this.selectedEntry ? contentOf(this.selectedEntry.right) : undefined;
+    }
+
+    get selectedLanguage(){
+        const entry = this.selectedEntry;
+
+        if(!entry || (entry.left || entry.right).isBinary){
+            return 'plaintext';
+        }
+
+        return languageForFile(entry.path, (entry.left || entry.right).content);
+    }
+
+    get selectedNotice(){
+        const entry = this.selectedEntry;
+
+        if(!entry){
+            return undefined;
+        }
+
+        if(!entry.right){
+            return entry.path + ' is only in ' + this.leftOrgName + '.';
+        }
+
+        if(!entry.left){
+            return entry.path + ' is only in ' + this.rightOrgName + '.';
+        }
+
+        if(entry.left.isBinary || entry.right.isBinary){
+            return entry.path + ' is a binary file, its contents ' +
+                (entry.status === IDENTICAL ? 'are the same' : 'differ') + ' in both orgs.';
+        }
+
+        return undefined;
+    }
+
+    get identicalMessage(){
+        return this.selectedEntry ? this.selectedEntry.path + ' is identical in both orgs.' : undefined;
     }
 
     get typeLabel(){
@@ -218,6 +278,15 @@ export default class CompareOrgs extends LightningElement{
         this.runComparison();
     }
 
+    //The comparison opens on its first change, or on its first component when
+    //the orgs hold the same of everything.
+    openFirstComponent(){
+        const firstChange = this.entries.find(entry => entry.status !== IDENTICAL);
+        const firstEntry = firstChange || this.entries[0];
+
+        this.selectedPath = firstEntry ? firstEntry.path : undefined;
+    }
+
     handleComponentSelect(event){
         this.selectedPath = event.detail.path;
     }
@@ -286,6 +355,7 @@ export default class CompareOrgs extends LightningElement{
             if(leftResult.status === 'fulfilled' && rightResult.status === 'fulfilled'){
                 this.entries = compareFileSets(leftResult.value.files, rightResult.value.files);
                 this.hasCompared = true;
+                this.openFirstComponent();
             }
         } catch(error){
             if(sequence !== this.runSequence){

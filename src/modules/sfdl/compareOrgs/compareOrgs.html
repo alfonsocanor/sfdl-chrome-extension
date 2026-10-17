@@ -86,6 +86,11 @@
                 <sfdl-diff-viewer
                     left-label={leftOrgName}
                     right-label={rightOrgName}
+                    left-content={leftContent}
+                    right-content={rightContent}
+                    language={selectedLanguage}
+                    notice={selectedNotice}
+                    identical-message={identicalMessage}
                     loading={isComparing}
                     empty-message={emptyMessage}>
                 </sfdl-diff-viewer>

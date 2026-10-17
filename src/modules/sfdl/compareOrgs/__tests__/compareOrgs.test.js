@@ -492,4 +492,154 @@ describe('sfdl-compare-orgs', () => {
             expect(resultsPanel(element).subtitle).toBe('Nothing compared yet');
         });
     });
+
+    describe('the diff of a component', () => {
+        const results = (element) =>
+            element.shadowRoot.querySelector('sfdl-compare-results');
+
+        async function compare(filesByOrg, type = 'ApexClass') {
+            mockOrgFiles(filesByOrg);
+            const element = await createCompareOrgs();
+            await pick(element, 'right-org', GLOBEX.instanceUrl);
+            await pick(element, 'type', type);
+            return element;
+        }
+
+        async function open(element, path) {
+            results(element).dispatchEvent(
+                new CustomEvent('componentselect', { detail: { path } })
+            );
+            await wait();
+        }
+
+        it('opens on the first change as soon as the orgs are compared', async () => {
+            const element = await compare({
+                [ACME.instanceUrl]: {
+                    'classes/A.cls': text('same'),
+                    'classes/B.cls': text('public class B { left }')
+                },
+                [GLOBEX.instanceUrl]: {
+                    'classes/A.cls': text('same'),
+                    'classes/B.cls': text('public class B { right }')
+                }
+            });
+
+            expect(results(element).selectedPath).toBe('classes/B.cls');
+            expect(diffViewer(element).leftContent).toBe(
+                'public class B { left }'
+            );
+            expect(diffViewer(element).rightContent).toBe(
+                'public class B { right }'
+            );
+            expect(diffViewer(element).language).toBe('apex');
+            expect(diffViewer(element).notice).toBeUndefined();
+        });
+
+        it('opens on the first component when the orgs are identical', async () => {
+            const element = await compare(
+                {
+                    [ACME.instanceUrl]: {
+                        'pages/Invoice.page': text('<apex:page/>')
+                    },
+                    [GLOBEX.instanceUrl]: {
+                        'pages/Invoice.page': text('<apex:page/>')
+                    }
+                },
+                'ApexPage'
+            );
+
+            expect(diffViewer(element).leftContent).toBe('<apex:page/>');
+            expect(diffViewer(element).rightContent).toBe('<apex:page/>');
+            expect(diffViewer(element).language).toBe('html');
+            expect(diffViewer(element).identicalMessage).toBe(
+                'pages/Invoice.page is identical in both orgs.'
+            );
+        });
+
+        it('shows the component picked in the list', async () => {
+            const element = await compare({
+                [ACME.instanceUrl]: {
+                    'classes/A.cls': text('a'),
+                    'classes/A.cls-meta.xml': text(
+                        '<?xml version="1.0"?><ApexClass/>'
+                    )
+                },
+                [GLOBEX.instanceUrl]: {
+                    'classes/A.cls': text('b'),
+                    'classes/A.cls-meta.xml': text(
+                        '<?xml version="1.0"?><ApexClass/>'
+                    )
+                }
+            });
+
+            await open(element, 'classes/A.cls-meta.xml');
+
+            expect(diffViewer(element).language).toBe('xml');
+            expect(diffViewer(element).leftContent).toContain('<ApexClass/>');
+        });
+
+        it('says which org holds a component the other one lacks', async () => {
+            const element = await compare({
+                [ACME.instanceUrl]: { 'classes/OnlyLeft.cls': text('left') },
+                [GLOBEX.instanceUrl]: { 'classes/OnlyRight.cls': text('right') }
+            });
+
+            expect(diffViewer(element).leftContent).toBe('left');
+            expect(diffViewer(element).rightContent).toBeUndefined();
+            expect(diffViewer(element).notice).toBe(
+                'classes/OnlyLeft.cls is only in acme.my.salesforce.com.'
+            );
+
+            await open(element, 'classes/OnlyRight.cls');
+
+            expect(diffViewer(element).leftContent).toBeUndefined();
+            expect(diffViewer(element).notice).toBe(
+                'classes/OnlyRight.cls is only in globex.my.salesforce.com.'
+            );
+        });
+
+        it('stands a binary file in for its size', async () => {
+            const element = await compare(
+                {
+                    [ACME.instanceUrl]: {
+                        'staticresources/logo.resource': {
+                            content: 'AAAAAAAA',
+                            isBinary: true
+                        }
+                    },
+                    [GLOBEX.instanceUrl]: {
+                        'staticresources/logo.resource': {
+                            content: 'BBBBBBBBBBBB',
+                            isBinary: true
+                        }
+                    }
+                },
+                'StaticResource'
+            );
+
+            expect(diffViewer(element).leftContent).toBe(
+                'Binary file of 6 bytes'
+            );
+            expect(diffViewer(element).rightContent).toBe(
+                'Binary file of 9 bytes'
+            );
+            expect(diffViewer(element).language).toBe('plaintext');
+            expect(diffViewer(element).notice).toBe(
+                'staticresources/logo.resource is a binary file, its contents differ in both orgs.'
+            );
+        });
+
+        it('empties the diff when a new comparison starts', async () => {
+            const element = await compare({
+                [ACME.instanceUrl]: { 'classes/A.cls': text('a') },
+                [GLOBEX.instanceUrl]: { 'classes/A.cls': text('b') }
+            });
+            retrieveOrgFiles.mockImplementation(() => new Promise(() => {}));
+
+            await pick(element, 'type', 'ApexTrigger');
+
+            expect(diffViewer(element).leftContent).toBeUndefined();
+            expect(diffViewer(element).rightContent).toBeUndefined();
+        });
+    });
 });
