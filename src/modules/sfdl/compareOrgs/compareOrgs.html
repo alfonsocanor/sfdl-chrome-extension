@@ -42,10 +42,10 @@
             <button
                 class="sfdl-compare-orgs__refresh sfdl-compare-orgs__toolbar-button slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
                 style="width:22px;height:22px;padding:2px;"
-                title="Retrieve both orgs again"
+                title="List both orgs again and forget what was retrieved"
                 disabled={isRefreshDisabled}
                 onclick={handleRefresh}>
-                <img src={refreshIcon} alt="retrieve both orgs again"/>
+                <img src={refreshIcon} alt="list both orgs again"/>
             </button>
             <label class="sfdl-compare-orgs__managed" title="Compare the components of installed packages too">
                 <input type="checkbox" class="sfdl-compare-orgs__managed-checkbox" checked={includeManaged} onchange={handleManagedChange}/>
@@ -68,14 +68,19 @@
                 <template if:true={errorMessage}>
                     <p class="sfdl-compare-orgs__error">{errorMessage}</p>
                 </template>
-                <template if:true={hasCompared}>
+                <template if:true={hasListed}>
                     <sfdl-compare-results
-                        entries={entries}
+                        components={components}
+                        selected-name={selectedName}
                         selected-path={selectedPath}
                         type-label={typeLabel}
                         left-name={leftOrgName}
                         right-name={rightOrgName}
-                        oncomponentselect={handleComponentSelect}>
+                        engine={typeEngine}
+                        batch-size={typeBatchSize}
+                        oncomponentopen={handleComponentOpen}
+                        onfileopen={handleFileOpen}
+                        oncomparerequest={handleCompareRequest}>
                     </sfdl-compare-results>
                 </template>
                 <template if:true={showPanelHint}>
@@ -91,7 +96,7 @@
                     language={selectedLanguage}
                     notice={selectedNotice}
                     identical-message={identicalMessage}
-                    loading={isComparing}
+                    loading={isDiffLoading}
                     empty-message={emptyMessage}>
                 </sfdl-diff-viewer>
             </div>

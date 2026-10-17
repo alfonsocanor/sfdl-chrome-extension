@@ -1,7 +1,7 @@
 import { retrieveFiles } from 'sfdl/metadataApi';
-import { retrieveRequestFor, listMetadataComponents } from 'sfdl/metadataCatalog';
+import { listMetadataComponents } from 'sfdl/metadataCatalog';
 import { splitMetadataFiles } from 'sfdl/metadataFiles';
-import { retrieveCustomSettingFiles, listCustomSettings, readCustomSettingFile } from 'sfdl/customSettings';
+import { listCustomSettings, readCustomSettingFile } from 'sfdl/customSettings';
 import { mapWithConcurrency } from 'sfdl/salesforceConnection';
 
 export const DIFFERENT = 'different';
@@ -10,6 +10,9 @@ export const RIGHT_ONLY = 'right';
 export const IDENTICAL = 'identical';
 //A component both orgs list but neither handed any file of.
 export const UNAVAILABLE = 'unavailable';
+//What a component both orgs list is until it is compared, and while it is.
+export const NOT_COMPARED = 'notCompared';
+export const COMPARING = 'comparing';
 
 const BATCH_SIZE = 100;
 const CUSTOM_SETTINGS_IN_FLIGHT = 5;
@@ -47,14 +50,12 @@ export function compareFileSets(leftFiles, rightFiles){
     });
 }
 
-export function countByStatus(entries){
-    const counts = { all: entries.length, [DIFFERENT]: 0, [LEFT_ONLY]: 0, [RIGHT_ONLY]: 0, [IDENTICAL]: 0 };
-    entries.forEach(entry => { counts[entry.status]++; });
-    return counts;
-}
-
 //The names one org holds of one type, kept for the session.
 const orgComponentLists = new Map();
+
+function cacheKey(sessionInformation, type, apiVersion, includeManaged){
+    return [sessionInformation.instanceUrl, type.key, apiVersion, includeManaged ? 'managed' : 'unmanaged'].join('|');
+}
 
 //[{ name, lastModifiedDate, lastModifiedByName }] of one org for one type: a
 //single call, listMetadata or describeGlobal, and nothing retrieved, so a big
@@ -79,57 +80,6 @@ export function listOrgComponents(sessionInformation, type, apiVersion, options 
     }
 
     return orgComponentLists.get(key);
-}
-
-//What one org holds of one type, kept for the session: going back to a type
-//already compared, or comparing it against a third org, retrieves nothing.
-const orgFiles = new Map();
-
-function cacheKey(sessionInformation, type, apiVersion, includeManaged){
-    return [sessionInformation.instanceUrl, type.key, apiVersion, includeManaged ? 'managed' : 'unmanaged'].join('|');
-}
-
-async function retrieveTypeFiles(sessionInformation, type, apiVersion, { includeManaged, onStatus }){
-    if(type.engine === 'customSettings'){
-        return { files: await retrieveCustomSettingFiles(sessionInformation, apiVersion, { includeManaged, onStatus }), problems: [] };
-    }
-
-    onStatus('Listing the components');
-
-    const request = await retrieveRequestFor(type, sessionInformation, apiVersion, { includeManaged });
-
-    if(!request.length){
-        return { files: new Map(), problems: [] };
-    }
-
-    const { files, messages } = await retrieveFiles(sessionInformation, apiVersion, request, { onStatus });
-
-    return {
-        files: splitMetadataFiles(files),
-        problems: messages.map(message => message.problem).filter(problem => problem)
-    };
-}
-
-//{ files, problems } of one org for one type. problems are the components
-//the org could not hand back, the rest of the files are still compared.
-export function retrieveOrgFiles(sessionInformation, type, apiVersion, options = {}){
-    const { includeManaged = false, refresh = false, onStatus = () => {} } = options;
-    const key = cacheKey(sessionInformation, type, apiVersion, includeManaged);
-
-    if(refresh){
-        orgFiles.delete(key);
-    }
-
-    if(!orgFiles.has(key)){
-        orgFiles.set(key, retrieveTypeFiles(sessionInformation, type, apiVersion, { includeManaged, onStatus }).catch(error => {
-            orgFiles.delete(key);
-            throw error;
-        }));
-    } else {
-        onStatus('Already retrieved');
-    }
-
-    return orgFiles.get(key);
 }
 
 //The name listMetadata gives the component a file belongs to:
@@ -208,6 +158,16 @@ async function retrieveCustomSettings(sessionInformation, type, apiVersion, name
     });
 
     return [];
+}
+
+//Forgets every component of a type retrieved from an org, so the next
+//comparison retrieves them again.
+export function forgetComponents(sessionInformation, type, apiVersion){
+    const prefix = componentKey(sessionInformation, type, apiVersion, '');
+
+    [...componentFiles.keys()]
+        .filter(key => key.startsWith(prefix))
+        .forEach(key => componentFiles.delete(key));
 }
 
 //{ files, problems }: the files of each named component of one org, a Map of

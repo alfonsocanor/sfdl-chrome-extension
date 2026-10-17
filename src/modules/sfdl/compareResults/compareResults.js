@@ -1,54 +1,105 @@
 import { LightningElement, api } from 'lwc';
-import { DIFFERENT, LEFT_ONLY, RIGHT_ONLY, IDENTICAL, countByStatus } from 'sfdl/orgCompare';
+import { DIFFERENT, LEFT_ONLY, RIGHT_ONLY, IDENTICAL, UNAVAILABLE, NOT_COMPARED, COMPARING } from 'sfdl/orgCompare';
 import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { adoptCompareTheme } from 'sfdl/compareTheme';
 import { css } from './compareResultsCss';
 
-const CHANGES = 'changes';
 const ALL = 'all';
 const SEARCH_ICON = '/resources/searchGrey.svg';
-//A few thousand fields of standard objects would take the page down rendered
-//at once, they are shown a page at a time.
+//Thousands of standard object names would take the page down rendered at
+//once, they are shown a page at a time.
 const ROWS_PER_PAGE = 300;
+const DEFAULT_BATCH_SIZE = 100;
 
 const STATUS_LABELS = {
+    [NOT_COMPARED]: 'In both',
+    [COMPARING]: 'Comparing...',
     [DIFFERENT]: 'Different',
     [LEFT_ONLY]: 'Only left',
     [RIGHT_ONLY]: 'Only right',
-    [IDENTICAL]: 'Identical'
+    [IDENTICAL]: 'Identical',
+    [UNAVAILABLE]: 'Not retrieved'
+};
+
+const BADGE_COLORS = {
+    [NOT_COMPARED]: 'pending',
+    [COMPARING]: 'pending',
+    [DIFFERENT]: 'different',
+    [LEFT_ONLY]: 'left',
+    [RIGHT_ONLY]: 'right',
+    [IDENTICAL]: 'identical',
+    [UNAVAILABLE]: 'identical'
 };
 
 const FILTERS = [
-    { value: CHANGES, label: 'Changes', statuses: [DIFFERENT, LEFT_ONLY, RIGHT_ONLY] },
+    { value: ALL, label: 'All' },
+    { value: NOT_COMPARED, label: 'Not compared', statuses: [NOT_COMPARED, COMPARING] },
     { value: DIFFERENT, label: 'Different', statuses: [DIFFERENT] },
     { value: LEFT_ONLY, label: 'Only left', statuses: [LEFT_ONLY] },
     { value: RIGHT_ONLY, label: 'Only right', statuses: [RIGHT_ONLY] },
-    { value: IDENTICAL, label: 'Identical', statuses: [IDENTICAL] },
-    { value: ALL, label: 'All', statuses: [DIFFERENT, LEFT_ONLY, RIGHT_ONLY, IDENTICAL] }
+    { value: IDENTICAL, label: 'Identical', statuses: [IDENTICAL, UNAVAILABLE] }
 ];
 
-//The components of a comparison by status. It opens on the changes, or on
-//every component when nothing changed.
+function badgeClass(status){
+    return 'sfdl-status-badge sfdl-status-badge_' + BADGE_COLORS[status];
+}
+
+function pad(value){
+    return String(value).padStart(2, '0');
+}
+
+function modifiedLine(side, modified){
+    if(!modified || !modified.date){
+        return '';
+    }
+
+    const date = new Date(modified.date);
+    const when = pad(date.getDate()) + '/' + pad(date.getMonth() + 1) + '/' + date.getFullYear() + ' ' +
+        pad(date.getHours()) + ':' + pad(date.getMinutes());
+
+    return '\n' + side + ': modified ' + when + (modified.by ? ' by ' + modified.by : '');
+}
+
+//The components two orgs hold of a type. Their names come from the listings,
+//nothing is compared until asked: a click on a component compares it, and the
+//ones ticked are compared together. The component on screen lists its files.
 export default class CompareResults extends LightningElement{
+    @api selectedName;
     @api selectedPath;
     @api typeLabel = 'components';
     @api leftName = 'the left org';
     @api rightName = 'the right org';
+    //How the components of the type come out of an org, for the cost of a
+    //comparison: metadata in retrieves of batchSize components, custom
+    //settings in two api calls each.
+    @api engine = 'metadata';
+    @api batchSize = DEFAULT_BATCH_SIZE;
 
+    //[{ name, presence, status, files: [{ path, status }], leftModified,
+    //rightModified }], a modified being { date, by }.
     @api
-    get entries(){
-        return this._entries;
+    get components(){
+        return this._components;
     }
-    set entries(entries){
-        this._entries = entries || [];
-        const counts = countByStatus(this._entries);
-        this.statusFilter = counts.all - counts[IDENTICAL] ? CHANGES : ALL;
-        this.rowLimit = ROWS_PER_PAGE;
+    set components(components){
+        this._components = components || [];
+
+        //A new listing starts over, a component compared in the same listing
+        //keeps the filter and the selection where they were.
+        const namesKey = this._components.map(component => component.name).join('\n');
+        if(namesKey !== this.namesKey){
+            this.namesKey = namesKey;
+            this.statusFilter = ALL;
+            this.checkedNames = new Set();
+            this.rowLimit = ROWS_PER_PAGE;
+        }
     }
 
-    _entries = [];
+    _components = [];
+    namesKey;
     statusFilter = ALL;
     searchText = '';
+    checkedNames = new Set();
     rowLimit = ROWS_PER_PAGE;
     searchIcon = SEARCH_ICON;
 
@@ -57,44 +108,38 @@ export default class CompareResults extends LightningElement{
         adoptCompareTheme();
     }
 
-    get counts(){
-        return countByStatus(this._entries);
-    }
-
-    get changeCount(){
-        return this.counts.all - this.counts[IDENTICAL];
+    countOf(statuses){
+        return this._components.filter(component => !statuses || statuses.includes(component.status)).length;
     }
 
     get summaryMessage(){
-        if(!this._entries.length){
+        if(!this._components.length){
             return 'Neither org holds any ' + this.typeLabel + '.';
         }
 
-        if(!this.changeCount){
-            return 'No differences: the ' + this._entries.length + ' ' + this.typeLabel + ' are identical in both orgs.';
-        }
+        const allCompared = !this.countOf([NOT_COMPARED, COMPARING]);
+        const nothingChanged = !this.countOf([DIFFERENT, LEFT_ONLY, RIGHT_ONLY]);
 
-        return '';
+        return allCompared && nothingChanged ?
+            'No differences: the ' + this._components.length + ' ' + this.typeLabel + ' are identical in both orgs.' :
+            '';
     }
 
     get summaryClass(){
-        return 'sfdl-compare-results__summary' + (this._entries.length ? ' sfdl-compare-results__summary_identical' : '');
+        return 'sfdl-compare-results__summary' + (this._components.length ? ' sfdl-compare-results__summary_identical' : '');
     }
 
     get statusFilters(){
-        const counts = this.counts;
-
         return FILTERS.map(filter => {
-            const count = filter.statuses.reduce((total, status) => total + counts[status], 0);
             const isActive = filter.value === this.statusFilter;
-            const statusClass = filter.statuses.length === 1 ? ' sfdl-status-badge sfdl-status-badge_' + filter.value : '';
+            const colorClass = filter.statuses ? ' ' + badgeClass(filter.statuses[0]) : '';
 
             return {
                 ...filter,
-                count,
+                count: this.countOf(filter.statuses),
                 ariaPressed: isActive ? 'true' : 'false',
-                title: 'Show the ' + filter.label.toLowerCase() + ' ' + this.typeLabel,
-                buttonClass: 'sfdl-status-filter' + statusClass + (isActive ? ' sfdl-status-filter_active' : '')
+                title: 'Show the ' + (filter.value === ALL ? 'all' : filter.label.toLowerCase()) + ' ' + this.typeLabel,
+                buttonClass: 'sfdl-status-filter' + colorClass + (isActive ? ' sfdl-status-filter_active' : '')
             };
         });
     }
@@ -103,60 +148,121 @@ export default class CompareResults extends LightningElement{
         return this.searchText.toLowerCase().split(/\s+/).filter(word => word);
     }
 
-    get filteredEntries(){
+    get filteredComponents(){
         const statuses = FILTERS.find(filter => filter.value === this.statusFilter).statuses;
         const searchWords = this.searchWords;
 
-        return this._entries.filter(entry =>
-            statuses.includes(entry.status) &&
-            searchWords.every(word => entry.path.toLowerCase().includes(word))
+        return this._components.filter(component =>
+            (!statuses || statuses.includes(component.status)) &&
+            searchWords.every(word => component.name.toLowerCase().includes(word))
         );
     }
 
+    //The components that can be ticked: everything but what is comparing.
+    get selectableNames(){
+        return this.filteredComponents
+            .filter(component => component.status !== COMPARING)
+            .map(component => component.name);
+    }
+
     get visibleRows(){
-        return this.filteredEntries.slice(0, this.rowLimit).map(entry => {
-            const slashIndex = entry.path.lastIndexOf('/');
+        return this.filteredComponents.slice(0, this.rowLimit).map(component => {
+            const isSelected = component.name === this.selectedName;
+            const files = component.files || [];
 
             return {
-                path: entry.path,
-                folder: entry.path.slice(0, slashIndex + 1),
-                fileName: entry.path.slice(slashIndex + 1),
-                statusLabel: STATUS_LABELS[entry.status],
-                title: entry.path + ': ' + this.statusTitle(entry.status),
-                badgeClass: 'sfdl-status-badge sfdl-status-badge_' + entry.status,
-                rowClass: 'sfdl-compare-results__row' + (entry.path === this.selectedPath ? ' sfdl-compare-results__row_selected' : '')
+                name: component.name,
+                statusLabel: STATUS_LABELS[component.status],
+                badgeClass: badgeClass(component.status),
+                isChecked: this.checkedNames.has(component.name),
+                isComparing: component.status === COMPARING,
+                title: component.name + modifiedLine('Left', component.leftModified) + modifiedLine('Right', component.rightModified),
+                rowClass: 'sfdl-compare-results__row' + (isSelected ? ' sfdl-compare-results__row_selected' : ''),
+                showFiles: isSelected && files.length > 0,
+                files: files.map(file => this.fileRow(component.name, file))
             };
         });
     }
 
-    statusTitle(status){
-        switch(status){
-            case LEFT_ONLY:
-                return 'only in ' + this.leftName;
-            case RIGHT_ONLY:
-                return 'only in ' + this.rightName;
-            case DIFFERENT:
-                return 'differs between both orgs';
-            default:
-                return 'identical in both orgs';
+    //A file is named from inside its component: Tier__c.field under
+    //fields of Account, invoiceList.js in the invoiceList bundle.
+    fileRow(componentName, file){
+        let fileName = file.path.split('/').slice(1).join('/');
+
+        if(fileName.startsWith(componentName + '/')){
+            fileName = fileName.slice(componentName.length + 1);
         }
+
+        return {
+            path: file.path,
+            fileName,
+            statusLabel: STATUS_LABELS[file.status],
+            badgeClass: badgeClass(file.status),
+            fileClass: 'sfdl-compare-results__file' + (file.path === this.selectedPath ? ' sfdl-compare-results__file_selected' : '')
+        };
     }
 
     get hasMoreRows(){
-        return this.filteredEntries.length > this.rowLimit;
+        return this.filteredComponents.length > this.rowLimit;
     }
 
     get showMoreLabel(){
-        const remaining = this.filteredEntries.length - this.rowLimit;
+        const remaining = this.filteredComponents.length - this.rowLimit;
         return 'Show ' + Math.min(remaining, ROWS_PER_PAGE) + ' more of the ' + remaining + ' left';
     }
 
     get emptyListMessage(){
-        if(!this._entries.length || this.filteredEntries.length){
+        if(!this._components.length || this.filteredComponents.length){
             return '';
         }
 
         return this.searchWords.length ? 'No component matches the filter' : 'No component has this status';
+    }
+
+    get checkedCount(){
+        return this.checkedNames.size;
+    }
+
+    get areAllShownSelected(){
+        const names = this.selectableNames;
+        return names.length > 0 && names.every(name => this.checkedNames.has(name));
+    }
+
+    get isSelectAllDisabled(){
+        return !this.selectableNames.length;
+    }
+
+    get selectAllTitle(){
+        return this.areAllShownSelected ? 'Unselect the components shown' : 'Select the components shown';
+    }
+
+    get isCompareDisabled(){
+        return !this.checkedCount;
+    }
+
+    get compareLabel(){
+        return this.checkedCount ? 'Compare selected (' + this.checkedCount + ')' : 'Compare selected';
+    }
+
+    get compareTitle(){
+        return this.checkedCount ? 'Retrieve the selected components from both orgs and compare them' : 'Tick the components to compare first';
+    }
+
+    //What comparing the selection costs each org, so a big selection is a
+    //decision rather than a surprise.
+    get costHint(){
+        const count = this.checkedCount;
+
+        if(!count){
+            return '';
+        }
+
+        if(this.engine === 'customSettings'){
+            return (count * 2) + ' api calls per org';
+        }
+
+        const retrieves = Math.ceil(count / (this.batchSize || DEFAULT_BATCH_SIZE));
+        return retrieves + (retrieves === 1 ? ' retrieve' : ' retrieves') + ' per org';
     }
 
     handleStatusFilter(event){
@@ -173,12 +279,53 @@ export default class CompareResults extends LightningElement{
         this.rowLimit += ROWS_PER_PAGE;
     }
 
-    handleRowClick(event){
-        this.selectComponent(event.currentTarget.dataset.path);
+    handleCheck(event){
+        const checkedNames = new Set(this.checkedNames);
+
+        if(event.target.checked){
+            checkedNames.add(event.target.dataset.name);
+        } else {
+            checkedNames.delete(event.target.dataset.name);
+        }
+
+        this.checkedNames = checkedNames;
     }
 
-    selectComponent(path){
-        this.dispatchEvent(new CustomEvent('componentselect', { detail: { path } }));
+    handleSelectAll(event){
+        const checkedNames = new Set(this.checkedNames);
+
+        this.selectableNames.forEach(name => {
+            if(event.target.checked){
+                checkedNames.add(name);
+            } else {
+                checkedNames.delete(name);
+            }
+        });
+
+        this.checkedNames = checkedNames;
+    }
+
+    handleCompareSelected(){
+        const names = this._components
+            .map(component => component.name)
+            .filter(name => this.checkedNames.has(name));
+
+        this.checkedNames = new Set();
+        this.dispatchEvent(new CustomEvent('comparerequest', { detail: { names } }));
+    }
+
+    handleOpen(event){
+        this.openComponent(event.currentTarget.dataset.name);
+    }
+
+    openComponent(name){
+        this.dispatchEvent(new CustomEvent('componentopen', { detail: { name } }));
+    }
+
+    handleOpenFile(event){
+        this.dispatchEvent(new CustomEvent('fileopen', {
+            detail: { name: event.currentTarget.dataset.name, path: event.currentTarget.dataset.path }
+        }));
     }
 
     //Up and down open the previous and the next component.
@@ -189,11 +336,11 @@ export default class CompareResults extends LightningElement{
 
         event.preventDefault();
 
-        const rows = [...this.template.querySelectorAll('.sfdl-compare-results__row')];
+        const rows = [...this.template.querySelectorAll('.sfdl-compare-results__open')];
         const index = rows.indexOf(event.currentTarget);
         const nextRow = rows[(index + (event.key === 'ArrowDown' ? 1 : -1) + rows.length) % rows.length];
 
         nextRow.focus();
-        this.selectComponent(nextRow.dataset.path);
+        this.openComponent(nextRow.dataset.name);
     }
 }

@@ -1,6 +1,5 @@
 import {
     customSettingDocument,
-    retrieveCustomSettingFiles,
     listCustomSettings,
     readCustomSettingFile
 } from 'sfdl/customSettings';
@@ -145,7 +144,7 @@ describe('customSettingDocument', () => {
     });
 });
 
-describe('retrieveCustomSettingFiles', () => {
+describe('reading custom settings', () => {
     function mockOrg({ queryFails = false } = {}) {
         global.fetch = jest.fn((url) => {
             if (url.endsWith('/sobjects/')) {
@@ -221,33 +220,11 @@ describe('retrieveCustomSettingFiles', () => {
         ).resolves.toContainEqual({ name: 'pkg__Config__c' });
     });
 
-    it('writes a file per custom setting of the org, managed ones left out', async () => {
-        mockOrg();
-        const onStatus = jest.fn();
-
-        const files = await retrieveCustomSettingFiles(ACME, '60.0', {
-            onStatus
-        });
-
-        expect([...files.keys()]).toEqual([
-            'customSettings/Country_Codes__c.setting',
-            'customSettings/Integration__c.setting'
-        ]);
-        expect(files.get('customSettings/Integration__c.setting')).toEqual({
-            content: expect.stringContaining('Custom Setting: Integration__c'),
-            isBinary: false
-        });
-        expect(onStatus.mock.calls.map(([status]) => status)).toEqual([
-            'Listing the custom settings',
-            'Read 1 of 2 custom settings',
-            'Read 2 of 2 custom settings'
-        ]);
-    });
-
     it('reads the owner of hierarchy values and the custom fields', async () => {
         mockOrg();
 
-        await retrieveCustomSettingFiles(ACME, '60.0');
+        await readCustomSettingFile(ACME, '60.0', 'Integration__c');
+        await readCustomSettingFile(ACME, '60.0', 'Country_Codes__c');
 
         expect(queries()).toEqual(
             expect.arrayContaining([
@@ -257,25 +234,17 @@ describe('retrieveCustomSettingFiles', () => {
         );
     });
 
-    it('includes the settings of managed packages when asked to', async () => {
-        mockOrg();
-
-        const files = await retrieveCustomSettingFiles(ACME, '60.0', {
-            includeManaged: true
-        });
-
-        expect([...files.keys()]).toContain(
-            'customSettings/pkg__Config__c.setting'
-        );
-    });
-
     it('compares the definitions of settings whose values cannot be read', async () => {
         mockOrg({ queryFails: true });
 
-        const files = await retrieveCustomSettingFiles(ACME, '60.0');
+        const { file } = await readCustomSettingFile(
+            ACME,
+            '60.0',
+            'Country_Codes__c'
+        );
 
-        expect(
-            files.get('customSettings/Country_Codes__c.setting').content
-        ).toContain('The values could not be read: Insufficient access');
+        expect(file.content).toContain(
+            'The values could not be read: Insufficient access'
+        );
     });
 });

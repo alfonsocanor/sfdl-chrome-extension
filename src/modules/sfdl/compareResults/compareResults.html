@@ -21,27 +21,69 @@
             <input
                 type="search"
                 class="slds-input sfdl-compare-results__filter"
-                placeholder="Filter by name or folder"
+                placeholder="Filter by name"
                 value={searchText}
                 oninput={handleSearch}/>
+        </div>
+        <div class="sfdl-compare-results__actions">
+            <input
+                type="checkbox"
+                class="sfdl-compare-results__select-all"
+                title={selectAllTitle}
+                checked={areAllShownSelected}
+                disabled={isSelectAllDisabled}
+                onchange={handleSelectAll}/>
+            <button
+                class="slds-button slds-button_brand sfdl-compare-results__compare"
+                disabled={isCompareDisabled}
+                title={compareTitle}
+                onclick={handleCompareSelected}>
+                {compareLabel}
+            </button>
+            <span class="sfdl-compare-results__cost">{costHint}</span>
         </div>
         <template if:true={emptyListMessage}>
             <p class="sfdl-compare-results__empty">{emptyListMessage}</p>
         </template>
         <ul class="sfdl-compare-results__list">
             <template for:each={visibleRows} for:item="row">
-                <li key={row.path}>
-                    <button
-                        class={row.rowClass}
-                        data-path={row.path}
-                        title={row.title}
-                        onclick={handleRowClick}
-                        onkeydown={handleRowKeyDown}>
-                        <span class={row.badgeClass}>{row.statusLabel}</span>
-                        <span class="sfdl-compare-results__path">
-                            <span class="sfdl-compare-results__folder">{row.folder}</span>{row.fileName}
-                        </span>
-                    </button>
+                <li key={row.name} class="sfdl-compare-results__item">
+                    <div class={row.rowClass}>
+                        <input
+                            type="checkbox"
+                            class="sfdl-compare-results__checkbox"
+                            data-name={row.name}
+                            checked={row.isChecked}
+                            disabled={row.isComparing}
+                            title="Select this component to compare it with the others"
+                            onchange={handleCheck}/>
+                        <button
+                            class="sfdl-compare-results__open"
+                            data-name={row.name}
+                            title={row.title}
+                            onclick={handleOpen}
+                            onkeydown={handleRowKeyDown}>
+                            <span class={row.badgeClass}>{row.statusLabel}</span>
+                            <span class="sfdl-compare-results__name">{row.name}</span>
+                        </button>
+                    </div>
+                    <template if:true={row.showFiles}>
+                        <ul class="sfdl-compare-results__files">
+                            <template for:each={row.files} for:item="file">
+                                <li key={file.path}>
+                                    <button
+                                        class={file.fileClass}
+                                        data-name={row.name}
+                                        data-path={file.path}
+                                        title={file.path}
+                                        onclick={handleOpenFile}>
+                                        <span class={file.badgeClass}>{file.statusLabel}</span>
+                                        <span class="sfdl-compare-results__name">{file.fileName}</span>
+                                    </button>
+                                </li>
+                            </template>
+                        </ul>
+                    </template>
                 </li>
             </template>
         </ul>

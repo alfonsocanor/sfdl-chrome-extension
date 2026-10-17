@@ -1,19 +1,26 @@
 import { LightningElement, api } from 'lwc';
 import { getCommonApiVersion } from 'sfdl/salesforceConnection';
 import { getMetadataType, metadataTypeOptions, languageForFile } from 'sfdl/metadataCatalog';
-import { compareFileSets, countByStatus, retrieveOrgFiles, IDENTICAL } from 'sfdl/orgCompare';
+import {
+    listOrgComponents,
+    compareComponents,
+    forgetComponents,
+    IDENTICAL,
+    LEFT_ONLY,
+    RIGHT_ONLY,
+    NOT_COMPARED,
+    COMPARING
+} from 'sfdl/orgCompare';
 import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { adoptCompareTheme } from 'sfdl/compareTheme';
 import { css } from './compareOrgsCss';
 
 const LEFT = 'left';
 const RIGHT = 'right';
+const BOTH = 'both';
 const SWAP_ICON = '/slds/icons/utility/sort.svg';
 const REFRESH_ICON = '/slds/icons/utility/refresh.svg';
-
-function domainOf(instanceUrl){
-    return instanceUrl ? instanceUrl.replace('https://', '') : '';
-}
+const DEFAULT_BATCH_SIZE = 100;
 
 //What the Metadata API and the custom settings reader report, in words.
 const STATUS_LABELS = {
@@ -22,6 +29,10 @@ const STATUS_LABELS = {
     Succeeded: 'Retrieved',
     'Already retrieved': 'Retrieved earlier, refresh to retrieve again'
 };
+
+function domainOf(instanceUrl){
+    return instanceUrl ? instanceUrl.replace('https://', '') : '';
+}
 
 //Every 4 characters of base64 hold 3 bytes, less one byte for each = that
 //pads the last group.
@@ -45,8 +56,39 @@ function emptySideState(){
     return { status: '', error: undefined, problems: [] };
 }
 
-//The metadata of two orgs side by side: pick both orgs and a type, and every
-//component either org holds comes back with its status.
+//The listing of each org, by name: what both hold, what only one holds, and
+//when each last changed it.
+function mergeListings(leftComponents, rightComponents){
+    const components = new Map();
+    const modified = component => ({ date: component.lastModifiedDate, by: component.lastModifiedByName });
+
+    leftComponents.forEach(component => {
+        components.set(component.name, { name: component.name, presence: LEFT, status: LEFT_ONLY, leftModified: modified(component) });
+    });
+
+    rightComponents.forEach(component => {
+        const existing = components.get(component.name);
+
+        components.set(component.name, existing ?
+            { ...existing, presence: BOTH, status: NOT_COMPARED, rightModified: modified(component) } :
+            { name: component.name, presence: RIGHT, status: RIGHT_ONLY, rightModified: modified(component) });
+    });
+
+    return [...components.values()].sort((a, b) => a.name.localeCompare(b.name));
+}
+
+//The first file worth looking at: the first that differs, or the first one.
+function firstFilePath(component){
+    const files = component.files || [];
+    const firstChange = files.find(file => file.status !== IDENTICAL);
+    const file = firstChange || files[0];
+
+    return file ? file.path : undefined;
+}
+
+//The metadata of two orgs side by side. Picking a type lists the names both
+//orgs hold, a call per org; contents are only retrieved for the components
+//opened or ticked, so a big org is never retrieved whole.
 export default class CompareOrgs extends LightningElement{
     @api orgs = [];
     @api height;
@@ -62,7 +104,7 @@ export default class CompareOrgs extends LightningElement{
         //as soon as it has one.
         if(!this.leftOrgSession && sessionInformation && sessionInformation.instanceUrl){
             this.leftOrgSession = { instanceUrl: sessionInformation.instanceUrl, authToken: sessionInformation.authToken };
-            this.runComparison();
+            this.runListing();
         }
     }
 
@@ -72,15 +114,20 @@ export default class CompareOrgs extends LightningElement{
     typeKey;
     includeManaged = false;
 
-    runSequence = 0;
-    isComparing = false;
-    hasCompared = false;
+    listSequence = 0;
+    isListing = false;
+    hasListed = false;
     errorMessage;
     apiVersion;
-    entries = [];
+    components = [];
+    selectedName;
     selectedPath;
     leftState = emptySideState();
     rightState = emptySideState();
+    activeComparisons = 0;
+    //Comparisons run one after the other, so the orgs never package two
+    //retrieves of ours at once.
+    comparisonQueue = Promise.resolve();
 
     swapIcon = SWAP_ICON;
     refreshIcon = REFRESH_ICON;
@@ -119,6 +166,18 @@ export default class CompareOrgs extends LightningElement{
         return getMetadataType(this.typeKey);
     }
 
+    get typeLabel(){
+        return this.selectedType ? this.selectedType.label : 'components';
+    }
+
+    get typeEngine(){
+        return this.selectedType ? this.selectedType.engine : 'metadata';
+    }
+
+    get typeBatchSize(){
+        return (this.selectedType && this.selectedType.batchSize) || DEFAULT_BATCH_SIZE;
+    }
+
     get canCompare(){
         return !!(this.leftOrgSession && this.rightOrgSession && this.selectedType);
     }
@@ -128,15 +187,24 @@ export default class CompareOrgs extends LightningElement{
     }
 
     get isRefreshDisabled(){
-        return !this.canCompare || this.isComparing;
+        return !this.canCompare || this.isListing || this.activeComparisons > 0;
     }
 
-    get counts(){
-        return countByStatus(this.entries);
+    get selectedComponent(){
+        return this.components.find(component => component.name === this.selectedName);
     }
 
     get selectedEntry(){
-        return this.entries.find(entry => entry.path === this.selectedPath);
+        const component = this.selectedComponent;
+        return component && component.files ? component.files.find(file => file.path === this.selectedPath) : undefined;
+    }
+
+    get isSelectedComparing(){
+        return !!this.selectedComponent && this.selectedComponent.status === COMPARING;
+    }
+
+    get isDiffLoading(){
+        return this.isListing || this.isSelectedComparing;
     }
 
     get leftContent(){
@@ -184,19 +252,17 @@ export default class CompareOrgs extends LightningElement{
         return this.selectedEntry ? this.selectedEntry.path + ' is identical in both orgs.' : undefined;
     }
 
-    get typeLabel(){
-        return this.selectedType ? this.selectedType.label : 'components';
-    }
-
     get resultsSubtitle(){
         if(!this.selectedType){
             return 'Nothing compared yet';
         }
 
-        return this.selectedType.label + (this.apiVersion ? ' \u00b7 API ' + this.apiVersion : '');
+        return this.selectedType.label + (this.apiVersion ? ' · API ' + this.apiVersion : '');
     }
 
     get sideProgress(){
+        const isBusy = this.isListing || this.activeComparisons > 0;
+
         return [LEFT, RIGHT].map(side => {
             const state = this[side + 'State'];
             const problemCount = state.problems.length;
@@ -208,7 +274,7 @@ export default class CompareOrgs extends LightningElement{
                 statusLabel = state.error;
                 statusTitle = state.error;
                 statusClass += ' sfdl-compare-orgs__progress-status_error';
-            } else if(problemCount && !this.isComparing){
+            } else if(problemCount && !isBusy){
                 statusLabel = problemCount + (problemCount === 1 ? ' component' : ' components') + ' could not be retrieved';
                 statusTitle = state.problems.join('\n');
                 statusClass += ' sfdl-compare-orgs__progress-status_warning';
@@ -225,17 +291,19 @@ export default class CompareOrgs extends LightningElement{
         });
     }
 
-    //While retrieving, and afterwards when an org failed or left components out.
+    //While listing or retrieving, and afterwards when an org failed or left
+    //components out.
     get showProgress(){
-        return this.isComparing || [this.leftState, this.rightState].some(state => state.error || state.problems.length);
-    }
-
-    get showPanelHint(){
-        return !!this.panelHint && !this.isComparing && !this.hasCompared && !this.errorMessage;
+        return this.isListing || this.activeComparisons > 0 ||
+            [this.leftState, this.rightState].some(state => state.error || state.problems.length);
     }
 
     get panelHint(){
         return this.canCompare ? '' : this.emptyMessage;
+    }
+
+    get showPanelHint(){
+        return !!this.panelHint && !this.isListing && !this.hasListed && !this.errorMessage;
     }
 
     get emptyMessage(){
@@ -247,11 +315,15 @@ export default class CompareOrgs extends LightningElement{
             return 'Pick the metadata to compare.';
         }
 
-        if(this.isComparing){
-            return 'Retrieving ' + this.selectedType.label + ' from both orgs...';
+        if(this.isListing){
+            return 'Listing the ' + this.selectedType.label + ' of both orgs...';
         }
 
-        return 'Pick a component to see how the two orgs differ.';
+        if(this.isSelectedComparing){
+            return 'Retrieving ' + this.selectedName + ' from both orgs...';
+        }
+
+        return 'Open a component to compare it, or tick several and compare them together.';
     }
 
     handleOrgChange(event){
@@ -260,66 +332,88 @@ export default class CompareOrgs extends LightningElement{
 
         if(org){
             this[side + 'OrgSession'] = { instanceUrl: org.label, authToken: org.value };
-            this.runComparison();
+            this.runListing();
         }
     }
 
     handleTypeChange(event){
         this.typeKey = event.detail.value;
-        this.runComparison();
+        this.runListing();
     }
 
     handleManagedChange(event){
         this.includeManaged = event.target.checked;
-        this.runComparison();
+        this.runListing();
     }
 
     handleRefresh(){
-        this.runComparison({ refresh: true });
+        this.runListing({ refresh: true });
     }
 
-    //Both orgs were retrieved already, swapping only compares them the other
-    //way round.
+    //What was retrieved stays cached, swapping only lists and compares the
+    //other way round.
     handleSwap(){
         [this.leftOrgSession, this.rightOrgSession] = [this.rightOrgSession, this.leftOrgSession];
-        this.runComparison();
+        this.runListing();
     }
 
-    //The comparison opens on its first change, or on its first component when
-    //the orgs hold the same of everything.
-    openFirstComponent(){
-        const firstChange = this.entries.find(entry => entry.status !== IDENTICAL);
-        const firstEntry = firstChange || this.entries[0];
-
-        this.selectedPath = firstEntry ? firstEntry.path : undefined;
+    handleComponentOpen(event){
+        this.openComponent(event.detail.name);
     }
 
-    handleComponentSelect(event){
+    handleFileOpen(event){
+        this.selectedName = event.detail.name;
         this.selectedPath = event.detail.path;
     }
 
+    handleCompareRequest(event){
+        this.compare(event.detail.names);
+    }
+
+    //A component already compared opens on its first difference, one that was
+    //not is compared first.
+    openComponent(name){
+        const component = this.components.find(candidate => candidate.name === name);
+
+        if(!component){
+            return;
+        }
+
+        this.selectedName = name;
+        this.selectedPath = firstFilePath(component);
+
+        if(!component.files && component.status !== COMPARING){
+            this.compare([name], { open: name });
+        }
+    }
+
     resetResults(){
-        this.entries = [];
+        this.components = [];
+        this.selectedName = undefined;
         this.selectedPath = undefined;
         this.errorMessage = undefined;
-        this.hasCompared = false;
+        this.hasListed = false;
         this.leftState = emptySideState();
         this.rightState = emptySideState();
     }
 
-    updateSideState(sequence, side, changes){
-        if(sequence === this.runSequence){
-            this[side + 'State'] = { ...this[side + 'State'], ...changes };
-        }
+    updateSideState(side, changes){
+        this[side + 'State'] = { ...this[side + 'State'], ...changes };
     }
 
-    async runComparison({ refresh = false } = {}){
-        const sequence = ++this.runSequence;
+    updateComponents(changesByName){
+        this.components = this.components.map(component =>
+            (changesByName.has(component.name) ? { ...component, ...changesByName.get(component.name) } : component)
+        );
+    }
+
+    async runListing({ refresh = false } = {}){
+        const sequence = ++this.listSequence;
 
         this.resetResults();
 
         if(!this.canCompare){
-            this.isComparing = false;
+            this.isListing = false;
             return;
         }
 
@@ -327,50 +421,115 @@ export default class CompareOrgs extends LightningElement{
         const sessions = { [LEFT]: this.leftOrgSession, [RIGHT]: this.rightOrgSession };
         const includeManaged = this.includeManaged;
 
-        this.isComparing = true;
+        this.isListing = true;
+        [LEFT, RIGHT].forEach(side => this.updateSideState(side, { status: 'Listing the components' }));
 
         try{
             const apiVersion = await getCommonApiVersion(sessions[LEFT], sessions[RIGHT]);
 
-            if(sequence !== this.runSequence){
+            if(sequence !== this.listSequence){
                 return;
             }
 
             this.apiVersion = apiVersion;
 
-            const results = await Promise.allSettled([LEFT, RIGHT].map(side =>
-                retrieveOrgFiles(sessions[side], type, apiVersion, {
-                    includeManaged,
-                    refresh,
-                    onStatus: status => this.updateSideState(sequence, side, { status })
-                })
+            if(refresh){
+                [LEFT, RIGHT].forEach(side => forgetComponents(sessions[side], type, apiVersion));
+            }
+
+            const [leftResult, rightResult] = await Promise.allSettled([LEFT, RIGHT].map(side =>
+                listOrgComponents(sessions[side], type, apiVersion, { includeManaged, refresh })
             ));
 
             //The orgs or the type changed while these were on their way.
-            if(sequence !== this.runSequence){
+            if(sequence !== this.listSequence){
                 return;
             }
 
-            const [leftResult, rightResult] = results;
-
             [[LEFT, leftResult], [RIGHT, rightResult]].forEach(([side, result]) => {
-                this.updateSideState(sequence, side, result.status === 'fulfilled' ?
-                    { problems: result.value.problems } :
+                this.updateSideState(side, result.status === 'fulfilled' ?
+                    { status: 'Listed' } :
                     { error: result.reason.message });
             });
 
             if(leftResult.status === 'fulfilled' && rightResult.status === 'fulfilled'){
-                this.entries = compareFileSets(leftResult.value.files, rightResult.value.files);
-                this.hasCompared = true;
-                this.openFirstComponent();
+                this.components = mergeListings(leftResult.value, rightResult.value);
+                this.hasListed = true;
             }
         } catch(error){
-            if(sequence !== this.runSequence){
+            if(sequence !== this.listSequence){
                 return;
             }
             this.errorMessage = error.message;
         }
 
-        this.isComparing = false;
+        this.isListing = false;
+    }
+
+    compare(names, { open } = {}){
+        const sequence = this.listSequence;
+        const targets = this.components.filter(component => names.includes(component.name) && component.status !== COMPARING);
+
+        if(!targets.length){
+            return this.comparisonQueue;
+        }
+
+        const previousStatuses = new Map(targets.map(component => [component.name, { status: component.status }]));
+        this.updateComponents(new Map(targets.map(component => [component.name, { status: COMPARING }])));
+        this.activeComparisons++;
+
+        const type = this.selectedType;
+        const apiVersion = this.apiVersion;
+        const sessions = { [LEFT]: this.leftOrgSession, [RIGHT]: this.rightOrgSession };
+
+        const runComparison = async () => {
+            const result = await compareComponents(sessions[LEFT], sessions[RIGHT], type, apiVersion,
+                targets.map(({ name, presence }) => ({ name, presence })),
+                {
+                    onStatus: (side, status) => {
+                        if(sequence === this.listSequence){
+                            this.updateSideState(side, { status, error: undefined });
+                        }
+                    }
+                });
+
+            //Another listing took over while this comparison ran.
+            if(sequence !== this.listSequence){
+                return;
+            }
+
+            [LEFT, RIGHT].forEach(side => {
+                const outcome = result[side];
+                this.updateSideState(side, outcome.error ?
+                    { error: outcome.error } :
+                    { problems: [...this[side + 'State'].problems, ...outcome.problems] });
+            });
+
+            if(result.components.size){
+                this.updateComponents(new Map([...result.components].map(([name, compared]) => [
+                    name, { status: compared.status, files: compared.entries }
+                ])));
+            } else {
+                this.updateComponents(previousStatuses);
+            }
+
+            if(open && this.selectedName === open){
+                this.selectedPath = firstFilePath(this.selectedComponent);
+            }
+        };
+
+        this.comparisonQueue = this.comparisonQueue
+            .then(runComparison)
+            .catch(error => {
+                if(sequence === this.listSequence){
+                    this.errorMessage = error.message;
+                    this.updateComponents(previousStatuses);
+                }
+            })
+            .then(() => {
+                this.activeComparisons--;
+            });
+
+        return this.comparisonQueue;
     }
 }

@@ -6,12 +6,12 @@ const DATA_MODEL = 'Data model';
 const AUTOMATION = 'Automation';
 const CONFIGURATION = 'Configuration';
 
-//How the files of each type come out of an org:
-//- metadata retrieves the type through the Metadata API, every component
-//  through the * wildcard, or the standard objects that listMetadata names
-//  since the wildcard of CustomObject only covers custom ones.
-//- customSettings reads the settings and their values through REST, values
-//  are data and the Metadata API has none of them.
+//How the components of each type come out of an org:
+//- metadata lists them with listMetadata and retrieves the ones asked for
+//  through the Metadata API. CustomObject covers standard and custom objects,
+//  told apart by their name.
+//- customSettings lists the settings with describeGlobal and reads each one
+//  and its values through REST, values are data the Metadata API has none of.
 //
 //batchSize is how many components one retrieve asks for, fewer for objects
 //since each one comes with every field, rule and view it has.
@@ -83,25 +83,6 @@ export async function listMetadataComponents(type, sessionInformation, apiVersio
             lastModifiedByName: component.lastModifiedByName
         }))
         .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-//The members to retrieve for a type. The * wildcard leaves the components of
-//managed packages out, so including them means naming every component the
-//org lists.
-export async function retrieveRequestFor(type, sessionInformation, apiVersion, { includeManaged = false } = {}){
-    if(type.members === 'standardObjects'){
-        const objects = await listMetadata(sessionInformation, apiVersion, [{ type: type.metadataType }]);
-        const members = objects.map(({ fullName }) => fullName).filter(isStandardObject).sort();
-        return members.length ? [{ name: type.metadataType, members }] : [];
-    }
-
-    if(includeManaged){
-        const components = await listMetadata(sessionInformation, apiVersion, [{ type: type.metadataType }]);
-        const members = components.map(({ fullName }) => fullName).sort();
-        return members.length ? [{ name: type.metadataType, members }] : [];
-    }
-
-    return [{ name: type.metadataType, members: ['*'] }];
 }
 
 const LANGUAGE_BY_EXTENSION = {

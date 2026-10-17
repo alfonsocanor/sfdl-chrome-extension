@@ -1,7 +1,11 @@
 import { createElement } from 'lwc';
 import CompareOrgs from 'sfdl/compareOrgs';
 import { getCommonApiVersion } from 'sfdl/salesforceConnection';
-import { retrieveOrgFiles } from 'sfdl/orgCompare';
+import {
+    listOrgComponents,
+    compareComponents,
+    forgetComponents
+} from 'sfdl/orgCompare';
 
 // Object.assign rather than a spread: the transform turns a spread into a
 // helper the hoisted factory cannot reach.
@@ -12,7 +16,9 @@ jest.mock('sfdl/salesforceConnection', () =>
 );
 jest.mock('sfdl/orgCompare', () =>
     Object.assign({}, jest.requireActual('sfdl/orgCompare'), {
-        retrieveOrgFiles: jest.fn()
+        listOrgComponents: jest.fn(),
+        compareComponents: jest.fn(),
+        forgetComponents: jest.fn()
     })
 );
 
@@ -29,21 +35,67 @@ const GLOBEX = {
     instanceUrl: 'https://globex.my.salesforce.com',
     authToken: 'sid-globex'
 };
+const ACME_SESSION = {
+    instanceUrl: ACME.instanceUrl,
+    authToken: ACME.authToken
+};
 
 const text = (content) => ({ content, isBinary: false });
+const listed = (name, by = 'Jane Roe') => ({
+    name,
+    lastModifiedDate: '2026-10-12T09:30:00.000Z',
+    lastModifiedByName: by
+});
 
 function wait(milliseconds = 0) {
     return new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-function mockOrgFiles(filesByOrg) {
-    retrieveOrgFiles.mockImplementation((session) =>
-        Promise.resolve({
-            files: new Map(
-                Object.entries(filesByOrg[session.instanceUrl] || {})
-            ),
-            problems: []
-        })
+function mockListings(namesByOrg) {
+    listOrgComponents.mockImplementation((session) =>
+        Promise.resolve(
+            (namesByOrg[session.instanceUrl] || []).map((name) => listed(name))
+        )
+    );
+}
+
+// Compares as the engine would: the files of each org by component name.
+function mockContents(filesByOrg) {
+    const { compareFileSets } = jest.requireActual('sfdl/orgCompare');
+    compareComponents.mockImplementation(
+        (left, right, type, apiVersion, components) => {
+            const filesOf = (session, name) =>
+                new Map(
+                    Object.entries(filesByOrg[session.instanceUrl] || {})
+                        .filter(([path]) => path.includes('/' + name + '.'))
+                        .map(([path, file]) => [
+                            path,
+                            typeof file === 'string' ? text(file) : file
+                        ])
+                );
+            const compared = new Map(
+                components.map(({ name, presence }) => {
+                    const entries = compareFileSets(
+                        filesOf(left, name),
+                        filesOf(right, name)
+                    );
+                    const status =
+                        presence !== 'both'
+                            ? presence
+                            : entries.every(
+                                  (entry) => entry.status === 'identical'
+                              )
+                            ? 'identical'
+                            : 'different';
+                    return [name, { status, entries }];
+                })
+            );
+            return Promise.resolve({
+                components: compared,
+                left: { problems: [] },
+                right: { problems: [] }
+            });
+        }
     );
 }
 
@@ -64,6 +116,23 @@ const picker = (element, name) =>
     element.shadowRoot.querySelector('.sfdl-compare-orgs__' + name);
 const diffViewer = (element) =>
     element.shadowRoot.querySelector('sfdl-diff-viewer');
+const results = (element) =>
+    element.shadowRoot.querySelector('sfdl-compare-results');
+const resultsPanel = (element) =>
+    element.shadowRoot.querySelector('.sfdl-compare-orgs__results-panel');
+const statuses = (element) =>
+    results(element).components.map(({ name, status }) => name + ' ' + status);
+const progressText = (element) =>
+    [
+        ...element.shadowRoot.querySelectorAll(
+            '.sfdl-compare-orgs__progress-row'
+        )
+    ].map((row) =>
+        [
+            row.dataset.side,
+            row.querySelector('.sfdl-compare-orgs__progress-status').textContent
+        ].join(' | ')
+    );
 
 async function pick(element, name, value) {
     picker(element, name).dispatchEvent(
@@ -73,10 +142,26 @@ async function pick(element, name, value) {
     await wait();
 }
 
+async function listType(type = 'ApexClass', properties) {
+    const element = await createCompareOrgs(properties);
+    await pick(element, 'right-org', GLOBEX.instanceUrl);
+    await pick(element, 'type', type);
+    return element;
+}
+
+async function openComponent(element, name) {
+    results(element).dispatchEvent(
+        new CustomEvent('componentopen', { detail: { name } })
+    );
+    await wait();
+    await wait();
+}
+
 describe('sfdl-compare-orgs', () => {
     beforeEach(() => {
         getCommonApiVersion.mockResolvedValue('60.0');
-        mockOrgFiles({});
+        mockListings({});
+        mockContents({});
     });
 
     describe('toolbar', () => {
@@ -109,9 +194,11 @@ describe('sfdl-compare-orgs', () => {
 
             expect(picker(element, 'left-org').value).toBe(ACME.instanceUrl);
             expect(picker(element, 'right-org').value).toBeUndefined();
-            expect(diffViewer(element).emptyMessage).toBe(
-                'Pick the two orgs to compare.'
-            );
+            expect(
+                element.shadowRoot.querySelector('.sfdl-compare-orgs__hint')
+                    .textContent
+            ).toBe('Pick the two orgs to compare.');
+            expect(resultsPanel(element).subtitle).toBe('Nothing compared yet');
         });
 
         it('takes the header org for the left side when it comes later', async () => {
@@ -133,7 +220,7 @@ describe('sfdl-compare-orgs', () => {
             expect(diffViewer(element).emptyMessage).toBe(
                 'Pick the metadata to compare.'
             );
-            expect(retrieveOrgFiles).not.toHaveBeenCalled();
+            expect(listOrgComponents).not.toHaveBeenCalled();
         });
 
         it('names each side of the diff after its org', async () => {
@@ -148,79 +235,138 @@ describe('sfdl-compare-orgs', () => {
                 'globex.my.salesforce.com'
             );
         });
+
+        it('cannot refresh before there is something to compare', async () => {
+            const element = await createCompareOrgs();
+
+            expect(picker(element, 'refresh').disabled).toBe(true);
+        });
     });
 
-    describe('running the comparison', () => {
-        async function readyToCompare(properties) {
-            const element = await createCompareOrgs(properties);
-            await pick(element, 'right-org', GLOBEX.instanceUrl);
-            return element;
-        }
+    describe('listing', () => {
+        it('lists the names both orgs hold as soon as the metadata is picked, and retrieves nothing', async () => {
+            mockListings({
+                [ACME.instanceUrl]: ['AccountService', 'InvoiceBatch', 'Utils'],
+                [GLOBEX.instanceUrl]: [
+                    'AccountService',
+                    'LegacyHelper',
+                    'Utils'
+                ]
+            });
 
-        it('retrieves both orgs as soon as the metadata is picked', async () => {
-            const element = await readyToCompare();
-
-            await pick(element, 'type', 'ApexClass');
+            const element = await listType();
 
             expect(getCommonApiVersion).toHaveBeenCalledWith(
-                { instanceUrl: ACME.instanceUrl, authToken: ACME.authToken },
+                ACME_SESSION,
                 GLOBEX
             );
             expect(
-                retrieveOrgFiles.mock.calls.map(
+                listOrgComponents.mock.calls.map(
                     ([session, type, apiVersion, options]) => [
                         session.instanceUrl,
                         type.key,
                         apiVersion,
-                        options.includeManaged,
-                        options.refresh
+                        options
                     ]
                 )
             ).toEqual([
-                [ACME.instanceUrl, 'ApexClass', '60.0', false, false],
-                [GLOBEX.instanceUrl, 'ApexClass', '60.0', false, false]
+                [
+                    ACME.instanceUrl,
+                    'ApexClass',
+                    '60.0',
+                    { includeManaged: false, refresh: false }
+                ],
+                [
+                    GLOBEX.instanceUrl,
+                    'ApexClass',
+                    '60.0',
+                    { includeManaged: false, refresh: false }
+                ]
             ]);
+            expect(compareComponents).not.toHaveBeenCalled();
+            expect(statuses(element)).toEqual([
+                'AccountService notCompared',
+                'InvoiceBatch left',
+                'LegacyHelper right',
+                'Utils notCompared'
+            ]);
+            expect(results(element).components[0]).toMatchObject({
+                presence: 'both',
+                leftModified: {
+                    date: '2026-10-12T09:30:00.000Z',
+                    by: 'Jane Roe'
+                },
+                rightModified: {
+                    date: '2026-10-12T09:30:00.000Z',
+                    by: 'Jane Roe'
+                }
+            });
+            expect(resultsPanel(element).subtitle).toBe(
+                'Apex Classes · API 60.0'
+            );
+        });
+
+        it('hands the list what a comparison of the type costs', async () => {
+            const element = await listType('CustomObjects');
+
+            expect(results(element).engine).toBe('metadata');
+            expect(results(element).batchSize).toBe(10);
+            expect(results(element).typeLabel).toBe('Custom Objects');
+        });
+
+        it('says it is listing until both orgs answered', async () => {
+            listOrgComponents.mockImplementation(() => new Promise(() => {}));
+
+            const element = await listType();
+
+            expect(progressText(element)).toEqual([
+                'left | Listing the components',
+                'right | Listing the components'
+            ]);
+            expect(diffViewer(element).loading).toBe(true);
+            expect(diffViewer(element).emptyMessage).toBe(
+                'Listing the Apex Classes of both orgs...'
+            );
         });
 
         it('leaves the where clause of the header out', async () => {
-            const element = await readyToCompare();
+            await listType();
 
-            await pick(element, 'type', 'ApexClass');
-
-            expect(retrieveOrgFiles.mock.calls[0][0]).toEqual({
-                instanceUrl: ACME.instanceUrl,
-                authToken: ACME.authToken
-            });
+            expect(listOrgComponents.mock.calls[0][0]).toEqual(ACME_SESSION);
         });
 
-        it('shows the spinner until both orgs are retrieved', async () => {
-            const pendingRetrieves = [];
-            retrieveOrgFiles.mockImplementation(
-                () =>
-                    new Promise((resolve) => {
-                        pendingRetrieves.push(() =>
-                            resolve({ files: new Map(), problems: [] })
-                        );
-                    })
-            );
-            const element = await readyToCompare();
-
-            await pick(element, 'type', 'ApexClass');
-
-            expect(diffViewer(element).loading).toBe(true);
-            expect(diffViewer(element).emptyMessage).toBe(
-                'Retrieving Apex Classes from both orgs...'
+        it('shows why an org could not be listed', async () => {
+            listOrgComponents.mockImplementation((session) =>
+                session.instanceUrl === GLOBEX.instanceUrl
+                    ? Promise.reject(
+                          new Error('INVALID_SESSION_ID: Invalid Session ID')
+                      )
+                    : Promise.resolve([])
             );
 
-            pendingRetrieves.forEach((finishRetrieve) => finishRetrieve());
-            await wait();
+            const element = await listType();
 
-            expect(diffViewer(element).loading).toBe(false);
+            expect(progressText(element)[1]).toBe(
+                'right | INVALID_SESSION_ID: Invalid Session ID'
+            );
+            expect(results(element)).toBeNull();
         });
 
-        it('compares again when the type, an org or the managed choice changes', async () => {
-            const element = await readyToCompare();
-            await pick(element, 'type', 'ApexClass');
+        it('shows why the orgs could not be compared at all', async () => {
+            getCommonApiVersion.mockRejectedValue(
+                new Error('The orgs do not share any api version')
+            );
+
+            const element = await listType();
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-compare-orgs__error')
+                    .textContent
+            ).toBe('The orgs do not share any api version');
+        });
+
+        it('lists again when the type, an org or the managed choice changes', async () => {
+            const element = await listType();
 
             await pick(element, 'type', 'ApexTrigger');
             await pick(element, 'left-org', GLOBEX.instanceUrl);
@@ -233,7 +379,7 @@ describe('sfdl-compare-orgs', () => {
             await wait();
 
             expect(
-                retrieveOrgFiles.mock.calls.map(([session, type, , options]) =>
+                listOrgComponents.mock.calls.map(([session, type, , options]) =>
                     [
                         session.instanceUrl,
                         type.key,
@@ -252,30 +398,34 @@ describe('sfdl-compare-orgs', () => {
             ]);
         });
 
-        it('retrieves both orgs again on refresh', async () => {
-            const element = await readyToCompare();
-            await pick(element, 'type', 'ApexClass');
+        it('lists again and forgets what was retrieved on refresh', async () => {
+            const element = await listType();
 
             picker(element, 'refresh').click();
             await wait();
             await wait();
 
             expect(
-                retrieveOrgFiles.mock.calls
+                listOrgComponents.mock.calls
                     .slice(2)
                     .map(([, , , options]) => options.refresh)
             ).toEqual([true, true]);
+            expect(
+                forgetComponents.mock.calls.map(
+                    ([session, type, apiVersion]) => [
+                        session.instanceUrl,
+                        type.key,
+                        apiVersion
+                    ]
+                )
+            ).toEqual([
+                [ACME.instanceUrl, 'ApexClass', '60.0'],
+                [GLOBEX.instanceUrl, 'ApexClass', '60.0']
+            ]);
         });
 
-        it('cannot refresh before there is something to compare', async () => {
-            const element = await createCompareOrgs();
-
-            expect(picker(element, 'refresh').disabled).toBe(true);
-        });
-
-        it('swaps the orgs of both sides and compares them the other way round', async () => {
-            const element = await readyToCompare();
-            await pick(element, 'type', 'ApexClass');
+        it('swaps the orgs of both sides', async () => {
+            const element = await listType();
 
             picker(element, 'swap').click();
             await wait();
@@ -283,339 +433,340 @@ describe('sfdl-compare-orgs', () => {
 
             expect(picker(element, 'left-org').value).toBe(GLOBEX.instanceUrl);
             expect(picker(element, 'right-org').value).toBe(ACME.instanceUrl);
-            expect(retrieveOrgFiles.mock.calls[2][0].instanceUrl).toBe(
+            expect(listOrgComponents.mock.calls[2][0].instanceUrl).toBe(
                 GLOBEX.instanceUrl
             );
         });
-    });
 
-    describe('results', () => {
-        const results = (element) =>
-            element.shadowRoot.querySelector('sfdl-compare-results');
-        const resultsPanel = (element) =>
-            element.shadowRoot.querySelector(
-                '.sfdl-compare-orgs__results-panel'
-            );
-        const progressRows = (element) => [
-            ...element.shadowRoot.querySelectorAll(
-                '.sfdl-compare-orgs__progress-row'
-            )
-        ];
-        const progressText = (element) =>
-            progressRows(element).map((row) =>
-                [
-                    row.dataset.side,
-                    row.querySelector('.sfdl-compare-orgs__progress-org')
-                        .textContent,
-                    row.querySelector('.sfdl-compare-orgs__progress-status')
-                        .textContent
-                ].join(' | ')
-            );
-
-        async function compare(type = 'ApexClass') {
-            const element = await createCompareOrgs();
-            await pick(element, 'right-org', GLOBEX.instanceUrl);
-            await pick(element, 'type', type);
-            return element;
-        }
-
-        it('lists every component of both orgs with its status', async () => {
-            mockOrgFiles({
-                [ACME.instanceUrl]: {
-                    'classes/A.cls': text('same'),
-                    'classes/B.cls': text('left')
-                },
-                [GLOBEX.instanceUrl]: {
-                    'classes/A.cls': text('same'),
-                    'classes/B.cls': text('right'),
-                    'classes/C.cls': text('new')
-                }
-            });
-
-            const element = await compare();
-
-            expect(
-                results(element).entries.map(
-                    ({ path, status }) => path + ' ' + status
-                )
-            ).toEqual([
-                'classes/A.cls identical',
-                'classes/B.cls different',
-                'classes/C.cls right'
-            ]);
-            expect(results(element).typeLabel).toBe('Apex Classes');
-            expect(results(element).leftName).toBe('acme.my.salesforce.com');
-            expect(resultsPanel(element).subtitle).toBe(
-                'Apex Classes \u00b7 API 60.0'
-            );
-        });
-
-        it('shows how far each org got while retrieving', async () => {
-            retrieveOrgFiles.mockImplementation(
-                (session, type, apiVersion, options) => {
-                    options.onStatus(
-                        session.instanceUrl === ACME.instanceUrl
-                            ? 'InProgress'
-                            : 'Pending'
-                    );
-                    return new Promise(() => {});
-                }
-            );
-
-            const element = await compare();
-
-            expect(progressText(element)).toEqual([
-                'left | acme.my.salesforce.com | Retrieving',
-                'right | globex.my.salesforce.com | Queued in the org'
-            ]);
-            expect(results(element)).toBeNull();
-        });
-
-        it('shows why an org could not be retrieved', async () => {
-            retrieveOrgFiles.mockImplementation((session) =>
-                session.instanceUrl === GLOBEX.instanceUrl
-                    ? Promise.reject(
-                          new Error('INVALID_SESSION_ID: Invalid Session ID')
-                      )
-                    : Promise.resolve({ files: new Map(), problems: [] })
-            );
-
-            const element = await compare();
-
-            expect(progressText(element)[1]).toBe(
-                'right | globex.my.salesforce.com | INVALID_SESSION_ID: Invalid Session ID'
-            );
-            expect(
-                progressRows(element)[1]
-                    .querySelector('.sfdl-compare-orgs__progress-status')
-                    .classList.contains(
-                        'sfdl-compare-orgs__progress-status_error'
-                    )
-            ).toBe(true);
-            expect(results(element)).toBeNull();
-        });
-
-        it('says which components an org could not hand back', async () => {
-            retrieveOrgFiles.mockImplementation((session) =>
-                Promise.resolve({
-                    files: new Map([['classes/A.cls', text('a')]]),
-                    problems:
-                        session.instanceUrl === ACME.instanceUrl
-                            ? [
-                                  'Entity of type ApexClass named Gone cannot be found',
-                                  'Another one'
-                              ]
-                            : []
-                })
-            );
-
-            const element = await compare();
-            const leftStatus = progressRows(element)[0].querySelector(
-                '.sfdl-compare-orgs__progress-status'
-            );
-
-            expect(leftStatus.textContent).toBe(
-                '2 components could not be retrieved'
-            );
-            expect(leftStatus.title).toBe(
-                'Entity of type ApexClass named Gone cannot be found\nAnother one'
-            );
-            expect(results(element)).not.toBeNull();
-        });
-
-        it('shows why the orgs could not be compared at all', async () => {
-            getCommonApiVersion.mockRejectedValue(
-                new Error('The orgs do not share any api version')
-            );
-
-            const element = await compare();
-
-            expect(
-                element.shadowRoot.querySelector('.sfdl-compare-orgs__error')
-                    .textContent
-            ).toBe('The orgs do not share any api version');
-        });
-
-        it('drops a comparison that a newer one overtook', async () => {
+        it('drops a listing that a newer one overtook', async () => {
             const pendingApexClasses = [];
-            retrieveOrgFiles.mockImplementation((session, type) =>
+            listOrgComponents.mockImplementation((session, type) =>
                 type.key === 'ApexClass'
                     ? new Promise((resolve) =>
                           pendingApexClasses.push(() =>
-                              resolve({
-                                  files: new Map([
-                                      ['classes/Old.cls', text('a')]
-                                  ]),
-                                  problems: []
-                              })
+                              resolve([listed('Old')])
                           )
                       )
-                    : Promise.resolve({
-                          files: new Map([['triggers/New.trigger', text('b')]]),
-                          problems: []
-                      })
+                    : Promise.resolve([listed('New')])
             );
-            const element = await compare('ApexClass');
+            const element = await listType('ApexClass');
 
             await pick(element, 'type', 'ApexTrigger');
             pendingApexClasses.forEach((finish) => finish());
             await wait();
 
-            expect(results(element).entries.map(({ path }) => path)).toEqual([
-                'triggers/New.trigger'
-            ]);
-        });
-
-        it('marks the component picked in the list', async () => {
-            mockOrgFiles({
-                [ACME.instanceUrl]: { 'classes/A.cls': text('a') }
-            });
-            const element = await compare();
-
-            results(element).dispatchEvent(
-                new CustomEvent('componentselect', {
-                    detail: { path: 'classes/A.cls' }
-                })
-            );
-            await wait();
-
-            expect(results(element).selectedPath).toBe('classes/A.cls');
-        });
-
-        it('explains in the panel what is missing before comparing', async () => {
-            const element = await createCompareOrgs();
-
-            expect(
-                element.shadowRoot.querySelector('.sfdl-compare-orgs__hint')
-                    .textContent
-            ).toBe('Pick the two orgs to compare.');
-            expect(resultsPanel(element).subtitle).toBe('Nothing compared yet');
+            expect(statuses(element)).toEqual(['New notCompared']);
         });
     });
 
-    describe('the diff of a component', () => {
-        const results = (element) =>
-            element.shadowRoot.querySelector('sfdl-compare-results');
+    describe('comparing on demand', () => {
+        const LISTINGS = {
+            [ACME.instanceUrl]: ['AccountService', 'InvoiceBatch', 'Utils'],
+            [GLOBEX.instanceUrl]: ['AccountService', 'LegacyHelper', 'Utils']
+        };
+        const FILES = {
+            [ACME.instanceUrl]: {
+                'classes/AccountService.cls':
+                    'public class AccountService { left }',
+                'classes/AccountService.cls-meta.xml':
+                    '<?xml version="1.0"?><ApexClass/>',
+                'classes/InvoiceBatch.cls': 'public class InvoiceBatch {}',
+                'classes/Utils.cls': 'same'
+            },
+            [GLOBEX.instanceUrl]: {
+                'classes/AccountService.cls':
+                    'public class AccountService { right }',
+                'classes/AccountService.cls-meta.xml':
+                    '<?xml version="1.0"?><ApexClass/>',
+                'classes/LegacyHelper.cls': 'public class LegacyHelper {}',
+                'classes/Utils.cls': 'same'
+            }
+        };
 
-        async function compare(filesByOrg, type = 'ApexClass') {
-            mockOrgFiles(filesByOrg);
-            const element = await createCompareOrgs();
-            await pick(element, 'right-org', GLOBEX.instanceUrl);
-            await pick(element, 'type', type);
-            return element;
-        }
+        beforeEach(() => {
+            mockListings(LISTINGS);
+            mockContents(FILES);
+        });
 
-        async function open(element, path) {
-            results(element).dispatchEvent(
-                new CustomEvent('componentselect', { detail: { path } })
+        it('compares a component when it is opened, and only that one', async () => {
+            const element = await listType();
+
+            await openComponent(element, 'AccountService');
+
+            expect(compareComponents).toHaveBeenCalledTimes(1);
+            expect(compareComponents.mock.calls[0].slice(0, 5)).toEqual([
+                ACME_SESSION,
+                GLOBEX,
+                expect.objectContaining({ key: 'ApexClass' }),
+                '60.0',
+                [{ name: 'AccountService', presence: 'both' }]
+            ]);
+            expect(statuses(element)[0]).toBe('AccountService different');
+        });
+
+        it('opens the component on its first difference', async () => {
+            const element = await listType();
+
+            await openComponent(element, 'AccountService');
+
+            expect(results(element).selectedName).toBe('AccountService');
+            expect(results(element).selectedPath).toBe(
+                'classes/AccountService.cls'
             );
-            await wait();
-        }
-
-        it('opens on the first change as soon as the orgs are compared', async () => {
-            const element = await compare({
-                [ACME.instanceUrl]: {
-                    'classes/A.cls': text('same'),
-                    'classes/B.cls': text('public class B { left }')
-                },
-                [GLOBEX.instanceUrl]: {
-                    'classes/A.cls': text('same'),
-                    'classes/B.cls': text('public class B { right }')
-                }
-            });
-
-            expect(results(element).selectedPath).toBe('classes/B.cls');
             expect(diffViewer(element).leftContent).toBe(
-                'public class B { left }'
+                'public class AccountService { left }'
             );
             expect(diffViewer(element).rightContent).toBe(
-                'public class B { right }'
+                'public class AccountService { right }'
             );
             expect(diffViewer(element).language).toBe('apex');
-            expect(diffViewer(element).notice).toBeUndefined();
         });
 
-        it('opens on the first component when the orgs are identical', async () => {
-            const element = await compare(
-                {
-                    [ACME.instanceUrl]: {
-                        'pages/Invoice.page': text('<apex:page/>')
-                    },
-                    [GLOBEX.instanceUrl]: {
-                        'pages/Invoice.page': text('<apex:page/>')
-                    }
-                },
-                'ApexPage'
-            );
+        it('shows the spinner while the component on screen is retrieved', async () => {
+            compareComponents.mockImplementation(() => new Promise(() => {}));
+            const element = await listType();
 
-            expect(diffViewer(element).leftContent).toBe('<apex:page/>');
-            expect(diffViewer(element).rightContent).toBe('<apex:page/>');
-            expect(diffViewer(element).language).toBe('html');
+            await openComponent(element, 'Utils');
+
+            expect(statuses(element)[3]).toBe('Utils comparing');
+            expect(diffViewer(element).loading).toBe(true);
+            expect(diffViewer(element).emptyMessage).toBe(
+                'Retrieving Utils from both orgs...'
+            );
+        });
+
+        it('opens a component compared before without retrieving it again', async () => {
+            const element = await listType();
+            await openComponent(element, 'Utils');
+
+            await openComponent(element, 'AccountService');
+            await openComponent(element, 'Utils');
+
+            expect(compareComponents).toHaveBeenCalledTimes(2);
             expect(diffViewer(element).identicalMessage).toBe(
-                'pages/Invoice.page is identical in both orgs.'
+                'classes/Utils.cls is identical in both orgs.'
             );
         });
 
-        it('shows the component picked in the list', async () => {
-            const element = await compare({
-                [ACME.instanceUrl]: {
-                    'classes/A.cls': text('a'),
-                    'classes/A.cls-meta.xml': text(
-                        '<?xml version="1.0"?><ApexClass/>'
-                    )
-                },
-                [GLOBEX.instanceUrl]: {
-                    'classes/A.cls': text('b'),
-                    'classes/A.cls-meta.xml': text(
-                        '<?xml version="1.0"?><ApexClass/>'
-                    )
-                }
-            });
+        it('opens the file picked in the list', async () => {
+            const element = await listType();
+            await openComponent(element, 'AccountService');
 
-            await open(element, 'classes/A.cls-meta.xml');
+            results(element).dispatchEvent(
+                new CustomEvent('fileopen', {
+                    detail: {
+                        name: 'AccountService',
+                        path: 'classes/AccountService.cls-meta.xml'
+                    }
+                })
+            );
+            await wait();
 
             expect(diffViewer(element).language).toBe('xml');
             expect(diffViewer(element).leftContent).toContain('<ApexClass/>');
         });
 
-        it('says which org holds a component the other one lacks', async () => {
-            const element = await compare({
-                [ACME.instanceUrl]: { 'classes/OnlyLeft.cls': text('left') },
-                [GLOBEX.instanceUrl]: { 'classes/OnlyRight.cls': text('right') }
-            });
+        it('retrieves a component one org lacks from the other org only, and says so', async () => {
+            const element = await listType();
 
-            expect(diffViewer(element).leftContent).toBe('left');
-            expect(diffViewer(element).rightContent).toBeUndefined();
-            expect(diffViewer(element).notice).toBe(
-                'classes/OnlyLeft.cls is only in acme.my.salesforce.com.'
-            );
+            await openComponent(element, 'LegacyHelper');
 
-            await open(element, 'classes/OnlyRight.cls');
-
+            expect(compareComponents.mock.calls[0][4]).toEqual([
+                { name: 'LegacyHelper', presence: 'right' }
+            ]);
             expect(diffViewer(element).leftContent).toBeUndefined();
+            expect(diffViewer(element).rightContent).toBe(
+                'public class LegacyHelper {}'
+            );
             expect(diffViewer(element).notice).toBe(
-                'classes/OnlyRight.cls is only in globex.my.salesforce.com.'
+                'classes/LegacyHelper.cls is only in globex.my.salesforce.com.'
             );
         });
 
+        it('compares the components ticked together', async () => {
+            const element = await listType();
+
+            results(element).dispatchEvent(
+                new CustomEvent('comparerequest', {
+                    detail: {
+                        names: ['AccountService', 'Utils', 'InvoiceBatch']
+                    }
+                })
+            );
+            await wait();
+            await wait();
+
+            expect(compareComponents).toHaveBeenCalledTimes(1);
+            expect(compareComponents.mock.calls[0][4]).toEqual([
+                { name: 'AccountService', presence: 'both' },
+                { name: 'InvoiceBatch', presence: 'left' },
+                { name: 'Utils', presence: 'both' }
+            ]);
+            expect(statuses(element)).toEqual([
+                'AccountService different',
+                'InvoiceBatch left',
+                'LegacyHelper right',
+                'Utils identical'
+            ]);
+            expect(
+                results(element).components[0].files.map(
+                    ({ path, status }) => path + ' ' + status
+                )
+            ).toEqual([
+                'classes/AccountService.cls different',
+                'classes/AccountService.cls-meta.xml identical'
+            ]);
+        });
+
+        it('runs one comparison at a time', async () => {
+            const pending = [];
+            compareComponents.mockImplementation(
+                (left, right, type, apiVersion, components) =>
+                    new Promise((resolve) =>
+                        pending.push(() =>
+                            resolve({
+                                components: new Map(
+                                    components.map(({ name }) => [
+                                        name,
+                                        { status: 'identical', entries: [] }
+                                    ])
+                                ),
+                                left: { problems: [] },
+                                right: { problems: [] }
+                            })
+                        )
+                    )
+            );
+            const element = await listType();
+
+            await openComponent(element, 'AccountService');
+            await openComponent(element, 'Utils');
+
+            expect(compareComponents).toHaveBeenCalledTimes(1);
+
+            pending.shift()();
+            await wait();
+            await wait();
+
+            expect(compareComponents).toHaveBeenCalledTimes(2);
+        });
+
+        it('shows how far each org got while retrieving', async () => {
+            compareComponents.mockImplementation(
+                (left, right, type, apiVersion, components, options) => {
+                    options.onStatus('left', 'InProgress');
+                    options.onStatus('right', 'Pending');
+                    return new Promise(() => {});
+                }
+            );
+            const element = await listType();
+
+            await openComponent(element, 'Utils');
+
+            expect(progressText(element)).toEqual([
+                'left | Retrieving',
+                'right | Queued in the org'
+            ]);
+        });
+
+        it('shows the org that failed and leaves the components as they were', async () => {
+            compareComponents.mockResolvedValue({
+                components: new Map(),
+                left: { problems: [] },
+                right: { error: 'INVALID_SESSION_ID: Invalid Session ID' }
+            });
+            const element = await listType();
+
+            await openComponent(element, 'Utils');
+
+            expect(progressText(element)[1]).toBe(
+                'right | INVALID_SESSION_ID: Invalid Session ID'
+            );
+            expect(statuses(element)[3]).toBe('Utils notCompared');
+        });
+
+        it('says which components an org could not hand back', async () => {
+            compareComponents.mockResolvedValue({
+                components: new Map([
+                    ['Utils', { status: 'identical', entries: [] }]
+                ]),
+                left: {
+                    problems: [
+                        'Entity of type ApexClass named Utils cannot be found'
+                    ]
+                },
+                right: { problems: [] }
+            });
+            const element = await listType();
+
+            await openComponent(element, 'Utils');
+            const leftStatus = element.shadowRoot.querySelector(
+                '.sfdl-compare-orgs__progress-status'
+            );
+
+            expect(leftStatus.textContent).toBe(
+                '1 component could not be retrieved'
+            );
+            expect(leftStatus.title).toBe(
+                'Entity of type ApexClass named Utils cannot be found'
+            );
+        });
+
+        it('drops a comparison of a listing that was replaced', async () => {
+            const pending = [];
+            compareComponents.mockImplementation(
+                () =>
+                    new Promise((resolve) =>
+                        pending.push(() =>
+                            resolve({
+                                components: new Map([
+                                    [
+                                        'Utils',
+                                        { status: 'different', entries: [] }
+                                    ]
+                                ]),
+                                left: { problems: [] },
+                                right: { problems: [] }
+                            })
+                        )
+                    )
+            );
+            mockListings({
+                [ACME.instanceUrl]: ['Utils'],
+                [GLOBEX.instanceUrl]: ['Utils']
+            });
+            const element = await listType('ApexClass');
+            await openComponent(element, 'Utils');
+
+            await pick(element, 'type', 'ApexTrigger');
+            pending.forEach((finish) => finish());
+            await wait();
+
+            expect(statuses(element)).toEqual(['Utils notCompared']);
+        });
+
         it('stands a binary file in for its size', async () => {
-            const element = await compare(
-                {
-                    [ACME.instanceUrl]: {
-                        'staticresources/logo.resource': {
-                            content: 'AAAAAAAA',
-                            isBinary: true
-                        }
-                    },
-                    [GLOBEX.instanceUrl]: {
-                        'staticresources/logo.resource': {
-                            content: 'BBBBBBBBBB==',
-                            isBinary: true
-                        }
+            mockListings({
+                [ACME.instanceUrl]: ['logo'],
+                [GLOBEX.instanceUrl]: ['logo']
+            });
+            mockContents({
+                [ACME.instanceUrl]: {
+                    'staticresources/logo.resource': {
+                        content: 'AAAAAAAA',
+                        isBinary: true
                     }
                 },
-                'StaticResource'
-            );
+                [GLOBEX.instanceUrl]: {
+                    'staticresources/logo.resource': {
+                        content: 'BBBBBBBBBB==',
+                        isBinary: true
+                    }
+                }
+            });
+            const element = await listType('StaticResource');
+
+            await openComponent(element, 'logo');
 
             expect(diffViewer(element).leftContent).toBe(
                 'Binary file of 6 bytes'
@@ -629,12 +780,9 @@ describe('sfdl-compare-orgs', () => {
             );
         });
 
-        it('empties the diff when a new comparison starts', async () => {
-            const element = await compare({
-                [ACME.instanceUrl]: { 'classes/A.cls': text('a') },
-                [GLOBEX.instanceUrl]: { 'classes/A.cls': text('b') }
-            });
-            retrieveOrgFiles.mockImplementation(() => new Promise(() => {}));
+        it('empties the diff when the listing changes', async () => {
+            const element = await listType();
+            await openComponent(element, 'AccountService');
 
             await pick(element, 'type', 'ApexTrigger');
 

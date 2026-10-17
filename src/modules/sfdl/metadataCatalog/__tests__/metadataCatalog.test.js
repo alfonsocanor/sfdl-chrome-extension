@@ -2,7 +2,6 @@ import {
     METADATA_TYPES,
     getMetadataType,
     metadataTypeOptions,
-    retrieveRequestFor,
     listMetadataComponents,
     languageForFile
 } from 'sfdl/metadataCatalog';
@@ -62,65 +61,6 @@ describe('metadataCatalog', () => {
 
             expect(metadataTypes).not.toContain('Profile');
             expect(metadataTypes).not.toContain('PermissionSet');
-        });
-    });
-
-    describe('retrieveRequestFor', () => {
-        it('retrieves every component through the wildcard', async () => {
-            await expect(
-                retrieveRequestFor(getMetadataType('ApexClass'), ACME, '60.0')
-            ).resolves.toEqual([{ name: 'ApexClass', members: ['*'] }]);
-            expect(listMetadata).not.toHaveBeenCalled();
-        });
-
-        it('names every component the org lists to include managed packages', async () => {
-            listMetadata.mockResolvedValue([
-                { fullName: 'pkg__Helper' },
-                { fullName: 'AccountService' }
-            ]);
-
-            await expect(
-                retrieveRequestFor(getMetadataType('ApexClass'), ACME, '60.0', {
-                    includeManaged: true
-                })
-            ).resolves.toEqual([
-                {
-                    name: 'ApexClass',
-                    members: ['AccountService', 'pkg__Helper']
-                }
-            ]);
-            expect(listMetadata).toHaveBeenCalledWith(ACME, '60.0', [
-                { type: 'ApexClass' }
-            ]);
-        });
-
-        it('names the standard objects, the wildcard only covers custom ones', async () => {
-            listMetadata.mockResolvedValue([
-                { fullName: 'Contact' },
-                { fullName: 'Invoice__c' },
-                { fullName: 'Account' },
-                { fullName: 'pkg__Thing__c' }
-            ]);
-
-            await expect(
-                retrieveRequestFor(
-                    getMetadataType('StandardObjects'),
-                    ACME,
-                    '60.0'
-                )
-            ).resolves.toEqual([
-                { name: 'CustomObject', members: ['Account', 'Contact'] }
-            ]);
-        });
-
-        it('asks for nothing when the org lists no component', async () => {
-            listMetadata.mockResolvedValue([]);
-
-            await expect(
-                retrieveRequestFor(getMetadataType('ApexClass'), ACME, '60.0', {
-                    includeManaged: true
-                })
-            ).resolves.toEqual([]);
         });
     });
 

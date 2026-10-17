@@ -1,11 +1,10 @@
-import { describeGlobal, describeSObject, queryAll, mapWithConcurrency } from 'sfdl/salesforceConnection';
+import { describeGlobal, describeSObject, queryAll } from 'sfdl/salesforceConnection';
 
 //Custom settings hold their values as records, data the Metadata API has none
 //of, and the values are what tends to drift between orgs: an endpoint, a
 //switch, a threshold. Each setting is written out as one document with its
 //fields and every one of its values, in an order that does not depend on the
 //org, so two orgs compare line by line.
-const DESCRIBES_IN_FLIGHT = 5;
 const ORGANIZATION_KEY_PREFIX = '00D';
 const PROFILE_KEY_PREFIX = '00e';
 const USER_KEY_PREFIX = '005';
@@ -148,31 +147,4 @@ export async function listCustomSettings(sessionInformation, apiVersion, { inclu
         .filter(sObject => sObject.customSetting && (includeManaged || !isNamespaced(sObject.name)))
         .map(sObject => ({ name: sObject.name }))
         .sort((a, b) => a.name.localeCompare(b.name));
-}
-
-//The custom settings of the org as files, customSettings/Name__c.setting,
-//the shape retrieveFiles hands the metadata back in.
-export async function retrieveCustomSettingFiles(sessionInformation, apiVersion, options = {}){
-    const { includeManaged = false, onStatus = () => {} } = options;
-
-    onStatus('Listing the custom settings');
-
-    const { sobjects } = await describeGlobal(sessionInformation, apiVersion);
-    const settingNames = sobjects
-        .filter(sObject => sObject.customSetting && (includeManaged || !isNamespaced(sObject.name)))
-        .map(sObject => sObject.name)
-        .sort();
-    let settingsRead = 0;
-
-    const documents = await mapWithConcurrency(settingNames, DESCRIBES_IN_FLIGHT, async settingName => {
-        const document = await readCustomSetting(sessionInformation, apiVersion, settingName);
-        settingsRead++;
-        onStatus('Read ' + settingsRead + ' of ' + settingNames.length + ' custom settings');
-        return document;
-    });
-
-    return new Map(settingNames.map((settingName, index) => [
-        'customSettings/' + settingName + '.setting',
-        { content: documents[index], isBinary: false }
-    ]));
 }
