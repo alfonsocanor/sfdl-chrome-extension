@@ -1,0 +1,65 @@
+<template>
+    <div class="slds-form-element sfdl-combobox">
+        <template if:true={label}>
+            <span class="slds-form-element__label sfdl-combobox-label">
+                <template if:true={side}>
+                    <span class={swatchClass}></span>
+                </template>
+                {label}
+            </span>
+        </template>
+        <div class="slds-form-element__control">
+            <div class="slds-combobox_container">
+                <div class={comboboxClass}>
+                    <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
+                        <button
+                            type="button"
+                            class="slds-input_faux slds-combobox__input sfdl-combobox-button"
+                            disabled={disabled}
+                            title={buttonTitle}
+                            aria-haspopup="listbox"
+                            aria-expanded={ariaExpanded}
+                            onclick={handleToggle}
+                            onblur={handleBlur}
+                            onkeydown={handleKeyDown}>
+                            <span class={valueClass}>{displayLabel}</span>
+                        </button>
+                        <span class="slds-icon_container slds-icon-utility-down slds-input__icon slds-input__icon_right">
+                            <img src={downIcon} alt=""/>
+                        </span>
+                    </div>
+                    <div class="slds-dropdown slds-dropdown_length-10 slds-dropdown_fluid" role="listbox" onmousedown={keepFocusOnButton}>
+                        <ul class="slds-listbox slds-listbox_vertical" role="presentation">
+                            <template for:each={items} for:item="item">
+                                <li key={item.key} role="presentation" class="slds-listbox__item">
+                                    <template if:true={item.isGroup}>
+                                        <div class="slds-media slds-listbox__option slds-listbox__option_plain" role="presentation">
+                                            <h3 class="slds-listbox__option-header" role="presentation">{item.label}</h3>
+                                        </div>
+                                    </template>
+                                    <template if:false={item.isGroup}>
+                                        <div
+                                            class={item.optionClass}
+                                            role="option"
+                                            aria-selected={item.ariaSelected}
+                                            data-value={item.value}
+                                            onclick={handleSelect}>
+                                            <span class="slds-media__body">
+                                                <span class="slds-truncate" title={item.label}>{item.label}</span>
+                                            </span>
+                                        </div>
+                                    </template>
+                                </li>
+                            </template>
+                            <template if:true={isEmpty}>
+                                <li role="presentation" class="slds-listbox__item">
+                                    <div class="slds-media slds-listbox__option slds-listbox__option_plain sfdl-combobox-empty" role="presentation">{emptyMessage}</div>
+                                </li>
+                            </template>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
