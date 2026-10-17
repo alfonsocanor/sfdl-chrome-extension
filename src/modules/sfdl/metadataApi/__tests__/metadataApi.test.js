@@ -347,6 +347,34 @@ describe('metadataApi', () => {
             ]);
         });
 
+        it('asks for the status less and less often', async () => {
+            const zipFile = await zipOf({ 'classes/Foo.cls': 'x' });
+            mockRetrieve([
+                retrieveStatus({ done: false, status: 'Pending' }),
+                retrieveStatus({ done: false, status: 'InProgress' }),
+                retrieveStatus({ done: false, status: 'InProgress' }),
+                retrieveStatus({ done: true, status: 'Succeeded', zipFile })
+            ]);
+            const setTimeoutSpy = jest.spyOn(global, 'setTimeout');
+
+            await retrieveFiles(
+                ACME,
+                '60.0',
+                [{ name: 'ApexClass', members: ['*'] }],
+                {
+                    pollInterval: 4,
+                    maxPollInterval: 8
+                }
+            );
+
+            expect(
+                setTimeoutSpy.mock.calls
+                    .map(([, delay]) => delay)
+                    .filter((delay) => delay >= 4)
+            ).toEqual([4, 6, 8, 8]);
+            setTimeoutSpy.mockRestore();
+        });
+
         it('fails with the message of the org', async () => {
             mockRetrieve([
                 retrieveStatus({

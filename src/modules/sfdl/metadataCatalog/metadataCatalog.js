@@ -13,6 +13,9 @@ const CONFIGURATION = 'Configuration';
 //- customSettings reads the settings and their values through REST, values
 //  are data and the Metadata API has none of them.
 //
+//batchSize is how many components one retrieve asks for, fewer for objects
+//since each one comes with every field, rule and view it has.
+//
 //Profiles and permission sets are left out on purpose: retrieved on their own
 //they only carry the permissions of the other components of the same
 //retrieve, so comparing them alone would report differences that are not
@@ -27,8 +30,8 @@ export const METADATA_TYPES = [
     { key: 'FlexiPage', label: 'Lightning Pages', group: USER_INTERFACE, engine: 'metadata', metadataType: 'FlexiPage' },
     { key: 'Layout', label: 'Page Layouts', group: USER_INTERFACE, engine: 'metadata', metadataType: 'Layout' },
     { key: 'StaticResource', label: 'Static Resources', group: USER_INTERFACE, engine: 'metadata', metadataType: 'StaticResource' },
-    { key: 'CustomObjects', label: 'Custom Objects', group: DATA_MODEL, engine: 'metadata', metadataType: 'CustomObject' },
-    { key: 'StandardObjects', label: 'Standard Objects', group: DATA_MODEL, engine: 'metadata', metadataType: 'CustomObject', members: 'standardObjects' },
+    { key: 'CustomObjects', label: 'Custom Objects', group: DATA_MODEL, engine: 'metadata', metadataType: 'CustomObject', batchSize: 10 },
+    { key: 'StandardObjects', label: 'Standard Objects', group: DATA_MODEL, engine: 'metadata', metadataType: 'CustomObject', members: 'standardObjects', batchSize: 10 },
     { key: 'CustomSettings', label: 'Custom Settings', group: DATA_MODEL, engine: 'customSettings' },
     { key: 'CustomMetadata', label: 'Custom Metadata Records', group: DATA_MODEL, engine: 'metadata', metadataType: 'CustomMetadata' },
     { key: 'GlobalValueSet', label: 'Global Value Sets', group: DATA_MODEL, engine: 'metadata', metadataType: 'GlobalValueSet' },

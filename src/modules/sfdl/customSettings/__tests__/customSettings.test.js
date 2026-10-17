@@ -1,7 +1,8 @@
 import {
     customSettingDocument,
     retrieveCustomSettingFiles,
-    listCustomSettings
+    listCustomSettings,
+    readCustomSettingFile
 } from 'sfdl/customSettings';
 
 const ACME = {
@@ -191,6 +192,21 @@ describe('retrieveCustomSettingFiles', () => {
             .map(([url]) => url)
             .filter((url) => url.includes('/query/'))
             .map((url) => decodeURIComponent(url.split('?q=')[1]));
+
+    it('reads one custom setting by name', async () => {
+        mockOrg();
+
+        const { path, file } = await readCustomSettingFile(
+            ACME,
+            '60.0',
+            'Integration__c'
+        );
+
+        expect(path).toBe('customSettings/Integration__c.setting');
+        expect(file.isBinary).toBe(false);
+        expect(file.content).toContain('Custom Setting: Integration__c');
+        expect(fetch).toHaveBeenCalledTimes(2);
+    });
 
     it('lists the names of the custom settings in one call', async () => {
         mockOrg();

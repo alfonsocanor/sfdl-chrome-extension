@@ -5,6 +5,10 @@ import { SalesforceError } from 'sfdl/salesforceConnection';
 //bearer token is a valid SOAP session id, so the same org session reaches it.
 const METADATA_NAMESPACE = 'http://soap.sforce.com/2006/04/metadata';
 const POLL_INTERVAL = 2000;
+//A long retrieve is asked about less and less often, every status check is an
+//api request of the org.
+const MAX_POLL_INTERVAL = 10000;
+const POLL_BACKOFF = 1.5;
 const RETRIEVE_TIMEOUT = 10 * 60 * 1000;
 //Like git, a file with a NUL byte in its first bytes is taken for binary.
 const BINARY_SNIFF_LENGTH = 8000;
@@ -198,17 +202,25 @@ export async function unzipFiles(zipFileBase64){
 //Retrieves the types and waits for the org to package them, reporting each
 //status it goes through: Pending, InProgress, then Succeeded or Failed.
 export async function retrieveFiles(sessionInformation, apiVersion, types, options = {}){
-    const { onStatus = () => {}, signal, pollInterval = POLL_INTERVAL, timeout = RETRIEVE_TIMEOUT } = options;
+    const {
+        onStatus = () => {},
+        signal,
+        pollInterval = POLL_INTERVAL,
+        maxPollInterval = MAX_POLL_INTERVAL,
+        timeout = RETRIEVE_TIMEOUT
+    } = options;
     const asyncProcessId = await retrieve(sessionInformation, apiVersion, types);
     const startedAt = Date.now();
+    let interval = pollInterval;
 
     onStatus('Pending');
 
     for(;;){
         //The org packages the components in its own time, so the status is
-        //asked again and again until it is done.
+        //asked again until it is done, a little less often each time.
         // eslint-disable-next-line no-await-in-loop
-        await waitFor(pollInterval, signal);
+        await waitFor(interval, signal);
+        interval = Math.min(interval * POLL_BACKOFF, maxPollInterval);
         // eslint-disable-next-line no-await-in-loop
         const retrieveStatus = await checkRetrieveStatus(sessionInformation, apiVersion, asyncProcessId);
 

@@ -128,6 +128,18 @@ async function readCustomSetting(sessionInformation, apiVersion, sObjectName){
     return customSettingDocument(describe, records, valuesError);
 }
 
+export function customSettingPath(settingName){
+    return 'customSettings/' + settingName + '.setting';
+}
+
+//One custom setting as a file, its describe and its values: two calls.
+export async function readCustomSettingFile(sessionInformation, apiVersion, settingName){
+    return {
+        path: customSettingPath(settingName),
+        file: { content: await readCustomSetting(sessionInformation, apiVersion, settingName), isBinary: false }
+    };
+}
+
 //The names of the custom settings of the org, one describeGlobal call.
 export async function listCustomSettings(sessionInformation, apiVersion, { includeManaged = false } = {}){
     const { sobjects } = await describeGlobal(sessionInformation, apiVersion);
