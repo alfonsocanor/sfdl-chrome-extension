@@ -1,6 +1,5 @@
 import { createElement } from 'lwc';
 import Console from 'sfdl/console';
-import { showToastEvent } from 'sfdl/utils';
 
 jest.mock('sfdl/utils', () => ({
     showToastEvent: jest.fn(),
@@ -148,28 +147,115 @@ describe('sfdl-console', () => {
     });
 
     describe('tab navigation', () => {
-        it('tells the user the other tabs are not available yet', async () => {
+        const tabItem = (element, tabHtmlClass) =>
+            element.shadowRoot.querySelector('.' + tabHtmlClass);
+        const tabContent = (element, contentHtmlClass) =>
+            element.shadowRoot.querySelector('.' + contentHtmlClass);
+
+        it('opens on the analyse logs tab', async () => {
             const element = await createConsole();
-
-            click(tab(element, 'compareOrgs'));
-
-            expect(showToastEvent).toHaveBeenCalledWith(
-                'info',
-                'Not available',
-                expect.stringContaining('Available soon')
-            );
-        });
-
-        it('keeps the analyse logs tab active', async () => {
-            const element = await createConsole();
-
-            click(tab(element, 'analyseLogs'));
 
             expect(
-                element.shadowRoot
-                    .querySelector('.liElementAnalyseLogs')
-                    .classList.contains('slds-is-active')
+                tabItem(element, 'liElementAnalyseLogs').classList.contains(
+                    'slds-is-active'
+                )
             ).toBe(true);
+            expect(
+                tabContent(element, 'sfdl-analise-logs').classList.contains(
+                    'slds-show'
+                )
+            ).toBe(true);
+        });
+
+        it('builds the compare tabs only once they are opened', async () => {
+            const element = await createConsole();
+
+            expect(
+                element.shadowRoot.querySelector('sfdl-compare-logs')
+            ).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('sfdl-compare-orgs')
+            ).toBeNull();
+        });
+
+        it.each([
+            ['compareLogs', 'liElementCompareLogs', 'sfdl-compare-logs'],
+            ['compareOrgs', 'liElementCompareOrgs', 'sfdl-compare-orgs']
+        ])(
+            'opens the %s tab and hides the analyse logs tab',
+            async (tabName, tabHtmlClass, contentHtmlClass) => {
+                const element = await createConsole();
+
+                click(tab(element, tabName));
+                await wait();
+
+                expect(
+                    tabItem(element, tabHtmlClass).classList.contains(
+                        'slds-is-active'
+                    )
+                ).toBe(true);
+                expect(
+                    tabItem(element, 'liElementAnalyseLogs').classList.contains(
+                        'slds-is-active'
+                    )
+                ).toBe(false);
+                expect(
+                    tabContent(element, contentHtmlClass).classList.contains(
+                        'slds-show'
+                    )
+                ).toBe(true);
+                expect(
+                    tabContent(element, 'sfdl-analise-logs').classList.contains(
+                        'slds-hide'
+                    )
+                ).toBe(true);
+                expect(
+                    element.shadowRoot.querySelector(contentHtmlClass)
+                ).not.toBeNull();
+            }
+        );
+
+        it('keeps every tab it built while another one is open', async () => {
+            const element = await createConsole();
+
+            click(tab(element, 'compareLogs'));
+            await wait();
+            click(tab(element, 'analyseLogs'));
+            await wait();
+
+            expect(
+                tabContent(element, 'sfdl-analise-logs').classList.contains(
+                    'slds-show'
+                )
+            ).toBe(true);
+            expect(
+                tabContent(element, 'sfdl-compare-logs').classList.contains(
+                    'slds-hide'
+                )
+            ).toBe(true);
+            expect(logDetails(element)).not.toBeNull();
+        });
+
+        it('hands the org sessions and the selected org to the compare tabs', async () => {
+            const element = await createConsole();
+            await selectOrg(element);
+
+            click(tab(element, 'compareLogs'));
+            click(tab(element, 'compareOrgs'));
+            await wait();
+
+            ['sfdl-compare-logs', 'sfdl-compare-orgs'].forEach((tagName) => {
+                const compareTab = element.shadowRoot.querySelector(tagName);
+                expect(compareTab.orgs).toEqual([
+                    {
+                        label: 'https://acme.my.salesforce.com',
+                        value: 'sid-acme'
+                    }
+                ]);
+                expect(compareTab.sessionInformation.instanceUrl).toBe(
+                    'https://acme.my.salesforce.com'
+                );
+            });
         });
     });
 

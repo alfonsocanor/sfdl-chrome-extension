@@ -1,31 +1,25 @@
 import { LightningElement, track } from 'lwc';
 import { getAllCookiesFromSalesforceDomain, isSessionInformationValid } from 'sfdl/authentication';
-import { showToastEvent } from 'sfdl/utils';
 import { css } from './consoleCss';
 
-const tabNavigation = {
-    analyseLogs:{tab:'.liElementAnalyseLogs', body:'.sfdl-analise-logs', open:'openAnaliseLogs'},
-    compareLogs:{tab:'.liElementCompareLogs', body:'.sfdl-compare-logs', open:'openCompareLogs'},
-    compareOrgs:{tab:'.liElementCompareOrgs', body:'.sfdl-compare-orgs', open:'openCompareOrgs'}
-}
+const ANALYSE_LOGS_TAB = 'analyseLogs';
+const COMPARE_LOGS_TAB = 'compareLogs';
+const COMPARE_ORGS_TAB = 'compareOrgs';
+const TAB_ITEM_CLASS = 'slds-tabs_scoped__item';
+const TAB_CONTENT_CLASS = 'slds-tabs_scoped__content';
 
 export default class Console extends LightningElement {
     firstRender = true;
     showLogListSection = true;
     renderLogList = false;
     
-    toastAction;
-    toastHeader;
-    toastMessage;
-    
     manipulationOptions;
 
-    openAnaliseLogs=true;
-    openCompareLogs=false;
-    openCompareOrgs=true;
-
-    logList = [];
-    isDownloadInProgress = false;
+    activeTab = ANALYSE_LOGS_TAB;
+    compareLogsRendered = false;
+    compareOrgsRendered = false;
+    bodyHeight = 0;
+    orgs = [];
 
     sectionStyle = 'background-color:#fafaf9;position:relative;overflow:hidden;display:flex;';
 
@@ -36,11 +30,7 @@ export default class Console extends LightningElement {
         this.showLogListSection = true;
         this.renderLogList = false;
         this.manipulationOptions = {};
-        this.openAnaliseLogs=true;
-        this.openCompareLogs=false;
-        this.openCompareOrgs=false;
-        this.logList = [];
-        this.isDownloadInProgress = false;
+        this.activeTab = ANALYSE_LOGS_TAB;
         this.picklistInformation = [];
         this.sessionInformation = {};
     }
@@ -67,6 +57,7 @@ export default class Console extends LightningElement {
         if(sfdlBodyTab) {
             let sfdlBodyTabHeight = (windowHeight - sfdlConsoleHeader.clientHeight - sfdlFooterContainer.clientHeight - tabs.clientHeight - 4);
             sfdlBodyTab.style.height = sfdlBodyTabHeight + 'px';
+            this.bodyHeight = sfdlBodyTabHeight;
             this.template.querySelector('sfdl-log-details').setMonacoEditorHeight(sfdlBodyTabHeight - 50);
         }
     }
@@ -106,6 +97,7 @@ export default class Console extends LightningElement {
     }
 
     setPicklistValues() {
+        this.orgs = this.picklistInformation;
         this.template.querySelector('sfdl-picklist').setPicklistValues(this.picklistInformation);
     }
 
@@ -161,54 +153,47 @@ export default class Console extends LightningElement {
         }
     }
 
-    async handleTabNavigation(event){
-        if(event.target.dataset.tabname !== 'analyseLogs') {
-            this.toastAction = 'info';
-            this.toastHeader = 'Not available';
-            this.toastMessage = 'We are working on new features. Available soon! (:';
-            showToastEvent(this.toastAction, this.toastHeader, this.toastMessage);
-            return;
+    get analyseLogsTabClass(){
+        return this.tabClass(ANALYSE_LOGS_TAB, 'liElementAnalyseLogs');
+    }
+
+    get compareLogsTabClass(){
+        return this.tabClass(COMPARE_LOGS_TAB, 'liElementCompareLogs');
+    }
+
+    get compareOrgsTabClass(){
+        return this.tabClass(COMPARE_ORGS_TAB, 'liElementCompareOrgs');
+    }
+
+    get analyseLogsContentClass(){
+        return this.tabContentClass(ANALYSE_LOGS_TAB, 'sfdl-analise-logs');
+    }
+
+    get compareLogsContentClass(){
+        return this.tabContentClass(COMPARE_LOGS_TAB, 'sfdl-compare-logs');
+    }
+
+    get compareOrgsContentClass(){
+        return this.tabContentClass(COMPARE_ORGS_TAB, 'sfdl-compare-orgs');
+    }
+
+    tabClass(tabName, tabHtmlClass){
+        return TAB_ITEM_CLASS + ' ' + tabHtmlClass + (this.activeTab === tabName ? ' slds-is-active' : '');
+    }
+
+    tabContentClass(tabName, contentHtmlClass){
+        return TAB_CONTENT_CLASS + ' ' + contentHtmlClass + (this.activeTab === tabName ? ' slds-show' : ' slds-hide');
+    }
+
+    handleTabNavigation(event){
+        const tabName = event.currentTarget.dataset.tabname;
+
+        if(tabName === COMPARE_LOGS_TAB){
+            this.compareLogsRendered = true;
+        } else if(tabName === COMPARE_ORGS_TAB){
+            this.compareOrgsRendered = true;
         }
 
-        this.inactiveAllTabs();
-        this.activateTab(event);
-        this.hideAllContent();
-        this.showContentBasedOnTab(event);
-    }
-
-    noLogs2Compare(event){
-        return event.target.dataset.tabname === 'compareLogs' && !this.logList.length;
-    }
-
-    activateTab(event){
-        this[tabNavigation[event.target.dataset.tabname].open] = true;
-        this.template.querySelector(tabNavigation[event.target.dataset.tabname].tab).classList.add('slds-is-active');
-    }
-
-    inactiveAllTabs(){
-        this.template.querySelectorAll('li').forEach( liElement => {
-            liElement.classList.remove('slds-is-active');
-        });
-    }
-
-    showContentBasedOnTab(event){
-        this.template.querySelector(tabNavigation[event.target.dataset.tabname].body).classList.remove('slds-hide');
-        this.template.querySelector(tabNavigation[event.target.dataset.tabname].body).classList.add('slds-show');
-    }
-
-    hideAllContent(){
-        this.template.querySelectorAll('.slds-tabs_scoped__content').forEach( contentElement => {
-            contentElement.classList.remove('slds-show');
-            contentElement.classList.add('slds-hide');
-        });
-    }
-
-    handleLogList(event){
-        this.logList = event.detail.logList;
-        this.openCompareLogs = true;
-    }
-    
-    handleDownloadInProgress2Compare(){
-        this.isDownloadInProgress = true;
+        this.activeTab = tabName;
     }
 }
