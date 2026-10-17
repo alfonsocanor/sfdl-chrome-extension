@@ -1,3 +1,66 @@
 <template>
-    
+    <div class="sfdl-compare-orgs" style={containerStyle}>
+        <div class="sfdl-compare-orgs__toolbar">
+            <sfdl-combobox
+                class="sfdl-compare-orgs__org sfdl-compare-orgs__left-org"
+                side="left"
+                label="Left org"
+                placeholder="Pick the left org"
+                empty-message="No org session, log in to Salesforce first"
+                options={orgOptions}
+                value={leftOrgUrl}
+                data-side="left"
+                onchange={handleOrgChange}>
+            </sfdl-combobox>
+            <button
+                class="sfdl-compare-orgs__swap sfdl-compare-orgs__toolbar-button slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                style="width:22px;height:22px;padding:2px;"
+                title="Swap the orgs of both sides"
+                disabled={isSwapDisabled}
+                onclick={handleSwap}>
+                <img src={swapIcon} alt="swap the orgs"/>
+            </button>
+            <sfdl-combobox
+                class="sfdl-compare-orgs__org sfdl-compare-orgs__right-org"
+                side="right"
+                label="Right org"
+                placeholder="Pick the right org"
+                empty-message="No org session, log in to Salesforce first"
+                options={orgOptions}
+                value={rightOrgUrl}
+                data-side="right"
+                onchange={handleOrgChange}>
+            </sfdl-combobox>
+            <sfdl-combobox
+                class="sfdl-compare-orgs__type"
+                label="Metadata"
+                placeholder="Pick what to compare"
+                options={typeOptions}
+                value={typeKey}
+                onchange={handleTypeChange}>
+            </sfdl-combobox>
+            <button
+                class="sfdl-compare-orgs__refresh sfdl-compare-orgs__toolbar-button slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                style="width:22px;height:22px;padding:2px;"
+                title="Retrieve both orgs again"
+                disabled={isRefreshDisabled}
+                onclick={handleRefresh}>
+                <img src={refreshIcon} alt="retrieve both orgs again"/>
+            </button>
+            <label class="sfdl-compare-orgs__managed" title="Compare the components of installed packages too">
+                <input type="checkbox" class="sfdl-compare-orgs__managed-checkbox" checked={includeManaged} onchange={handleManagedChange}/>
+                <span>Include managed packages</span>
+            </label>
+        </div>
+        <div class="sfdl-compare-orgs__body">
+            <div class="sfdl-compare-orgs__diff">
+                <sfdl-diff-viewer
+                    left-label={leftOrgName}
+                    right-label={rightOrgName}
+                    loading={isComparing}
+                    empty-message={emptyMessage}>
+                </sfdl-diff-viewer>
+            </div>
+        </div>
+    </div>
 </template>
