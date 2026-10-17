@@ -9,12 +9,9 @@ const TOGGLE_IMAGE_LEFT = '/slds/icons/utility/toggle_panel_left.svg';
 export default class LogDetails extends LightningElement{
     @api showLogListSection;
     @api isAnaliseLogs = false;
-    @api isCompareLogs = false;
 
     logName = '';
     logDetails; 
-    logCompareLeft;
-    logCompareRight;
 
     showMonacoEditor;
     toggleImage = TOGGLE_IMAGE_RIGHT;
@@ -58,8 +55,6 @@ export default class LogDetails extends LightningElement{
         this.logDetails = await logDetails.response;
         if(this.isAnaliseLogs){
             this.displayAnalyseLogsDetails(this.logDetails, logName);
-        } else if (this.isCompareLogs){
-            this.displayCompareLogsDetails(this.logDetails, logName);
         }
     }
 
@@ -79,18 +74,6 @@ export default class LogDetails extends LightningElement{
         }
     }
 
-    async displayCompareLogsDetails(logDetails){
-        this.logCompareLeft = logDetails[0];
-        this.logCompareRight = logDetails[1]; 
-
-        const sfdlMonacoEditor = this.template.querySelector('.sfdlMonacoEditor');
-        const diffEditor = monaco.editor.createDiffEditor(sfdlMonacoEditor);
-        diffEditor.setModel({
-            original: manipulationDetailLogs(logDetails[0], this.getManipulationOptions()),
-            modified: manipulationDetailLogs(logDetails[1], this.getManipulationOptions())
-        });
-    }
- 
     async renderedMonacoEditor(){
         this.showMonacoEditor = false;
         await new Promise((resolve)=>{setTimeout(resolve, 100);});

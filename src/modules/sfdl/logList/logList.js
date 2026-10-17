@@ -1,6 +1,6 @@
 /*global chrome*/
 import { track, api, LightningElement  } from 'lwc';
-import { showToastEvent, setKeyValueLocalStorage } from 'sfdl/utils';
+import { showToastEvent } from 'sfdl/utils';
 import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { css } from './logListCss';
 
@@ -35,9 +35,6 @@ const processResponseBasedOnContentType = {
 export default class LogList extends LightningElement{
     @api sessionInformation;
     @api isAnaliseLogs = false;
-    @api isCompareLogs = false;
-    @api logs2Compare = [];
-    totalLogsCompletelyRetrieved = 0;
 
     @track logList = [];
     
@@ -51,16 +48,7 @@ export default class LogList extends LightningElement{
     @track logs2Download = [];
     downloadButtonDisabled = false;
 
-    compareLogsColumns2LogDetails = {
-        column1:{id:'',logName:'', logDetails:''},
-        column2:{id:'',logName:'', logDetails:''}
-    }
-
     totalLogsToDownload = 0;
-
-    retrivingLogsInProgress = false;
-    downloadAllLogsActivated = false;
-    downloadInProgress;
 
     index4NavigationFocusOn;
 
@@ -101,8 +89,6 @@ export default class LogList extends LightningElement{
     connectedCallback(){
         if(this.isAnaliseLogs){
             this.getApexLogsInformation(this.sessionInformation);
-        } else if(this.isCompareLogs){
-            this.logList = this.addSelectionFlag2LogList(this.logs2Compare);
         }
     }
 
@@ -133,16 +119,9 @@ export default class LogList extends LightningElement{
         });
     }
 
-    saveFirstAndLastLogIdsFromLogList(){
-        this.firstLogId = this.logList[0].id;
-        this.lastLogId = this.logList[this.logList.length - 1].id;
-    }
-
     handleLogInfo(event){
         if(this.isAnaliseLogs){
             this.logInfoAnalyseLogs(event);
-        } else  if(this.isCompareLogs){
-            this.logInfoCompareLogs(event);
         }
     }
 
@@ -179,75 +158,6 @@ export default class LogList extends LightningElement{
 
     getLogByIdFromLogList(logId){
         return this.logList.find(log => log.id === logId);
-    }
-
-    async getLogInformation(event){
-        const response = this.logList.filter(log => {
-            return log.id === event.target.dataset.logid
-        });
-        const logDetails = await response[0].response;
-        const logName = event.target.dataset.logname;
-
-        return { logDetails, logName }
-    }
-
-    logInfoCompareLogs(event){
-        let wasUnselected = this.unselectLogs2Compare(event);
-        
-        if(!wasUnselected){
-            this.selectLogs2Compare(event);
-        }
-    }
-
-    async selectLogs2Compare(event){
-        const logInfo = await this.getLogInformation(event);
-        if(this.bothLogs2CompareSelected()){
-            this.updateCompareLogsColumns2LogDetails('column1', event.target.dataset.logid, logInfo.logName, logInfo.logDetails);
-            this.boxShadowForTheLogDetailSelected(event, '0 0 0 3px #006bff40');
-        } else {
-            for(const log2Compare in this.compareLogsColumns2LogDetails){
-                if(!this.compareLogsColumns2LogDetails[log2Compare].id){
-                    this.updateCompareLogsColumns2LogDetails(log2Compare, event.target.dataset.logid, logInfo.logName, logInfo.logDetails);
-                    this.boxShadowForTheLogDetailSelected(event, '0 0 0 3px #006bff40');
-                    break;
-                }
-            }
-        }
-
-    }
-
-    bothLogs2CompareSelected(){
-        for(const log2Compare in this.compareLogsColumns2LogDetails){
-            if(!this.compareLogsColumns2LogDetails[log2Compare].id){
-                return false;
-            }
-        }
-        return true;
-    }
-
-    updateCompareLogsColumns2LogDetails(columnNumber, logId, logName, logDetails){
-        this.compareLogsColumns2LogDetails[columnNumber].id = logId;
-        this.compareLogsColumns2LogDetails[columnNumber].logName = logName;
-        this.compareLogsColumns2LogDetails[columnNumber].logDetails = logDetails;
-    }
-
-    unselectLogs2Compare(event){
-        for(const log2Compare in this.compareLogsColumns2LogDetails){
-            if(this.bothLogs2CompareSelected()){
-                this.template.querySelectorAll('.displayLogButton').find(element => element.dataset.logid === this.compareLogsColumns2LogDetails.column2.id).style.boxShadow = 'none';
-                this.compareLogsColumns2LogDetails.column2.id = '';
-                this.compareLogsColumns2LogDetails.column2.logName = '';
-                this.compareLogsColumns2LogDetails.column2.logDetails = '';        
-            } else if(this.compareLogsColumns2LogDetails[log2Compare].id === event.target.dataset.logid){
-                this.compareLogsColumns2LogDetails[log2Compare].id = '';
-                this.compareLogsColumns2LogDetails[log2Compare].logName = '';
-                this.compareLogsColumns2LogDetails[log2Compare].logDetails = '';
-                this.boxShadowForTheLogDetailSelected(event, 'none');
-                return true
-            }
-        }
-
-        return false;
     }
 
     //The log name button is only one cell of the row, so the highlight belongs
@@ -362,46 +272,6 @@ export default class LogList extends LightningElement{
         apexLog2Update.response = message.apexLogWithBody.response.response;
     }
 
-    async processApexLogs(sessionInformation, apexLogList) {
-        setKeyValueLocalStorage('isDownloadInProgress', true);
-        this.totalLogsToDownload = apexLogList.length;
-        this.retrivingLogsInProgress = true;
-        this.downloadProgressBar();
-
-        let message = await chrome.runtime.sendMessage({
-            message: "downloadApexLogs", 
-            sessionInformation, apexLogList
-        });
-
-        if(message.logsDownloaded){
-            this.retrivingLogsInProgress = false;
-            setTimeout(() => {
-                this.disableDownloadButton(true);
-            }, 200);
-            this.getLogsDownloadedFromWorkerBackground();
-        }
-    }
-
-    async getLogsDownloadedFromWorkerBackground(){
-        let message = await chrome.runtime.sendMessage({
-            message: "getLogsDownloaded"
-        });
-
-        this.logList.find( apexLog => apexLog.id === message.batchLogs2Producess[0].id) //this.logList.concat(message.batchLogs2Process);
-
-        return message.continueProcess ? 
-            this.getLogsDownloadedFromWorkerBackground() : //recursion
-            this.logsProcessedResults();
-    }
-
-    logsProcessedResults(){
-        this.disableDownloadButton(false);
-        this.sendLogList2Console(this.logList);
-
-        showToastEvent('success', 'You can use compare now!', 'Compare Logs', true);
-        this.enableSearchQueryIcon();
-    }
-
     addSelectionFlag2LogList(apexLogList){
         return (apexLogList ? apexLogList : []).map(apexLog => {
             return { ...apexLog, isSelected: false };
@@ -465,31 +335,6 @@ export default class LogList extends LightningElement{
     @api
     handleManipulationOptionsForDownloading(manipulationOptions){
         this.manipulationOptions = manipulationOptions;
-    }
-
-    downloadinprogress2compare(){
-        this.dispatchEvent(new CustomEvent('downloadinprogress2compare',{
-            detail: true
-        }));
-    }
-
-    sendLogList2Console(logList){
-        this.dispatchEvent(new CustomEvent('sendloglist',{
-            detail:{ logList }
-        }));
-    }
-
-    async downloadProgressBar(){
-        let currentValue = await chrome.runtime.sendMessage({message: "downloadProgressBar"});
-
-        const sfdlProcessBar = this.template.querySelector('sfdl-process-bar');
-
-        if(sfdlProcessBar){
-            this.template.querySelector('sfdl-process-bar').updateProgressBar(currentValue.totalLogsCompletelyRetrieved);
-        }
-
-        return currentValue.totalLogsCompletelyRetrieved === this.totalLogsToDownload ? 
-            currentValue.totalLogsCompletelyRetrieved : this.downloadProgressBar();
     }
 
     handleDownloadProgress(event) {

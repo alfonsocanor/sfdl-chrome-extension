@@ -1,12 +1,4 @@
 <template>
-    <template if:true={retrivingLogsInProgress}>
-        <div class="sfdl-process-bar" style="width:92%;">
-            <sfdl-process-bar 
-                total={totalLogsToDownload}
-                placeholder="Downloading logs...">
-            </sfdl-process-bar>
-        </div>
-    </template>
     <template if:true={isDownloading}> 
         <div class="slds-grid slds-wrap">
             <div style="color:rgb(127 127 127);" class="slds-col slds-size_7-of-8">
