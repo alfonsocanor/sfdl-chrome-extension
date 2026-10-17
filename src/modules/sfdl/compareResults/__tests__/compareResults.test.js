@@ -225,6 +225,35 @@ describe('sfdl-compare-results', () => {
             expect(summary(element)).toBeNull();
         });
 
+        it('keeps the components no org handed back apart from the identical ones', () => {
+            const element = createResults({
+                components: [
+                    component('Account', 'identical'),
+                    component('Contact', 'unavailable')
+                ]
+            });
+
+            expect(
+                [
+                    ...element.shadowRoot.querySelectorAll(
+                        '.sfdl-status-filter'
+                    )
+                ].map((button) => button.textContent.trim())
+            ).toEqual([
+                'All 2',
+                'Not compared 0',
+                'Different 0',
+                'Only left 0',
+                'Only right 0',
+                'Identical 1',
+                'Not retrieved 1'
+            ]);
+            expect(summary(element)).toBeNull();
+            expect(
+                rows(element)[1].querySelector('.sfdl-status-badge').textContent
+            ).toBe('Not retrieved');
+        });
+
         it('shows a long list a page at a time', async () => {
             const many = Array.from({ length: 350 }, (value, index) =>
                 component(

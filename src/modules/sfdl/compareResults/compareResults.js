@@ -37,7 +37,9 @@ const FILTERS = [
     { value: DIFFERENT, label: 'Different', statuses: [DIFFERENT] },
     { value: LEFT_ONLY, label: 'Only left', statuses: [LEFT_ONLY] },
     { value: RIGHT_ONLY, label: 'Only right', statuses: [RIGHT_ONLY] },
-    { value: IDENTICAL, label: 'Identical', statuses: [IDENTICAL, UNAVAILABLE] }
+    { value: IDENTICAL, label: 'Identical', statuses: [IDENTICAL] },
+    //Only shown when some component came back with no file at all.
+    { value: UNAVAILABLE, label: 'Not retrieved', statuses: [UNAVAILABLE], onlyWhenFound: true }
 ];
 
 function badgeClass(status){
@@ -117,10 +119,9 @@ export default class CompareResults extends LightningElement{
             return 'Neither org holds any ' + this.typeLabel + '.';
         }
 
-        const allCompared = !this.countOf([NOT_COMPARED, COMPARING]);
-        const nothingChanged = !this.countOf([DIFFERENT, LEFT_ONLY, RIGHT_ONLY]);
+        const everythingIdentical = this.countOf([IDENTICAL]) === this._components.length;
 
-        return allCompared && nothingChanged ?
+        return everythingIdentical ?
             'No differences: the ' + this._components.length + ' ' + this.typeLabel + ' are identical in both orgs.' :
             '';
     }
@@ -130,7 +131,7 @@ export default class CompareResults extends LightningElement{
     }
 
     get statusFilters(){
-        return FILTERS.map(filter => {
+        return FILTERS.filter(filter => !filter.onlyWhenFound || this.countOf(filter.statuses)).map(filter => {
             const isActive = filter.value === this.statusFilter;
             const colorClass = filter.statuses ? ' ' + badgeClass(filter.statuses[0]) : '';
 

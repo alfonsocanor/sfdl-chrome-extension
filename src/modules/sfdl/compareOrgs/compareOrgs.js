@@ -387,6 +387,20 @@ export default class CompareOrgs extends LightningElement{
         }
     }
 
+    //A comparison of several components opens on the first of them that
+    //differs, unless a component is already on screen.
+    openFirstChange(names){
+        const firstChange = this.components.find(component =>
+            names.includes(component.name) && component.files &&
+            component.files.some(file => file.status !== IDENTICAL)
+        );
+
+        if(firstChange){
+            this.selectedName = firstChange.name;
+            this.selectedPath = firstFilePath(firstChange);
+        }
+    }
+
     resetResults(){
         this.components = [];
         this.selectedName = undefined;
@@ -515,6 +529,8 @@ export default class CompareOrgs extends LightningElement{
 
             if(open && this.selectedName === open){
                 this.selectedPath = firstFilePath(this.selectedComponent);
+            } else if(!this.selectedName){
+                this.openFirstChange(targets.map(({ name }) => name));
             }
         };
 

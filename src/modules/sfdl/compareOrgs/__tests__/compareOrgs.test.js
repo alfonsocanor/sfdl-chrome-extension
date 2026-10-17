@@ -618,6 +618,38 @@ describe('sfdl-compare-orgs', () => {
             ]);
         });
 
+        it('opens the first difference of a selection compared with nothing on screen', async () => {
+            const element = await listType();
+
+            results(element).dispatchEvent(
+                new CustomEvent('comparerequest', {
+                    detail: { names: ['Utils', 'AccountService'] }
+                })
+            );
+            await wait();
+            await wait();
+
+            expect(results(element).selectedName).toBe('AccountService');
+            expect(diffViewer(element).leftContent).toBe(
+                'public class AccountService { left }'
+            );
+        });
+
+        it('leaves the component on screen when a selection is compared', async () => {
+            const element = await listType();
+            await openComponent(element, 'Utils');
+
+            results(element).dispatchEvent(
+                new CustomEvent('comparerequest', {
+                    detail: { names: ['AccountService'] }
+                })
+            );
+            await wait();
+            await wait();
+
+            expect(results(element).selectedName).toBe('Utils');
+        });
+
         it('runs one comparison at a time', async () => {
             const pending = [];
             compareComponents.mockImplementation(
