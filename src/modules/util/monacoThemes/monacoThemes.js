@@ -192,7 +192,15 @@ const monacoThemes = {
                 "editor.selectionBackground": "#275FFF4D",
                 "editor.lineHighlightBackground": "#2463B41F",
                 "editorCursor.foreground": "#000000",
-                "editorWhitespace.foreground": "#4B4B7E80"
+                "editorWhitespace.foreground": "#4B4B7E80",
+                //The compare tabs paint what only the left side has in blue and
+                //what only the right side has in amber, the colours of each side.
+                "diffEditor.removedTextBackground": "#0176d32e",
+                "diffEditor.removedLineBackground": "#0176d312",
+                "diffEditor.insertedTextBackground": "#dd7a0133",
+                "diffEditor.insertedLineBackground": "#dd7a0114",
+                "diffEditor.diagonalFill": "#dddbda80",
+                "diffEditor.border": "#dddbda"
             }
         }
 };

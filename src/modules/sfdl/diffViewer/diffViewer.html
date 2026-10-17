@@ -1,0 +1,15 @@
+<template>
+    <div class="sfdl-diff-viewer" style={viewerStyle}>
+        <div class="sfdl-diff-body">
+            <!-- Monaco owns everything inside this element. It is never removed,
+                 only hidden, so the editor survives the empty state. -->
+            <div class={editorClass} lwc:dom="manual"></div>
+            <template if:false={hasContent}>
+                <div class="sfdl-diff-empty">{emptyMessage}</div>
+            </template>
+            <template if:true={loading}>
+                <sfdl-spinner></sfdl-spinner>
+            </template>
+        </div>
+    </div>
+</template>
