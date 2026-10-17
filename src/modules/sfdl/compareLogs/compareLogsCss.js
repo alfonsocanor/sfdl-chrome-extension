@@ -39,6 +39,10 @@ export const css = `
         min-height: 0;
     }
 
+    .sfdl-compare-logs .sfdl-compare-logs__org-picker {
+        margin-bottom: 8px;
+    }
+
     .sfdl-compare-logs__diff {
         flex: 1 1 auto;
         min-width: 0;

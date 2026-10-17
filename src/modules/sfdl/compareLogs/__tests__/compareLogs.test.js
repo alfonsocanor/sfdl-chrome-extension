@@ -437,4 +437,176 @@ describe('sfdl-compare-logs', () => {
             expect(diffViewer(element).rightContent).toBeUndefined();
         });
     });
+
+    describe('two orgs', () => {
+        const GLOBEX = {
+            instanceUrl: 'https://globex.my.salesforce.com',
+            authToken: 'sid-globex'
+        };
+        const sideList = (element, side) =>
+            element.shadowRoot.querySelector(
+                `.sfdl-compare-logs__${side}-panel sfdl-compare-log-list`
+            );
+        const orgPicker = (element, side) =>
+            element.shadowRoot.querySelector(
+                `.sfdl-compare-logs__${side}-panel sfdl-combobox`
+            );
+        const panel = (element, side) =>
+            element.shadowRoot.querySelector(
+                `.sfdl-compare-logs__${side}-panel`
+            );
+
+        async function createTwoOrgs(properties) {
+            const element = await createCompareLogs(properties);
+            modeButton(element, 'twoOrgs').click();
+            await wait();
+            return element;
+        }
+
+        async function pickOrg(element, side, instanceUrl) {
+            orgPicker(element, side).dispatchEvent(
+                new CustomEvent('change', { detail: { value: instanceUrl } })
+            );
+            await wait();
+        }
+
+        it('lays out a log list for each side around the diff', async () => {
+            const element = await createTwoOrgs();
+            const columns = [
+                ...element.shadowRoot.querySelector('.sfdl-compare-logs__body')
+                    .children
+            ].map((column) => column.className);
+
+            expect(columns).toEqual([
+                'sfdl-compare-logs__left-panel',
+                'sfdl-compare-logs__diff',
+                'sfdl-compare-logs__right-panel'
+            ]);
+            expect(panel(element, 'left').side).toBe('left');
+            expect(panel(element, 'right').side).toBe('right');
+            expect(sideList(element, 'left').mode).toBe('single');
+            expect(sideList(element, 'right').side).toBe('right');
+            expect(
+                element.shadowRoot.querySelector(
+                    '.sfdl-compare-logs__pair-panel'
+                )
+            ).toBeNull();
+        });
+
+        it('offers every org session on both pickers', async () => {
+            const element = await createTwoOrgs();
+
+            expect(orgPicker(element, 'right').options).toEqual([
+                {
+                    label: 'acme.my.salesforce.com',
+                    value: 'https://acme.my.salesforce.com'
+                },
+                {
+                    label: 'globex.my.salesforce.com',
+                    value: 'https://globex.my.salesforce.com'
+                }
+            ]);
+        });
+
+        it('starts the left side on the org of the header, without its filter', async () => {
+            const element = await createTwoOrgs({
+                sessionInformation: { ...ACME, queryWhere: 'WHERE Id != null' }
+            });
+
+            expect(orgPicker(element, 'left').value).toBe(ACME.instanceUrl);
+            expect(sideList(element, 'left').sessionInformation).toEqual({
+                instanceUrl: ACME.instanceUrl,
+                authToken: ACME.authToken
+            });
+            expect(
+                sideList(element, 'right').sessionInformation
+            ).toBeUndefined();
+            expect(panel(element, 'right').subtitle).toBe('No org picked yet');
+        });
+
+        it('takes the header org for the left side when it comes later', async () => {
+            const element = await createTwoOrgs({
+                sessionInformation: undefined
+            });
+
+            element.sessionInformation = ACME;
+            await wait();
+
+            expect(orgPicker(element, 'left').value).toBe(ACME.instanceUrl);
+        });
+
+        it('lists the logs of the org picked on each side', async () => {
+            const element = await createTwoOrgs();
+
+            await pickOrg(element, 'right', GLOBEX.instanceUrl);
+
+            expect(sideList(element, 'right').sessionInformation).toEqual(
+                GLOBEX
+            );
+            expect(panel(element, 'right').subtitle).toBe(
+                'globex.my.salesforce.com'
+            );
+        });
+
+        it('compares a log of each org and names the org of each side', async () => {
+            // Logs no other test downloaded, the bodies are cached per session.
+            const leftLog = {
+                ...LOG_ONE,
+                id: '07LTWO1',
+                attributes: {
+                    url: '/services/data/v51.0/tooling/sobjects/ApexLog/07LTWO1'
+                }
+            };
+            const rightLog = {
+                ...LOG_TWO,
+                id: '07LTWO2',
+                attributes: {
+                    url: '/services/data/v51.0/tooling/sobjects/ApexLog/07LTWO2'
+                }
+            };
+            const element = await createTwoOrgs();
+            await pickOrg(element, 'right', GLOBEX.instanceUrl);
+
+            await selectLog(sideList(element, 'left'), leftLog, 'left');
+            await selectLog(sideList(element, 'right'), rightLog, 'right');
+
+            expect(sideList(element, 'left').leftLogId).toBe('07LTWO1');
+            expect(sideList(element, 'right').rightLogId).toBe('07LTWO2');
+            expect(diffViewer(element).leftLabel).toBe(
+                'acme \u00b7 ' + LOG_ONE.name
+            );
+            expect(diffViewer(element).rightLabel).toBe(
+                'globex \u00b7 ' + LOG_TWO.name
+            );
+            expect(
+                fetch.mock.calls
+                    .map(([url]) => url)
+                    .filter((url) => url.endsWith('/Body'))
+            ).toEqual([
+                'https://acme.my.salesforce.com/services/data/v51.0/tooling/sobjects/ApexLog/07LTWO1/Body',
+                'https://globex.my.salesforce.com/services/data/v51.0/tooling/sobjects/ApexLog/07LTWO2/Body'
+            ]);
+        });
+
+        it('takes the log off a side when its org changes', async () => {
+            const element = await createTwoOrgs();
+            await selectLog(sideList(element, 'left'), LOG_ONE, 'left');
+
+            await pickOrg(element, 'left', GLOBEX.instanceUrl);
+
+            expect(sideList(element, 'left').leftLogId).toBeUndefined();
+        });
+
+        it('keeps its orgs when the header org changes', async () => {
+            const element = await createTwoOrgs();
+            await pickOrg(element, 'right', GLOBEX.instanceUrl);
+            await selectLog(sideList(element, 'left'), LOG_ONE, 'left');
+
+            element.sessionInformation = GLOBEX;
+            await wait();
+
+            expect(orgPicker(element, 'left').value).toBe(ACME.instanceUrl);
+            expect(sideList(element, 'left').leftLogId).toBe('07L1');
+        });
+    });
 });

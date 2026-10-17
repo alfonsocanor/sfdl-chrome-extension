@@ -24,6 +24,29 @@
                     </sfdl-compare-log-list>
                 </sfdl-side-panel>
             </template>
+            <template if:true={isTwoOrgs}>
+                <sfdl-side-panel class="sfdl-compare-logs__left-panel" title="Left org" subtitle={leftOrgLabel} side="left" width="18rem">
+                    <sfdl-combobox
+                        class="sfdl-compare-logs__org-picker"
+                        side="left"
+                        label="Org"
+                        placeholder="Pick the left org"
+                        empty-message="No org session, log in to Salesforce first"
+                        options={orgOptions}
+                        value={leftOrgUrl}
+                        data-side="left"
+                        onchange={handleOrgChange}>
+                    </sfdl-combobox>
+                    <sfdl-compare-log-list
+                        mode="single"
+                        side="left"
+                        session-information={leftOrgSession}
+                        left-log-id={leftLogId}
+                        no-session-message="Pick the org of the left side"
+                        onlogselect={handleLogSelect}>
+                    </sfdl-compare-log-list>
+                </sfdl-side-panel>
+            </template>
             <div class="sfdl-compare-logs__diff">
                 <sfdl-diff-viewer
                     language="apexlog"
@@ -35,6 +58,29 @@
                     empty-message={emptyMessage}>
                 </sfdl-diff-viewer>
             </div>
+            <template if:true={isTwoOrgs}>
+                <sfdl-side-panel class="sfdl-compare-logs__right-panel" title="Right org" subtitle={rightOrgLabel} side="right" width="18rem">
+                    <sfdl-combobox
+                        class="sfdl-compare-logs__org-picker"
+                        side="right"
+                        label="Org"
+                        placeholder="Pick the right org"
+                        empty-message="No org session, log in to Salesforce first"
+                        options={orgOptions}
+                        value={rightOrgUrl}
+                        data-side="right"
+                        onchange={handleOrgChange}>
+                    </sfdl-combobox>
+                    <sfdl-compare-log-list
+                        mode="single"
+                        side="right"
+                        session-information={rightOrgSession}
+                        right-log-id={rightLogId}
+                        no-session-message="Pick the org of the right side"
+                        onlogselect={handleLogSelect}>
+                    </sfdl-compare-log-list>
+                </sfdl-side-panel>
+            </template>
         </div>
     </div>
 </template>

@@ -19,6 +19,11 @@ const LOG_BODIES_TO_KEEP = 20;
 //changing a filter does not download it again.
 const logBodies = new Map();
 
+//acme from acme.my.salesforce.com, acme--uat from its sandbox.
+function shortOrgName(instanceUrl){
+    return instanceUrl.replace('https://', '').split('.')[0];
+}
+
 function downloadLogBody(sessionInformation, log){
     const key = sessionInformation.instanceUrl + '|' + log.id;
 
@@ -54,6 +59,12 @@ export default class CompareLogs extends LightningElement{
         if(hasOrgChanged && this.isSameOrg){
             this.clearSides();
         }
+
+        //The left side starts on the org of the header, and goes its own way
+        //as soon as it has one.
+        if(this.isTwoOrgs && !this.leftOrgSession){
+            this.leftOrgSession = this.headerOrgSession();
+        }
     }
 
     _sessionInformation;
@@ -61,6 +72,9 @@ export default class CompareLogs extends LightningElement{
     //{ log, sessionInformation } of each side, null while a side is empty.
     left = null;
     right = null;
+    //The org of each side while comparing two orgs, { instanceUrl, authToken }.
+    leftOrgSession;
+    rightOrgSession;
     leftContent;
     rightContent;
     isLoadingLogs = false;
@@ -119,17 +133,56 @@ export default class CompareLogs extends LightningElement{
     }
 
     get leftLabel(){
-        return this.left ? this.left.log.name : undefined;
+        return this.sideLabel(this.left);
     }
 
     get rightLabel(){
-        return this.right ? this.right.log.name : undefined;
+        return this.sideLabel(this.right);
+    }
+
+    //Two orgs can hold logs with the very same name, the org tells them apart.
+    sideLabel(side){
+        if(!side){
+            return undefined;
+        }
+
+        return this.isTwoOrgs ?
+            shortOrgName(side.sessionInformation.instanceUrl) + ' \u00b7 ' + side.log.name :
+            side.log.name;
+    }
+
+    get orgOptions(){
+        return (this.orgs || []).map(org => ({ label: org.label.replace('https://', ''), value: org.label }));
+    }
+
+    get leftOrgUrl(){
+        return this.leftOrgSession ? this.leftOrgSession.instanceUrl : undefined;
+    }
+
+    get rightOrgUrl(){
+        return this.rightOrgSession ? this.rightOrgSession.instanceUrl : undefined;
+    }
+
+    get leftOrgLabel(){
+        return this.leftOrgUrl ? this.leftOrgUrl.replace('https://', '') : 'No org picked yet';
+    }
+
+    get rightOrgLabel(){
+        return this.rightOrgUrl ? this.rightOrgUrl.replace('https://', '') : 'No org picked yet';
+    }
+
+    //The where clause of the header belongs to the header org, each side of a
+    //two orgs comparison filters its own list.
+    headerOrgSession(){
+        return this.hasHeaderOrg ?
+            { instanceUrl: this._sessionInformation.instanceUrl, authToken: this._sessionInformation.authToken } :
+            undefined;
     }
 
     get hint(){
         return this.isSameOrg ?
             'Click a log to fill the next free side and click it again to take it off, or send it to a side with L and R.' :
-            'Pick an org on each side, then click the log to compare on that side.';
+            'Pick an org on each side, then click the log to compare on that side. The arrows walk a list.';
     }
 
     get emptyMessage(){
@@ -153,7 +206,29 @@ export default class CompareLogs extends LightningElement{
 
         if(mode !== this.mode){
             this.mode = mode;
+
+            if(this.isTwoOrgs && !this.leftOrgSession){
+                this.leftOrgSession = this.headerOrgSession();
+            }
+
             this.clearSides();
+        }
+    }
+
+    handleOrgChange(event){
+        const side = event.currentTarget.dataset.side;
+        const org = (this.orgs || []).find(candidate => candidate.label === event.detail.value);
+
+        if(!org){
+            return;
+        }
+
+        this[side + 'OrgSession'] = { instanceUrl: org.label, authToken: org.value };
+
+        //The log of that side belonged to the org it had before.
+        if(this[side]){
+            this[side] = null;
+            this.refreshComparison();
         }
     }
 
@@ -164,8 +239,8 @@ export default class CompareLogs extends LightningElement{
     }
 
     //Both sides read the org of the header while comparing within one org.
-    sessionForSide(){
-        return this._sessionInformation;
+    sessionForSide(side){
+        return this.isTwoOrgs ? this[side + 'OrgSession'] : this._sessionInformation;
     }
 
     handleLogSelect(event){

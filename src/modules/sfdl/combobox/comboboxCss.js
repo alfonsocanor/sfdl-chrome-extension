@@ -1,4 +1,8 @@
 export const css = `
+    sfdl-combobox {
+        display: block;
+    }
+
     .sfdl-combobox .sfdl-combobox-label {
         display: inline-flex;
         align-items: center;
