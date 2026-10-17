@@ -1,7 +1,7 @@
 import { retrieveFiles } from 'sfdl/metadataApi';
-import { retrieveRequestFor } from 'sfdl/metadataCatalog';
+import { retrieveRequestFor, listMetadataComponents } from 'sfdl/metadataCatalog';
 import { splitMetadataFiles } from 'sfdl/metadataFiles';
-import { retrieveCustomSettingFiles } from 'sfdl/customSettings';
+import { retrieveCustomSettingFiles, listCustomSettings } from 'sfdl/customSettings';
 
 export const DIFFERENT = 'different';
 export const LEFT_ONLY = 'left';
@@ -42,6 +42,34 @@ export function countByStatus(entries){
     const counts = { all: entries.length, [DIFFERENT]: 0, [LEFT_ONLY]: 0, [RIGHT_ONLY]: 0, [IDENTICAL]: 0 };
     entries.forEach(entry => { counts[entry.status]++; });
     return counts;
+}
+
+//The names one org holds of one type, kept for the session.
+const orgComponentLists = new Map();
+
+//[{ name, lastModifiedDate, lastModifiedByName }] of one org for one type: a
+//single call, listMetadata or describeGlobal, and nothing retrieved, so a big
+//org can be browsed before deciding what is worth comparing.
+export function listOrgComponents(sessionInformation, type, apiVersion, options = {}){
+    const { includeManaged = false, refresh = false } = options;
+    const key = cacheKey(sessionInformation, type, apiVersion, includeManaged);
+
+    if(refresh){
+        orgComponentLists.delete(key);
+    }
+
+    if(!orgComponentLists.has(key)){
+        const listing = type.engine === 'customSettings' ?
+            listCustomSettings(sessionInformation, apiVersion, { includeManaged }) :
+            listMetadataComponents(type, sessionInformation, apiVersion, { includeManaged });
+
+        orgComponentLists.set(key, listing.catch(error => {
+            orgComponentLists.delete(key);
+            throw error;
+        }));
+    }
+
+    return orgComponentLists.get(key);
 }
 
 //What one org holds of one type, kept for the session: going back to a type

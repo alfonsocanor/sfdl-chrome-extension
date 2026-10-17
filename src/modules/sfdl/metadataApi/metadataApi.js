@@ -76,7 +76,8 @@ export async function metadataCall(sessionInformation, apiVersion, body){
 }
 
 //Every component of the given types, { fullName, type, namespacePrefix,
-//manageableState, fileName }. The api takes three queries per call at most.
+//manageableState, fileName, lastModifiedDate, lastModifiedByName }. The api
+//takes three queries per call at most.
 export async function listMetadata(sessionInformation, apiVersion, queries){
     const batches = [];
     for(let index = 0; index < queries.length; index += 3){
@@ -100,7 +101,9 @@ export async function listMetadata(sessionInformation, apiVersion, queries){
         type: childText(result, 'type'),
         namespacePrefix: childText(result, 'namespacePrefix') || '',
         manageableState: childText(result, 'manageableState'),
-        fileName: childText(result, 'fileName')
+        fileName: childText(result, 'fileName'),
+        lastModifiedDate: childText(result, 'lastModifiedDate'),
+        lastModifiedByName: childText(result, 'lastModifiedByName')
     })));
 }
 

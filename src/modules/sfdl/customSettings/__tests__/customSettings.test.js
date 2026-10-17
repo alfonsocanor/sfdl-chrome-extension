@@ -1,6 +1,7 @@
 import {
     customSettingDocument,
-    retrieveCustomSettingFiles
+    retrieveCustomSettingFiles,
+    listCustomSettings
 } from 'sfdl/customSettings';
 
 const ACME = {
@@ -190,6 +191,19 @@ describe('retrieveCustomSettingFiles', () => {
             .map(([url]) => url)
             .filter((url) => url.includes('/query/'))
             .map((url) => decodeURIComponent(url.split('?q=')[1]));
+
+    it('lists the names of the custom settings in one call', async () => {
+        mockOrg();
+
+        await expect(listCustomSettings(ACME, '60.0')).resolves.toEqual([
+            { name: 'Country_Codes__c' },
+            { name: 'Integration__c' }
+        ]);
+        expect(fetch).toHaveBeenCalledTimes(1);
+        await expect(
+            listCustomSettings(ACME, '60.0', { includeManaged: true })
+        ).resolves.toContainEqual({ name: 'pkg__Config__c' });
+    });
 
     it('writes a file per custom setting of the org, managed ones left out', async () => {
         mockOrg();

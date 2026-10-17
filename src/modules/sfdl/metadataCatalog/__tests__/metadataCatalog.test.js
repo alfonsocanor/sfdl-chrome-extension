@@ -3,6 +3,7 @@ import {
     getMetadataType,
     metadataTypeOptions,
     retrieveRequestFor,
+    listMetadataComponents,
     languageForFile
 } from 'sfdl/metadataCatalog';
 import { listMetadata } from 'sfdl/metadataApi';
@@ -120,6 +121,94 @@ describe('metadataCatalog', () => {
                     includeManaged: true
                 })
             ).resolves.toEqual([]);
+        });
+    });
+
+    describe('listMetadataComponents', () => {
+        const component = (fullName, extra = {}) => ({
+            fullName,
+            namespacePrefix: '',
+            lastModifiedDate: '2026-10-12T09:30:00.000Z',
+            lastModifiedByName: 'Jane Roe',
+            ...extra
+        });
+
+        it('lists the names with their last change, by name, in one call', async () => {
+            listMetadata.mockResolvedValue([
+                component('Utils'),
+                component('AccountService', { lastModifiedByName: 'John Doe' })
+            ]);
+
+            await expect(
+                listMetadataComponents(
+                    getMetadataType('ApexClass'),
+                    ACME,
+                    '60.0'
+                )
+            ).resolves.toEqual([
+                {
+                    name: 'AccountService',
+                    lastModifiedDate: '2026-10-12T09:30:00.000Z',
+                    lastModifiedByName: 'John Doe'
+                },
+                {
+                    name: 'Utils',
+                    lastModifiedDate: '2026-10-12T09:30:00.000Z',
+                    lastModifiedByName: 'Jane Roe'
+                }
+            ]);
+            expect(listMetadata).toHaveBeenCalledTimes(1);
+            expect(listMetadata).toHaveBeenCalledWith(ACME, '60.0', [
+                { type: 'ApexClass' }
+            ]);
+        });
+
+        it('leaves the components of managed packages out unless asked for', async () => {
+            listMetadata.mockResolvedValue([
+                component('Utils'),
+                component('pkg__Helper', { namespacePrefix: 'pkg' })
+            ]);
+            const type = getMetadataType('ApexClass');
+
+            const unmanaged = await listMetadataComponents(type, ACME, '60.0');
+            const all = await listMetadataComponents(type, ACME, '60.0', {
+                includeManaged: true
+            });
+
+            expect(unmanaged.map(({ name }) => name)).toEqual(['Utils']);
+            expect(all.map(({ name }) => name)).toEqual([
+                'pkg__Helper',
+                'Utils'
+            ]);
+        });
+
+        it('tells the standard objects from the custom ones', async () => {
+            listMetadata.mockResolvedValue([
+                component('Account'),
+                component('Invoice__c'),
+                component('Contact'),
+                component('Rate__mdt')
+            ]);
+
+            const standard = await listMetadataComponents(
+                getMetadataType('StandardObjects'),
+                ACME,
+                '60.0'
+            );
+            const custom = await listMetadataComponents(
+                getMetadataType('CustomObjects'),
+                ACME,
+                '60.0'
+            );
+
+            expect(standard.map(({ name }) => name)).toEqual([
+                'Account',
+                'Contact'
+            ]);
+            expect(custom.map(({ name }) => name)).toEqual([
+                'Invoice__c',
+                'Rate__mdt'
+            ]);
         });
     });
 

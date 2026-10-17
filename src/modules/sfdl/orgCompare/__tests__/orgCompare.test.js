@@ -2,6 +2,7 @@ import {
     compareFileSets,
     countByStatus,
     retrieveOrgFiles,
+    listOrgComponents,
     DIFFERENT,
     LEFT_ONLY,
     RIGHT_ONLY,
@@ -9,14 +10,18 @@ import {
 } from 'sfdl/orgCompare';
 import { getMetadataType } from 'sfdl/metadataCatalog';
 import { retrieveFiles, listMetadata } from 'sfdl/metadataApi';
-import { retrieveCustomSettingFiles } from 'sfdl/customSettings';
+import {
+    retrieveCustomSettingFiles,
+    listCustomSettings
+} from 'sfdl/customSettings';
 
 jest.mock('sfdl/metadataApi', () => ({
     retrieveFiles: jest.fn(),
     listMetadata: jest.fn()
 }));
 jest.mock('sfdl/customSettings', () => ({
-    retrieveCustomSettingFiles: jest.fn()
+    retrieveCustomSettingFiles: jest.fn(),
+    listCustomSettings: jest.fn()
 }));
 
 const text = (content) => ({ content, isBinary: false });
@@ -248,5 +253,65 @@ describe('retrieveOrgFiles', () => {
         await retrieveOrgFiles(org, type, '60.0');
 
         expect(retrieveFiles).toHaveBeenCalledTimes(2);
+    });
+});
+
+describe('listOrgComponents', () => {
+    it('lists the names through listMetadata, without retrieving anything', async () => {
+        const org = newOrg();
+        listMetadata.mockResolvedValue([
+            {
+                fullName: 'Utils',
+                namespacePrefix: '',
+                lastModifiedDate: 'd',
+                lastModifiedByName: 'n'
+            }
+        ]);
+
+        await expect(
+            listOrgComponents(org, getMetadataType('ApexClass'), '60.0')
+        ).resolves.toEqual([
+            { name: 'Utils', lastModifiedDate: 'd', lastModifiedByName: 'n' }
+        ]);
+        expect(retrieveFiles).not.toHaveBeenCalled();
+    });
+
+    it('lists custom settings through describeGlobal', async () => {
+        const org = newOrg();
+        listCustomSettings.mockResolvedValue([{ name: 'A__c' }]);
+
+        await expect(
+            listOrgComponents(org, getMetadataType('CustomSettings'), '60.0', {
+                includeManaged: true
+            })
+        ).resolves.toEqual([{ name: 'A__c' }]);
+        expect(listCustomSettings).toHaveBeenCalledWith(org, '60.0', {
+            includeManaged: true
+        });
+        expect(listMetadata).not.toHaveBeenCalled();
+    });
+
+    it('lists an org and a type once until refreshed', async () => {
+        const org = newOrg();
+        const type = getMetadataType('ApexTrigger');
+        listMetadata.mockResolvedValue([]);
+
+        await listOrgComponents(org, type, '60.0');
+        await listOrgComponents(org, type, '60.0');
+        await listOrgComponents(org, type, '60.0', { refresh: true });
+
+        expect(listMetadata).toHaveBeenCalledTimes(2);
+    });
+
+    it('forgets a listing that failed', async () => {
+        const org = newOrg();
+        const type = getMetadataType('ApexTrigger');
+        listMetadata.mockRejectedValueOnce(new Error('INVALID_SESSION_ID'));
+        listMetadata.mockResolvedValueOnce([]);
+
+        await expect(listOrgComponents(org, type, '60.0')).rejects.toThrow(
+            'INVALID_SESSION_ID'
+        );
+        await expect(listOrgComponents(org, type, '60.0')).resolves.toEqual([]);
     });
 });

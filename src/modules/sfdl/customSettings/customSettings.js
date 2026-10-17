@@ -128,6 +128,16 @@ async function readCustomSetting(sessionInformation, apiVersion, sObjectName){
     return customSettingDocument(describe, records, valuesError);
 }
 
+//The names of the custom settings of the org, one describeGlobal call.
+export async function listCustomSettings(sessionInformation, apiVersion, { includeManaged = false } = {}){
+    const { sobjects } = await describeGlobal(sessionInformation, apiVersion);
+
+    return sobjects
+        .filter(sObject => sObject.customSetting && (includeManaged || !isNamespaced(sObject.name)))
+        .map(sObject => ({ name: sObject.name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 //The custom settings of the org as files, customSettings/Name__c.setting,
 //the shape retrieveFiles hands the metadata back in.
 export async function retrieveCustomSettingFiles(sessionInformation, apiVersion, options = {}){

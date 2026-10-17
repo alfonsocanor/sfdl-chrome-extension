@@ -151,7 +151,7 @@ describe('metadataApi', () => {
                 Promise.resolve(
                     soapResponse(
                         '<listMetadataResponse>' +
-                            '<result><fullName>Account</fullName><type>CustomObject</type><fileName>objects/Account.object</fileName><manageableState>unmanaged</manageableState></result>' +
+                            '<result><fullName>Account</fullName><type>CustomObject</type><fileName>objects/Account.object</fileName><lastModifiedByName>Jane Roe</lastModifiedByName><lastModifiedDate>2026-10-12T09:30:00.000Z</lastModifiedDate><manageableState>unmanaged</manageableState></result>' +
                             '<result><fullName>pkg__Thing__c</fullName><namespacePrefix>pkg</namespacePrefix><type>CustomObject</type><fileName>objects/pkg__Thing__c.object</fileName><manageableState>installed</manageableState></result>' +
                             '</listMetadataResponse>'
                     )
@@ -168,14 +168,18 @@ describe('metadataApi', () => {
                     type: 'CustomObject',
                     namespacePrefix: '',
                     manageableState: 'unmanaged',
-                    fileName: 'objects/Account.object'
+                    fileName: 'objects/Account.object',
+                    lastModifiedDate: '2026-10-12T09:30:00.000Z',
+                    lastModifiedByName: 'Jane Roe'
                 },
                 {
                     fullName: 'pkg__Thing__c',
                     type: 'CustomObject',
                     namespacePrefix: 'pkg',
                     manageableState: 'installed',
-                    fileName: 'objects/pkg__Thing__c.object'
+                    fileName: 'objects/pkg__Thing__c.object',
+                    lastModifiedDate: undefined,
+                    lastModifiedByName: undefined
                 }
             ]);
             expect(requestBody()).toContain(

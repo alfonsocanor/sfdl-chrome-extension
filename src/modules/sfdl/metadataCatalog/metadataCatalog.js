@@ -52,6 +52,36 @@ function isStandardObject(fullName){
     return !fullName.includes('__');
 }
 
+//Which of the components listMetadata names belong to a type of the catalog:
+//CustomObject covers both standard and custom objects, and the components of
+//managed packages carry their namespace.
+function belongsToType(type, component, includeManaged){
+    if(type.members === 'standardObjects'){
+        return isStandardObject(component.fullName);
+    }
+
+    if(type.metadataType === 'CustomObject' && isStandardObject(component.fullName)){
+        return false;
+    }
+
+    return includeManaged || !component.namespacePrefix;
+}
+
+//The names of the components of a type in an org, with when and by whom each
+//was last modified. One listMetadata call, nothing is retrieved.
+export async function listMetadataComponents(type, sessionInformation, apiVersion, { includeManaged = false } = {}){
+    const components = await listMetadata(sessionInformation, apiVersion, [{ type: type.metadataType }]);
+
+    return components
+        .filter(component => belongsToType(type, component, includeManaged))
+        .map(component => ({
+            name: component.fullName,
+            lastModifiedDate: component.lastModifiedDate,
+            lastModifiedByName: component.lastModifiedByName
+        }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+}
+
 //The members to retrieve for a type. The * wildcard leaves the components of
 //managed packages out, so including them means naming every component the
 //org lists.
