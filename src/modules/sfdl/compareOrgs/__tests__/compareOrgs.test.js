@@ -609,7 +609,7 @@ describe('sfdl-compare-orgs', () => {
                     },
                     [GLOBEX.instanceUrl]: {
                         'staticresources/logo.resource': {
-                            content: 'BBBBBBBBBBBB',
+                            content: 'BBBBBBBBBB==',
                             isBinary: true
                         }
                     }
@@ -621,7 +621,7 @@ describe('sfdl-compare-orgs', () => {
                 'Binary file of 6 bytes'
             );
             expect(diffViewer(element).rightContent).toBe(
-                'Binary file of 9 bytes'
+                'Binary file of 7 bytes'
             );
             expect(diffViewer(element).language).toBe('plaintext');
             expect(diffViewer(element).notice).toBe(

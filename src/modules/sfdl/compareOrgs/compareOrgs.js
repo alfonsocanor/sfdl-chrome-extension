@@ -23,6 +23,13 @@ const STATUS_LABELS = {
     'Already retrieved': 'Retrieved earlier, refresh to retrieve again'
 };
 
+//Every 4 characters of base64 hold 3 bytes, less one byte for each = that
+//pads the last group.
+function byteLength(base64){
+    const padding = base64.endsWith('==') ? 2 : base64.endsWith('=') ? 1 : 0;
+    return base64.length * 3 / 4 - padding;
+}
+
 //A binary file cannot be shown, its size stands for it in the diff.
 function contentOf(file){
     if(!file){
@@ -30,7 +37,7 @@ function contentOf(file){
     }
 
     return file.isBinary ?
-        'Binary file of ' + Math.round(file.content.length * 3 / 4) + ' bytes' :
+        'Binary file of ' + byteLength(file.content) + ' bytes' :
         file.content;
 }
 
