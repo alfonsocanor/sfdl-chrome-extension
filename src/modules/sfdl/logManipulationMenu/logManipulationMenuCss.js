@@ -44,20 +44,18 @@ export const css = `
         background: #d8e6fe;
     }
 
+    /* Out of the layout while hidden, so it never widens the page. */
     .sfdl-log-filters .sfdl-log-filter__tooltip {
         position: absolute;
         top: calc(100% + 0.75rem);
         left: 0;
+        display: none;
         width: max-content;
         max-width: 20rem;
-        visibility: hidden;
-        opacity: 0;
-        transition: opacity 0.1s;
         pointer-events: none;
     }
 
     .sfdl-log-filters .sfdl-log-filter:hover > .sfdl-log-filter__tooltip {
-        visibility: visible;
-        opacity: 1;
+        display: block;
     }
 `;

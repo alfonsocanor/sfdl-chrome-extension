@@ -70,6 +70,13 @@ export default class Combobox extends LightningElement{
         return 'slds-form-element__control' + (this.side ? ' sfdl-combobox-control_side sfdl-combobox-control_' + this.side : '');
     }
 
+    //A picker on the right opens its tooltip towards the inside of the page,
+    //so a long org name never reaches past its right edge.
+    get tooltipClass(){
+        return 'slds-popover slds-popover_tooltip sfdl-combobox-tooltip ' +
+            (this.side === 'right' ? 'slds-nubbin_top-right sfdl-combobox-tooltip_right' : 'slds-nubbin_top-left');
+    }
+
     //Open, the list takes the place of the tooltip.
     get showTooltip(){
         return !!this.side && !!this.label && !this.isOpen;

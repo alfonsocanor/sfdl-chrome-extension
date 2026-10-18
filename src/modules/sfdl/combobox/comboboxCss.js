@@ -32,21 +32,25 @@ export const css = `
         box-shadow: inset 0 0 0 1px var(--sfdl-combobox-side), 0 0 3px #0176d3;
     }
 
-    /* Right on hover, where the title of the browser takes its time. */
+    /* Right on hover, where the title of the browser takes its time. Out of
+       the layout while hidden: a hidden one would still widen the page and
+       turn its horizontal scrolling on. */
     .sfdl-combobox .sfdl-combobox-tooltip {
         position: absolute;
         top: calc(100% + 0.75rem);
         left: 0;
+        display: none;
         width: max-content;
-        visibility: hidden;
-        opacity: 0;
-        transition: opacity 0.1s;
         pointer-events: none;
     }
 
+    .sfdl-combobox .sfdl-combobox-tooltip.sfdl-combobox-tooltip_right {
+        left: auto;
+        right: 0;
+    }
+
     .sfdl-combobox .sfdl-combobox-control_side:hover > .sfdl-combobox-tooltip {
-        visibility: visible;
-        opacity: 1;
+        display: block;
     }
 
     .sfdl-combobox .sfdl-combobox-tooltip__label {

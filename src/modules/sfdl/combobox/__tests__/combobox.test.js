@@ -249,6 +249,19 @@ describe('sfdl-combobox', () => {
         expect(button(element).title).toBe('');
     });
 
+    it('opens the tooltip of a right picker towards the inside of the page', () => {
+        const right = createCombobox({ side: 'right', label: 'Right org' });
+        const left = createCombobox({ side: 'left', label: 'Left org' });
+        const tooltipOf = (element) =>
+            element.shadowRoot.querySelector('.sfdl-combobox-tooltip');
+
+        expect(tooltipOf(right).classList).toContain(
+            'sfdl-combobox-tooltip_right'
+        );
+        expect(tooltipOf(right).classList).toContain('slds-nubbin_top-right');
+        expect(tooltipOf(left).classList).toContain('slds-nubbin_top-left');
+    });
+
     it('lets the open list take the place of the tooltip', async () => {
         const element = createCombobox({ side: 'left', label: 'Left org' });
 

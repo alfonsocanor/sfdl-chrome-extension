@@ -59,7 +59,7 @@
             <!-- The border in the colour of the side says which one it is, the
                  label only comes on hover, with the whole org name. -->
             <template if:true={showTooltip}>
-                <div class="slds-popover slds-popover_tooltip slds-nubbin_top-left sfdl-combobox-tooltip" role="tooltip">
+                <div class={tooltipClass} role="tooltip">
                     <div class="slds-popover__body">
                         <div class="sfdl-combobox-tooltip__label">{label}</div>
                         <template if:true={selectedOption}>
