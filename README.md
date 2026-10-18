@@ -55,7 +55,8 @@ shows in light blue, whatever comes only from the right log in light amber.
   to compare each log against the other side as you go. Both lists filter by any word
   of the log name and fold away.
 
-The filters of a log are pills, blue while on, each explained on hover. Analyse shows
+The filters of a log are pills, outlined in blue on a light blue fill while on, each
+explained on hover. Analyse shows
 them next to the name of the log:
 
 - **Indent calls** indents each line by how deep it runs, method, constructor, flow and

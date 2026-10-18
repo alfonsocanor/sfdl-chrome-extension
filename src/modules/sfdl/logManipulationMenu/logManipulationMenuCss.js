@@ -16,7 +16,8 @@ export const css = `
         position: relative;
     }
 
-    /* The look of the status filters of the metadata, a brand button while on. */
+    /* Off, a plain outline. On, the blue border with a light blue fill and the
+       text as it was, nothing strong. */
     .sfdl-log-filters .sfdl-log-filter__pill {
         padding: 1px 8px;
         border: 1px solid var(--sfdl-neutral-border, #dddbda);
@@ -34,14 +35,13 @@ export const css = `
     }
 
     .sfdl-log-filters .sfdl-log-filter__pill.sfdl-log-filter__pill_on {
-        background: #0176d3;
+        background: #edf5fd;
         border-color: #0176d3;
-        color: #ffffff;
+        color: #3e3e3c;
     }
 
     .sfdl-log-filters .sfdl-log-filter__pill.sfdl-log-filter__pill_on:hover {
-        background: #014486;
-        border-color: #014486;
+        background: #d8e6fe;
     }
 
     .sfdl-log-filters .sfdl-log-filter__tooltip {
