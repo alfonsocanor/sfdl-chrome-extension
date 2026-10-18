@@ -39,7 +39,14 @@ export const css = `
         font-size: 12px;
     }
 
+    /* The editor column takes what the log list leaves, never the width of
+       what it shows: a flex item would otherwise grow to fit a comparison. */
+    .sfdl-body-tab > .slds-col {
+        min-width: 0;
+    }
+
     .sfdl-debug-logs__pair {
+        display: block;
         height: 100%;
     }
 `;
