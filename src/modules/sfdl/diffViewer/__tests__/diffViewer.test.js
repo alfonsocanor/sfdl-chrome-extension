@@ -95,6 +95,22 @@ describe('sfdl-diff-viewer', () => {
             ).toBeNull();
         });
 
+        it('waits for something to compare when the parent asks it to', async () => {
+            const element = await createDiffViewer({ hideEmptySummary: true });
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-summary')
+            ).toBeNull();
+
+            element.leftContent = 'a';
+            element.rightContent = 'b';
+            await flushPromises();
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-summary')
+            ).not.toBeNull();
+        });
+
         it('writes what the org of each side is doing next to its name', async () => {
             const element = await createDiffViewer({
                 leftLabel: 'acme.my.salesforce.com',

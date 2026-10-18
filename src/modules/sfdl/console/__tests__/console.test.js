@@ -165,7 +165,8 @@ describe('sfdl-console', () => {
             );
             const { setPicklistValues } = spyOnPicklistValues();
 
-            await wait(50);
+            // Well past the slow answer, a busy run included.
+            await wait(150);
 
             expect(setPicklistValues).toHaveBeenCalledTimes(1);
             expect(setPicklistValues).toHaveBeenCalledWith([
@@ -276,6 +277,9 @@ describe('sfdl-console', () => {
             click(scopeButton('twoOrgs'));
             await wait();
 
+            expect(
+                tabContent(element, 'sfdl-debug-logs__two-orgs').classList
+            ).toContain('sfdl-debug-logs__two-orgs_entering');
             expect(isShown(element, 'sfdl-debug-logs__same-org')).toBe(false);
             expect(isShown(element, 'sfdl-debug-logs__two-orgs')).toBe(true);
             expect(
@@ -291,6 +295,29 @@ describe('sfdl-console', () => {
             expect(isShown(element, 'sfdl-debug-logs__two-orgs')).toBe(false);
             expect(scopeButton('twoOrgs')).toBeNull();
             expect(logDetails(element)).not.toBeNull();
+        });
+
+        it('slides the right panel in only when going from the same org to two orgs', async () => {
+            const element = await createConsole();
+            const scopeButton = (scope) =>
+                element.shadowRoot.querySelector(`[data-scope="${scope}"]`);
+            const isEntering = () =>
+                tabContent(element, 'sfdl-debug-logs__two-orgs').classList.contains(
+                    'sfdl-debug-logs__two-orgs_entering'
+                );
+            click(modeButton(element, 'compare'));
+            await wait();
+            click(scopeButton('twoOrgs'));
+            await wait();
+
+            await wait(450);
+            expect(isEntering()).toBe(false);
+
+            click(tab(element, 'compareMetadata'));
+            await wait();
+            click(tab(element, 'debugLogs'));
+            await wait();
+            expect(isEntering()).toBe(false);
         });
 
         it('opens the compare metadata tab and hides the debug logs one', async () => {

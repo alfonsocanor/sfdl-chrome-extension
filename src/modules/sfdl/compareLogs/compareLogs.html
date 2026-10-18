@@ -30,7 +30,7 @@
             <template if:true={isTwoOrgs}>
                 <!-- The org of each side is picked where its title would be, its
                      colour telling the side. Folded, each reads Log List. -->
-                <sfdl-side-panel class="sfdl-compare-logs__left-panel" label="Log List" side="left" width="18rem">
+                <sfdl-side-panel class="sfdl-compare-logs__left-panel" label="Log List" side="left" width="20rem">
                     <sfdl-combobox
                         slot="header"
                         class="sfdl-compare-logs__org-picker"
@@ -53,13 +53,16 @@
                 </sfdl-side-panel>
             </template>
             <div class="sfdl-compare-logs__diff">
-                <!-- Six pills do not fit the bar of the diff, they get a row above it. -->
-                <div class="sfdl-compare-logs__filters">
-                    <sfdl-log-manipulation-menu
-                        options={options}
-                        oncheckboxselection={handleOptionsChange}>
-                    </sfdl-log-manipulation-menu>
-                </div>
+                <!-- Six pills do not fit the bar of the diff, they get a row above
+                     it. The row and the bar only come with two logs to compare. -->
+                <template if:true={hasComparison}>
+                    <div class="sfdl-compare-logs__filters">
+                        <sfdl-log-manipulation-menu
+                            options={options}
+                            oncheckboxselection={handleOptionsChange}>
+                        </sfdl-log-manipulation-menu>
+                    </div>
+                </template>
                 <!-- A new log on one side only reloads that side. -->
                 <sfdl-diff-viewer
                     language="apexlog"
@@ -70,11 +73,12 @@
                     loading={isLoadingLogs}
                     loading-side={pendingSide}
                     side-loading-message={pendingMessage}
+                    hide-empty-summary={hideEmptySummary}
                     empty-message={emptyMessage}>
                 </sfdl-diff-viewer>
             </div>
             <template if:true={isTwoOrgs}>
-                <sfdl-side-panel class="sfdl-compare-logs__right-panel" label="Log List" side="right" width="18rem">
+                <sfdl-side-panel class="sfdl-compare-logs__right-panel" label="Log List" side="right" width="20rem">
                     <sfdl-combobox
                         slot="header"
                         class="sfdl-compare-logs__org-picker"

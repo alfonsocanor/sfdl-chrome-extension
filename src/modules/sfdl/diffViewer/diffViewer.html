@@ -1,7 +1,8 @@
 <template>
     <div class="sfdl-diff-viewer" style={viewerStyle}>
-        <!-- Always there, with or without a comparison, so the diff never jumps
-             under it when one comes or goes. -->
+        <!-- There with or without a comparison, so the diff never jumps under
+             it when one comes or goes, unless the parent has it wait for one. -->
+        <template if:true={showSummary}>
         <div class="sfdl-diff-summary">
             <div class="sfdl-diff-summary__side">
                 <!-- A side only gets its name once it has one. -->
@@ -80,6 +81,7 @@
                 </template>
             </div>
         </div>
+        </template>
         <template if:true={hasContent}>
             <template if:true={notice}>
                 <div class="sfdl-diff-banner sfdl-diff-banner_notice" role="status">{notice}</div>

@@ -153,8 +153,23 @@ describe('sfdl-compare-logs', () => {
             expect(sideList(element, 'right').side).toBe('right');
         });
 
+        it('shows neither the filters nor the bar before two logs are picked', async () => {
+            const element = await ready();
+            await selectLog(element, 'left', newLog());
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-compare-logs__filters')
+            ).toBeNull();
+            expect(diffViewer(element).hideEmptySummary).toBe(true);
+        });
+
         it('puts the filters in a row of their own above the diff', async () => {
-            const element = await createCompareLogs();
+            const [left, right] = [newLog(), newLog()];
+            mockOrgs({ bodies: { [left.id]: 'a', [right.id]: 'b' } });
+            const element = await ready();
+            await selectLog(element, 'left', left);
+            await selectLog(element, 'right', right);
+            await wait();
             const menu = element.shadowRoot.querySelector(
                 'sfdl-log-manipulation-menu'
             );

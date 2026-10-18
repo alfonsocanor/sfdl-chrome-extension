@@ -109,6 +109,8 @@ export default class CompareLogs extends LightningElement{
     comparisonSequence = 0;
     //Of the same org, the side a new tick replaces once both are taken.
     lastPickedSide = RIGHT;
+    //Before two logs are picked there is nothing to filter or count.
+    hideEmptySummary = true;
     //The filters both logs go through, kept here so a menu built again starts
     //from them.
     options = [...analyseOptions(), ...compareOptions()];
@@ -124,6 +126,11 @@ export default class CompareLogs extends LightningElement{
 
     get isTwoOrgs(){
         return !this.isSameOrg;
+    }
+
+    get hasComparison(){
+        return this.isLoadingLogs || !!this.pendingSide ||
+            typeof this.leftContent === 'string' || typeof this.rightContent === 'string';
     }
 
     get containerStyle(){

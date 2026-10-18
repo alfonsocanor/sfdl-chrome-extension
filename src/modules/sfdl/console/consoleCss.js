@@ -45,6 +45,30 @@ export const css = `
         display: block;
     }
 
+    /* From the same org to two orgs, the panel of the right org slides in
+       rather than showing up at once, the diff giving it the room. */
+    .sfdl-debug-logs__two-orgs_entering .sfdl-compare-logs__right-panel {
+        overflow: hidden;
+        animation: sfdl-right-panel-in 0.3s ease-out;
+    }
+
+    @keyframes sfdl-right-panel-in {
+        from {
+            max-width: 0;
+            opacity: 0;
+        }
+        to {
+            max-width: 20rem;
+            opacity: 1;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .sfdl-debug-logs__two-orgs_entering .sfdl-compare-logs__right-panel {
+            animation: none;
+        }
+    }
+
     .sfdl-debug-logs__toolbar {
         display: flex;
         align-items: center;

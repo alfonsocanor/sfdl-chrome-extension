@@ -9,6 +9,8 @@ const ANALYSE_MODE = 'analyse';
 const COMPARE_MODE = 'compare';
 const SAME_ORG_SCOPE = 'sameOrg';
 const TWO_ORGS_SCOPE = 'twoOrgs';
+//The slide of the right panel in consoleCss, and a little more.
+const RIGHT_PANEL_SLIDE_MILLISECONDS = 400;
 const TAB_ITEM_CLASS = 'slds-tabs_scoped__item';
 const TAB_CONTENT_CLASS = 'slds-tabs_scoped__content';
 const BUTTON_CLASS = 'slds-button';
@@ -24,6 +26,8 @@ export default class Console extends LightningElement {
     compareScope = SAME_ORG_SCOPE;
     compareSameOrgRendered = false;
     compareTwoOrgsRendered = false;
+    //From the same org to two orgs, the right panel slides in.
+    isTwoOrgsEntering = false;
     compareMetadataRendered = false;
     bodyHeight = 0;
     logsBodyHeight = 0;
@@ -232,7 +236,9 @@ export default class Console extends LightningElement {
     }
 
     get compareTwoOrgsViewClass(){
-        return 'sfdl-debug-logs__two-orgs' + (!this.isAnalyseMode && !this.isSameOrgScope ? '' : ' slds-hide');
+        return 'sfdl-debug-logs__two-orgs' +
+            (!this.isAnalyseMode && !this.isSameOrgScope ? '' : ' slds-hide') +
+            (this.isTwoOrgsEntering ? ' sfdl-debug-logs__two-orgs_entering' : '');
     }
 
     get logsHint(){
@@ -253,7 +259,19 @@ export default class Console extends LightningElement {
     }
 
     handleCompareScopeChange(event){
-        this.compareScope = event.currentTarget.dataset.scope;
+        const scope = event.currentTarget.dataset.scope;
+
+        //Only this switch slides the right panel in, not the tab being shown
+        //again or the two orgs being picked from analyse.
+        if(scope === TWO_ORGS_SCOPE && this.compareScope === SAME_ORG_SCOPE){
+            this.isTwoOrgsEntering = true;
+            clearTimeout(this.twoOrgsEnteringTimeout);
+            this.twoOrgsEnteringTimeout = setTimeout(() => {
+                this.isTwoOrgsEntering = false;
+            }, RIGHT_PANEL_SLIDE_MILLISECONDS);
+        }
+
+        this.compareScope = scope;
         this.renderCompareScope();
     }
 
