@@ -151,7 +151,7 @@ describe('sfdl-compare-results', () => {
             );
         });
 
-        it('counts the components of every status', () => {
+        it('only filters on what the listings tell, which org holds a component', () => {
             const element = createResults();
 
             expect(
@@ -160,23 +160,21 @@ describe('sfdl-compare-results', () => {
                         '.sfdl-status-filter'
                     )
                 ].map((button) => button.textContent.trim())
-            ).toEqual([
-                'All 5',
-                'Not compared 1',
-                'Different 1',
-                'Only left 1',
-                'Only right 1',
-                'Identical 1'
-            ]);
+            ).toEqual(['All 5', 'Only left 1', 'Only right 1']);
         });
 
-        it('shows the components of the status picked', async () => {
+        it('shows the components only one org holds', async () => {
             const element = createResults();
 
-            click(filterButton(element, 'notCompared'));
+            click(filterButton(element, 'right'));
             await flushPromises();
 
-            expect(names(element)).toEqual(['Utils']);
+            expect(names(element)).toEqual(['LegacyHelper']);
+
+            click(filterButton(element, 'all'));
+            await flushPromises();
+
+            expect(names(element)).toHaveLength(5);
         });
 
         it('filters by every word typed', async () => {
@@ -225,7 +223,7 @@ describe('sfdl-compare-results', () => {
             expect(summary(element)).toBeNull();
         });
 
-        it('keeps the components no org handed back apart from the identical ones', () => {
+        it('does not take a component no org handed back for an identical one', () => {
             const element = createResults({
                 components: [
                     component('Account', 'identical'),
@@ -233,21 +231,6 @@ describe('sfdl-compare-results', () => {
                 ]
             });
 
-            expect(
-                [
-                    ...element.shadowRoot.querySelectorAll(
-                        '.sfdl-status-filter'
-                    )
-                ].map((button) => button.textContent.trim())
-            ).toEqual([
-                'All 2',
-                'Not compared 0',
-                'Different 0',
-                'Only left 0',
-                'Only right 0',
-                'Identical 1',
-                'Not retrieved 1'
-            ]);
             expect(summary(element)).toBeNull();
             expect(
                 rows(element)[1].querySelector('.sfdl-status-badge').textContent
@@ -496,7 +479,7 @@ describe('sfdl-compare-results', () => {
         it('starts over with a new listing', async () => {
             const element = createResults();
             check(checkboxes(element)[3], true);
-            click(filterButton(element, 'notCompared'));
+            click(filterButton(element, 'left'));
             await flushPromises();
 
             element.components = [component('Other', 'notCompared')];

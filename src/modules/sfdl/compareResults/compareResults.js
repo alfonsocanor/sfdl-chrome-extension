@@ -31,15 +31,13 @@ const BADGE_COLORS = {
     [UNAVAILABLE]: 'identical'
 };
 
+//What the listings tell before anything is compared: which org holds a
+//component. A filter on what only a comparison tells would hide every
+//component nobody compared yet.
 const FILTERS = [
     { value: ALL, label: 'All' },
-    { value: NOT_COMPARED, label: 'Not compared', statuses: [NOT_COMPARED, COMPARING] },
-    { value: DIFFERENT, label: 'Different', statuses: [DIFFERENT] },
     { value: LEFT_ONLY, label: 'Only left', statuses: [LEFT_ONLY] },
-    { value: RIGHT_ONLY, label: 'Only right', statuses: [RIGHT_ONLY] },
-    { value: IDENTICAL, label: 'Identical', statuses: [IDENTICAL] },
-    //Only shown when some component came back with no file at all.
-    { value: UNAVAILABLE, label: 'Not retrieved', statuses: [UNAVAILABLE], onlyWhenFound: true }
+    { value: RIGHT_ONLY, label: 'Only right', statuses: [RIGHT_ONLY] }
 ];
 
 function badgeClass(status){
@@ -131,7 +129,7 @@ export default class CompareResults extends LightningElement{
     }
 
     get statusFilters(){
-        return FILTERS.filter(filter => !filter.onlyWhenFound || this.countOf(filter.statuses)).map(filter => {
+        return FILTERS.map(filter => {
             const isActive = filter.value === this.statusFilter;
             const colorClass = filter.statuses ? ' ' + badgeClass(filter.statuses[0]) : '';
 
