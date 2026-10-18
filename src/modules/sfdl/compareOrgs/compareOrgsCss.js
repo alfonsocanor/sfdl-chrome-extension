@@ -22,9 +22,8 @@ export const css = `
         border-bottom: 1px solid #dddbda;
     }
 
-    /* The field keeps its 17rem, the square of the side comes on top. */
     .sfdl-compare-orgs__org {
-        width: 19.5rem;
+        width: 17rem;
     }
 
     /* Under the Components title, in the header of the panel. */

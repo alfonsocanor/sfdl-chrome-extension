@@ -223,15 +223,41 @@ describe('sfdl-combobox', () => {
 
     it('stands the colour of its side for the label, which shows on hover', () => {
         const element = createCombobox({ side: 'right', label: 'Right org' });
-        const swatch = element.shadowRoot.querySelector('.sfdl-side-swatch');
+        const tooltip = () =>
+            element.shadowRoot.querySelector('.sfdl-combobox-tooltip');
 
-        expect(swatch.classList.contains('sfdl-side-swatch_right')).toBe(true);
         expect(
-            swatch.querySelector('.sfdl-combobox-tooltip').textContent
-        ).toBe('Right org');
-        expect(swatch.parentElement.firstElementChild).toBe(swatch);
+            element.shadowRoot.querySelector('.sfdl-combobox-control_right')
+        ).not.toBeNull();
+        expect(element.shadowRoot.querySelector('.sfdl-side-swatch')).toBeNull();
         expect(element.shadowRoot.querySelector('.sfdl-combobox-label')).toBeNull();
+        expect(tooltip().textContent).toBe('Right org');
         expect(button(element).getAttribute('aria-label')).toBe('Right org');
+    });
+
+    it('tells the whole org name of its side on hover', () => {
+        const element = createCombobox({
+            side: 'left',
+            label: 'Left org',
+            value: 'ApexClass'
+        });
+
+        expect(
+            element.shadowRoot.querySelector('.sfdl-combobox-tooltip__value')
+                .textContent
+        ).toBe('Apex Classes');
+        expect(button(element).title).toBe('');
+    });
+
+    it('lets the open list take the place of the tooltip', async () => {
+        const element = createCombobox({ side: 'left', label: 'Left org' });
+
+        click(button(element));
+        await flushPromises();
+
+        expect(
+            element.shadowRoot.querySelector('.sfdl-combobox-tooltip')
+        ).toBeNull();
     });
 
     it('can be disabled', () => {

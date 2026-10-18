@@ -4,17 +4,6 @@
             <span class="slds-form-element__label sfdl-combobox-label">{label}</span>
         </template>
         <div class={controlClass}>
-            <!-- The colour of the side says which one it is, the label only
-                 comes on hover. -->
-            <template if:true={side}>
-                <span class={swatchClass} data-side={side}>
-                    <template if:true={label}>
-                        <span class="slds-popover slds-popover_tooltip slds-nubbin_top-left sfdl-combobox-tooltip" role="tooltip">
-                            <span class="slds-popover__body">{label}</span>
-                        </span>
-                    </template>
-                </span>
-            </template>
             <div class="slds-combobox_container">
                 <div class={comboboxClass}>
                     <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
@@ -67,6 +56,18 @@
                     </div>
                 </div>
             </div>
+            <!-- The border in the colour of the side says which one it is, the
+                 label only comes on hover, with the whole org name. -->
+            <template if:true={showTooltip}>
+                <div class="slds-popover slds-popover_tooltip slds-nubbin_top-left sfdl-combobox-tooltip" role="tooltip">
+                    <div class="slds-popover__body">
+                        <div class="sfdl-combobox-tooltip__label">{label}</div>
+                        <template if:true={selectedOption}>
+                            <div class="sfdl-combobox-tooltip__value">{selectedOption.label}</div>
+                        </template>
+                    </div>
+                </div>
+            </template>
         </div>
     </div>
 </template>

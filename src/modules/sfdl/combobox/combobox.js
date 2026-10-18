@@ -14,8 +14,8 @@ export default class Combobox extends LightningElement{
     @api placeholder = 'Select an option';
     @api emptyMessage = 'Nothing to pick from';
     @api disabled = false;
-    //left or right: a square of the colour of that side stands in for the
-    //label, which shows on hover.
+    //left or right: the border takes the colour of that side and stands in
+    //for the label, which shows on hover.
     @api side;
 
     @api
@@ -53,8 +53,9 @@ export default class Combobox extends LightningElement{
         return this.selectedOption ? this.selectedOption.label : this.placeholder;
     }
 
+    //With a side, the tooltip tells the org name already.
     get buttonTitle(){
-        return this.selectedOption ? this.selectedOption.label : '';
+        return this.selectedOption && !this.side ? this.selectedOption.label : '';
     }
 
     get valueClass(){
@@ -66,11 +67,12 @@ export default class Combobox extends LightningElement{
     }
 
     get controlClass(){
-        return 'slds-form-element__control' + (this.side ? ' sfdl-combobox-control_side' : '');
+        return 'slds-form-element__control' + (this.side ? ' sfdl-combobox-control_side sfdl-combobox-control_' + this.side : '');
     }
 
-    get swatchClass(){
-        return 'sfdl-side-swatch sfdl-side-swatch_' + this.side + ' sfdl-combobox-swatch';
+    //Open, the list takes the place of the tooltip.
+    get showTooltip(){
+        return !!this.side && !!this.label && !this.isOpen;
     }
 
     get comboboxClass(){
