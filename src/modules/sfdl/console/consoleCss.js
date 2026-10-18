@@ -63,8 +63,27 @@ export const css = `
         }
     }
 
+    /* Back to the same org, it slides out the way it came, the diff taking its
+       room back, before the same org takes the place. */
+    .sfdl-debug-logs__two-orgs_leaving .sfdl-compare-logs__right-panel {
+        overflow: hidden;
+        animation: sfdl-right-panel-out 0.3s ease-in forwards;
+    }
+
+    @keyframes sfdl-right-panel-out {
+        from {
+            max-width: 20rem;
+            opacity: 1;
+        }
+        to {
+            max-width: 0;
+            opacity: 0;
+        }
+    }
+
     @media (prefers-reduced-motion: reduce) {
-        .sfdl-debug-logs__two-orgs_entering .sfdl-compare-logs__right-panel {
+        .sfdl-debug-logs__two-orgs_entering .sfdl-compare-logs__right-panel,
+        .sfdl-debug-logs__two-orgs_leaving .sfdl-compare-logs__right-panel {
             animation: none;
         }
     }

@@ -11,6 +11,10 @@ const SAME_ORG_SCOPE = 'sameOrg';
 const TWO_ORGS_SCOPE = 'twoOrgs';
 //The slide of the right panel in consoleCss, and a little more.
 const RIGHT_PANEL_SLIDE_MILLISECONDS = 400;
+
+function prefersReducedMotion(){
+    return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
 const TAB_ITEM_CLASS = 'slds-tabs_scoped__item';
 const TAB_CONTENT_CLASS = 'slds-tabs_scoped__content';
 const BUTTON_CLASS = 'slds-button';
@@ -23,11 +27,16 @@ export default class Console extends LightningElement {
 
     activeTab = DEBUG_LOGS_TAB;
     logsMode = ANALYSE_MODE;
+    //The comparison picked, which the buttons show at once, and the one on
+    //screen, which waits for the right panel to slide out.
     compareScope = SAME_ORG_SCOPE;
+    shownScope = SAME_ORG_SCOPE;
     compareSameOrgRendered = false;
     compareTwoOrgsRendered = false;
-    //From the same org to two orgs, the right panel slides in.
+    //From the same org to two orgs, the right panel slides in, and back out
+    //the other way.
     isTwoOrgsEntering = false;
+    isTwoOrgsLeaving = false;
     compareMetadataRendered = false;
     bodyHeight = 0;
     logsBodyHeight = 0;
@@ -167,7 +176,9 @@ export default class Console extends LightningElement {
             right: { log: right, sessionInformation: this.sessionInformation }
         };
         this.logsMode = COMPARE_MODE;
+        this.stopScopeSlide();
         this.compareScope = SAME_ORG_SCOPE;
+        this.shownScope = SAME_ORG_SCOPE;
         this.compareSameOrgRendered = true;
     }
 
@@ -231,14 +242,19 @@ export default class Console extends LightningElement {
         return this.isSameOrgScope ? 'false' : 'true';
     }
 
+    get isSameOrgShown(){
+        return this.shownScope === SAME_ORG_SCOPE;
+    }
+
     get compareSameOrgViewClass(){
-        return 'sfdl-debug-logs__same-org' + (!this.isAnalyseMode && this.isSameOrgScope ? '' : ' slds-hide');
+        return 'sfdl-debug-logs__same-org' + (!this.isAnalyseMode && this.isSameOrgShown ? '' : ' slds-hide');
     }
 
     get compareTwoOrgsViewClass(){
         return 'sfdl-debug-logs__two-orgs' +
-            (!this.isAnalyseMode && !this.isSameOrgScope ? '' : ' slds-hide') +
-            (this.isTwoOrgsEntering ? ' sfdl-debug-logs__two-orgs_entering' : '');
+            (!this.isAnalyseMode && !this.isSameOrgShown ? '' : ' slds-hide') +
+            (this.isTwoOrgsEntering ? ' sfdl-debug-logs__two-orgs_entering' : '') +
+            (this.isTwoOrgsLeaving ? ' sfdl-debug-logs__two-orgs_leaving' : '');
     }
 
     get logsHint(){
@@ -258,21 +274,44 @@ export default class Console extends LightningElement {
         this.renderCompareScope();
     }
 
+    //Only these switches slide the right panel, in to two orgs and out back to
+    //the same org, not the tab being shown again or two logs picked in analyse.
     handleCompareScopeChange(event){
         const scope = event.currentTarget.dataset.scope;
+        const previousScope = this.compareScope;
+        const slides = !prefersReducedMotion();
 
-        //Only this switch slides the right panel in, not the tab being shown
-        //again or the two orgs being picked from analyse.
-        if(scope === TWO_ORGS_SCOPE && this.compareScope === SAME_ORG_SCOPE){
-            this.isTwoOrgsEntering = true;
-            clearTimeout(this.twoOrgsEnteringTimeout);
-            this.twoOrgsEnteringTimeout = setTimeout(() => {
-                this.isTwoOrgsEntering = false;
-            }, RIGHT_PANEL_SLIDE_MILLISECONDS);
-        }
-
+        this.stopScopeSlide();
         this.compareScope = scope;
         this.renderCompareScope();
+
+        if(slides && scope === TWO_ORGS_SCOPE && previousScope === SAME_ORG_SCOPE){
+            this.shownScope = TWO_ORGS_SCOPE;
+            this.isTwoOrgsEntering = true;
+            this.scopeSlideTimeout = setTimeout(() => {
+                this.isTwoOrgsEntering = false;
+            }, RIGHT_PANEL_SLIDE_MILLISECONDS);
+            return;
+        }
+
+        //Two orgs stay on screen while their right panel slides out, then the
+        //same org takes their place.
+        if(slides && scope === SAME_ORG_SCOPE && this.shownScope === TWO_ORGS_SCOPE){
+            this.isTwoOrgsLeaving = true;
+            this.scopeSlideTimeout = setTimeout(() => {
+                this.isTwoOrgsLeaving = false;
+                this.shownScope = SAME_ORG_SCOPE;
+            }, RIGHT_PANEL_SLIDE_MILLISECONDS);
+            return;
+        }
+
+        this.shownScope = scope;
+    }
+
+    stopScopeSlide(){
+        clearTimeout(this.scopeSlideTimeout);
+        this.isTwoOrgsEntering = false;
+        this.isTwoOrgsLeaving = false;
     }
 
     renderCompareScope(){

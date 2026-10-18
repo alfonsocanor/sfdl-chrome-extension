@@ -153,4 +153,92 @@ describe('sfdl-side-panel', () => {
                 .textContent
         ).toBe('Left org');
     });
+
+    describe('back to the top', () => {
+        const body = (element) =>
+            element.shadowRoot.querySelector('.sfdl-side-panel__body');
+        const wrapper = (element) =>
+            element.shadowRoot.querySelector('.sfdl-side-panel__back-to-top');
+        const backToTopButton = (element) =>
+            element.shadowRoot.querySelector(
+                '.sfdl-side-panel__back-to-top-button'
+            );
+
+        function scrollBody(element, scrollTop, clientHeight = 400) {
+            Object.defineProperty(body(element), 'clientHeight', {
+                configurable: true,
+                value: clientHeight
+            });
+            body(element).scrollTop = scrollTop;
+            body(element).dispatchEvent(new CustomEvent('scroll'));
+        }
+
+        function nextFrame() {
+            return new Promise((resolve) => setTimeout(resolve, 30));
+        }
+
+        it('has no way back to the top unless asked for one', () => {
+            const element = createSidePanel();
+
+            expect(wrapper(element)).toBeNull();
+            expect(body(element).getAttribute('tabindex')).toBeNull();
+        });
+
+        it('stays hidden and out of the tab order near the top', async () => {
+            const element = createSidePanel({ backToTop: true });
+
+            scrollBody(element, 150);
+            await nextFrame();
+
+            expect(wrapper(element).classList).not.toContain(
+                'sfdl-side-panel__back-to-top_visible'
+            );
+            expect(wrapper(element).getAttribute('aria-hidden')).toBe('true');
+            expect(backToTopButton(element).getAttribute('tabindex')).toBe(
+                '-1'
+            );
+        });
+
+        it('rises once the list is scrolled half a panel down, and goes when the top is back', async () => {
+            const element = createSidePanel({ backToTop: true });
+
+            scrollBody(element, 260);
+            await nextFrame();
+
+            expect(wrapper(element).classList).toContain(
+                'sfdl-side-panel__back-to-top_visible'
+            );
+            expect(wrapper(element).getAttribute('aria-hidden')).toBe('false');
+            expect(backToTopButton(element).textContent.trim()).toBe(
+                'Back to the top'
+            );
+
+            scrollBody(element, 0);
+            await nextFrame();
+
+            expect(wrapper(element).classList).not.toContain(
+                'sfdl-side-panel__back-to-top_visible'
+            );
+        });
+
+        it('glides back to the top, the list taking the focus', async () => {
+            const element = createSidePanel({ backToTop: true });
+            body(element).scrollTo = jest.fn();
+            const focus = jest.spyOn(body(element), 'focus');
+            scrollBody(element, 900);
+            await nextFrame();
+
+            backToTopButton(element).click();
+            await flushPromises();
+
+            expect(focus).toHaveBeenCalledWith({ preventScroll: true });
+            expect(body(element).scrollTo).toHaveBeenCalledWith({
+                top: 0,
+                behavior: 'smooth'
+            });
+            expect(wrapper(element).classList).not.toContain(
+                'sfdl-side-panel__back-to-top_visible'
+            );
+        });
+    });
 });

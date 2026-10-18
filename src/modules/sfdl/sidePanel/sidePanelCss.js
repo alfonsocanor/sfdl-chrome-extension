@@ -87,6 +87,92 @@ export const css = `
         background: #fafaf9;
     }
 
+    /* The list takes the focus from the button: no ring on a column. */
+    .sfdl-side-panel__body:focus {
+        outline: none;
+    }
+
+    /*
+     * BACK TO THE TOP. The dock sits in the part of the panel that does not
+     * scroll, at its foot, with no height and no pointer events, so the list
+     * under it stays usable. The wrapper inside moves; the button keeps the
+     * outline brand look of slds, on white so the rows do not show through,
+     * with a soft lift under it.
+     */
+    .sfdl-side-panel__content {
+        position: relative;
+    }
+
+    .sfdl-side-panel__back-to-top-dock {
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        height: 0;
+        z-index: 2;
+        pointer-events: none;
+    }
+
+    /* Hidden: sunk, shrunk, blurred and transparent, and not pressable. */
+    .sfdl-side-panel__back-to-top {
+        position: absolute;
+        left: 50%;
+        bottom: 0.75rem;
+        border-radius: 0.25rem;
+        background: #ffffff;
+        box-shadow: 0 6px 18px rgba(1, 118, 211, 0.16), 0 1px 3px rgba(0, 0, 0, 0.08);
+        white-space: nowrap;
+        opacity: 0;
+        filter: blur(3px);
+        transform: translate(-50%, 0.75rem) scale(0.92);
+        visibility: hidden;
+        pointer-events: none;
+        transition:
+            opacity 220ms ease,
+            filter 260ms ease,
+            transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
+            visibility 0s linear 320ms;
+    }
+
+    /* Shown: rises into place with a small overshoot, sharp and pressable. */
+    .sfdl-side-panel__back-to-top_visible {
+        opacity: 1;
+        filter: none;
+        transform: translate(-50%, 0) scale(1);
+        visibility: visible;
+        pointer-events: auto;
+        transition:
+            opacity 220ms ease,
+            filter 220ms ease,
+            transform 320ms cubic-bezier(0.34, 1.56, 0.64, 1),
+            visibility 0s linear 0s;
+    }
+
+    .sfdl-side-panel__back-to-top .sfdl-side-panel__back-to-top-button {
+        gap: 6px;
+        padding: 0 12px;
+        line-height: 1.75rem;
+        font-size: 12px;
+    }
+
+    .sfdl-side-panel__back-to-top-icon {
+        width: 12px;
+        height: 12px;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .sfdl-side-panel__back-to-top,
+        .sfdl-side-panel__back-to-top_visible {
+            filter: none;
+            transform: translate(-50%, 0);
+            transition: opacity 150ms ease, visibility 0s linear 150ms;
+        }
+
+        .sfdl-side-panel__back-to-top_visible {
+            transition: opacity 150ms ease, visibility 0s linear 0s;
+        }
+    }
+
     .sfdl-side-panel__strip {
         display: flex;
         flex: 1 1 auto;

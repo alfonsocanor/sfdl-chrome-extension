@@ -320,6 +320,36 @@ describe('sfdl-console', () => {
             expect(isEntering()).toBe(false);
         });
 
+        it('slides the right panel out before the same org takes its place again', async () => {
+            const element = await createConsole();
+            const scopeButton = (scope) =>
+                element.shadowRoot.querySelector(`[data-scope="${scope}"]`);
+            click(modeButton(element, 'compare'));
+            await wait();
+            click(scopeButton('twoOrgs'));
+            await wait(450);
+
+            click(scopeButton('sameOrg'));
+            await wait();
+
+            expect(scopeButton('sameOrg').getAttribute('aria-pressed')).toBe(
+                'true'
+            );
+            expect(isShown(element, 'sfdl-debug-logs__two-orgs')).toBe(true);
+            expect(
+                tabContent(element, 'sfdl-debug-logs__two-orgs').classList
+            ).toContain('sfdl-debug-logs__two-orgs_leaving');
+            expect(isShown(element, 'sfdl-debug-logs__same-org')).toBe(false);
+
+            await wait(450);
+
+            expect(isShown(element, 'sfdl-debug-logs__two-orgs')).toBe(false);
+            expect(isShown(element, 'sfdl-debug-logs__same-org')).toBe(true);
+            expect(
+                tabContent(element, 'sfdl-debug-logs__two-orgs').classList
+            ).not.toContain('sfdl-debug-logs__two-orgs_leaving');
+        });
+
         it('opens the compare metadata tab and hides the debug logs one', async () => {
             const element = await createConsole();
 

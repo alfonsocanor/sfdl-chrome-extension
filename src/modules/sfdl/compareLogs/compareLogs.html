@@ -4,7 +4,7 @@
             <template if:true={isSameOrg}>
                 <!-- One org feeds both sides: two of its logs are ticked, the first
                      on the left, and a new tick replaces the last one. -->
-                <sfdl-side-panel class="sfdl-compare-logs__list-panel" label="Log List" side="left" width="20rem">
+                <sfdl-side-panel class="sfdl-compare-logs__list-panel" label="Log List" side="left" width="20rem" back-to-top="true">
                     <sfdl-combobox
                         slot="header"
                         class="sfdl-compare-logs__org-picker"
@@ -30,7 +30,7 @@
             <template if:true={isTwoOrgs}>
                 <!-- The org of each side is picked where its title would be, its
                      colour telling the side. Folded, each reads Log List. -->
-                <sfdl-side-panel class="sfdl-compare-logs__left-panel" label="Log List" side="left" width="20rem">
+                <sfdl-side-panel class="sfdl-compare-logs__left-panel" label="Log List" side="left" width="20rem" back-to-top="true">
                     <sfdl-combobox
                         slot="header"
                         class="sfdl-compare-logs__org-picker"
@@ -78,7 +78,7 @@
                 </sfdl-diff-viewer>
             </div>
             <template if:true={isTwoOrgs}>
-                <sfdl-side-panel class="sfdl-compare-logs__right-panel" label="Log List" side="right" width="20rem">
+                <sfdl-side-panel class="sfdl-compare-logs__right-panel" label="Log List" side="right" width="20rem" back-to-top="true">
                     <sfdl-combobox
                         slot="header"
                         class="sfdl-compare-logs__org-picker"

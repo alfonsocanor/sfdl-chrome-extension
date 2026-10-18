@@ -36,9 +36,26 @@
                     </button>
                 </div>
             </div>
-            <div class="sfdl-side-panel__body">
+            <div class="sfdl-side-panel__body" tabindex={bodyTabIndex} onscroll={handleBodyScroll}>
                 <slot></slot>
             </div>
+            <!-- Back to the top (`back-to-top`): drawn outside the body that
+                 scrolls, at the foot of the panel, or it would scroll away with
+                 the list. It rises once the list is scrolled half a panel down
+                 and goes as soon as the top is back. -->
+            <template if:true={backToTop}>
+                <div class="sfdl-side-panel__back-to-top-dock">
+                    <div class={backToTopClass} aria-hidden={backToTopHidden}>
+                        <button
+                            class="slds-button slds-button_outline-brand sfdl-side-panel__back-to-top-button"
+                            tabindex={backToTopTabIndex}
+                            onclick={handleBackToTop}>
+                            <img class="sfdl-side-panel__back-to-top-icon" src={backToTopIcon} alt=""/>
+                            Back to the top
+                        </button>
+                    </div>
+                </div>
+            </template>
         </div>
     </section>
 </template>
