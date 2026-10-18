@@ -34,19 +34,11 @@ export const css = `
         color: var(--sfdl-text, #16325c);
     }
 
-    /* The names of the tabs and of the modes of the logs in small capitals.
-       The colour and the weight stay those of the tab or the button, so the
-       open tab stays bold and a brand button white. */
-    .sfdl-console-tabs .slds-text-title_caps,
-    .sfdl-debug-logs__toolbar .slds-text-title_caps {
+    /* The names of the tabs in small capitals, in the colour and the weight
+       of the tab, so the open one stays bold. */
+    .sfdl-console-tabs .slds-text-title_caps {
         color: inherit;
         font-weight: inherit;
-    }
-
-    /* A button lays its label out as a flex item, the label keeps the height
-       of the button. */
-    .sfdl-debug-logs__toolbar .slds-button .slds-text-title_caps {
-        line-height: inherit;
     }
 
     .sfdl-console-log-list-section .sfdl-log-list-panel__org {

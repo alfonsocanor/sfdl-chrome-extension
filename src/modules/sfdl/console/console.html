@@ -13,14 +13,14 @@
         <div class={debugLogsContentClass} style="padding:0; border-right:none;">
           <div class="sfdl-debug-logs__toolbar">
             <div class="slds-button-group" role="group">
-              <button class={analyseButtonClass} data-mode="analyse" aria-pressed={isAnalysePressed} onclick={handleLogsModeChange}><span class="slds-text-title_caps">Analyse</span></button>
-              <button class={compareButtonClass} data-mode="compare" aria-pressed={isComparePressed} onclick={handleLogsModeChange}><span class="slds-text-title_caps">Compare logs</span></button>
+              <button class={analyseButtonClass} data-mode="analyse" aria-pressed={isAnalysePressed} onclick={handleLogsModeChange}>Analyse</button>
+              <button class={compareButtonClass} data-mode="compare" aria-pressed={isComparePressed} onclick={handleLogsModeChange}>Compare logs</button>
             </div>
             <!-- Comparing, the logs come from one org or from two. -->
             <template if:false={isAnalyseMode}>
               <div class="slds-button-group sfdl-debug-logs__scope" role="group">
-                <button class={sameOrgButtonClass} data-scope="sameOrg" aria-pressed={isSameOrgPressed} onclick={handleCompareScopeChange}><span class="slds-text-title_caps">Same org</span></button>
-                <button class={twoOrgsButtonClass} data-scope="twoOrgs" aria-pressed={isTwoOrgsPressed} onclick={handleCompareScopeChange}><span class="slds-text-title_caps">Two orgs</span></button>
+                <button class={sameOrgButtonClass} data-scope="sameOrg" aria-pressed={isSameOrgPressed} onclick={handleCompareScopeChange}>Same org</button>
+                <button class={twoOrgsButtonClass} data-scope="twoOrgs" aria-pressed={isTwoOrgsPressed} onclick={handleCompareScopeChange}>Two orgs</button>
               </div>
             </template>
             <span class="sfdl-debug-logs__hint">{logsHint}</span>
