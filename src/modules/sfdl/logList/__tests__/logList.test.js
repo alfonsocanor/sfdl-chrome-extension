@@ -146,6 +146,41 @@ describe('sfdl-log-list', () => {
     });
 
     describe('rendering', () => {
+        it('outlines its rows while the logs are queried', async () => {
+            let answer;
+            global.fetch = jest.fn(
+                () =>
+                    new Promise((resolve) => {
+                        answer = resolve;
+                    })
+            );
+            const element = createElement('sfdl-log-list', { is: LogList });
+            element.isAnaliseLogs = true;
+            element.sessionInformation = SESSION_INFORMATION;
+            document.body.appendChild(element);
+            await flushPromises();
+
+            const skeleton = element.shadowRoot.querySelector('sfdl-skeleton');
+            expect(skeleton).not.toBeNull();
+            expect(skeleton.rowClass).toBe('sfdl-log-row');
+            expect(skeleton.shape).toEqual([
+                { square: 14 },
+                { lines: 2 },
+                { square: 18 }
+            ]);
+
+            answer({
+                status: 200,
+                json: () => Promise.resolve({ records: APEX_LOG_RECORDS })
+            });
+            await flushPromises();
+            await flushPromises();
+            await flushPromises();
+
+            expect(element.shadowRoot.querySelector('sfdl-skeleton')).toBeNull();
+            expect(rows(element).length).toBe(2);
+        });
+
         it('renders one row per retrieved log', async () => {
             const element = await createLogList();
 
@@ -193,7 +228,14 @@ describe('sfdl-log-list', () => {
             check(rowCheckboxes(element)[1], true);
             await flushPromises();
 
-            expect(document.adoptedStyleSheets).toHaveLength(1);
+            // The skeleton shown while loading adopts a sheet of its own.
+            const sheets = document.adoptedStyleSheets.map(
+                (sheet) => sheet.cssText
+            );
+            expect(
+                sheets.filter((text) => text.includes('.sfdl-log-row {'))
+            ).toHaveLength(1);
+            expect(new Set(sheets).size).toBe(sheets.length);
         });
 
         it('informs the user when the org has no logs', async () => {

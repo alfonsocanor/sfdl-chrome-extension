@@ -41,6 +41,10 @@ export default class LogList extends LightningElement{
     thereAreLogsToDisplay = false;
     //The query came back without a log, as opposed to not having run yet.
     isListEmpty = false;
+    isLoading = false;
+    //A row of the list: its tick, the two lines of the name of a log and its
+    //download icon.
+    skeletonShape = [{ square: 14 }, { lines: 2 }, { square: 18 }];
     isDownloading;
     firstRender = true;
 
@@ -202,6 +206,15 @@ export default class LogList extends LightningElement{
     }
 
     async getApexLogsInformation(sessionInformation) {
+        this.isLoading = true;
+        try{
+            await this.queryApexLogs(sessionInformation);
+        } finally {
+            this.isLoading = false;
+        }
+    }
+
+    async queryApexLogs(sessionInformation) {
         let url2GetApexLogIds = sessionInformation.instanceUrl +
             APEX_LOG_IDS_QUERY_URL + APEX_LOG_IDS_QUERY_URL_SELECT_FROM +
             (sessionInformation.queryWhere ? sessionInformation.queryWhere : APEX_LOG_IDS_QUERY_URL_ORDER_BY);

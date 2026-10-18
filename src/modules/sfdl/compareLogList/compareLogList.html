@@ -20,17 +20,25 @@
                 <img src={refreshIcon} alt="query the logs again"/>
             </button>
         </div>
-        <template if:true={countLabel}>
+        <template if:true={showCount}>
             <p class="sfdl-compare-log-list__count">{countLabel}</p>
         </template>
         <template if:true={message}>
             <p class={messageClass}>{message}</p>
         </template>
         <div class="sfdl-compare-log-list__logs">
+            <!-- Loading, the outline of the rows to come stands in their place. -->
             <template if:true={isLoading}>
-                <sfdl-spinner></sfdl-spinner>
+                <sfdl-skeleton
+                    rows="8"
+                    shape={skeletonShape}
+                    list-class="slds-has-dividers_around slds-has-block-links"
+                    item-class="slds-item"
+                    row-class="sfdl-compare-log-row"
+                    label="Loading the logs">
+                </sfdl-skeleton>
             </template>
-            <ul class="slds-has-dividers_around slds-has-block-links">
+            <ul class={listClass}>
                 <template for:each={visibleLogs} for:item="log">
                     <li key={log.id} class="slds-item">
                         <div class={log.rowClass}>

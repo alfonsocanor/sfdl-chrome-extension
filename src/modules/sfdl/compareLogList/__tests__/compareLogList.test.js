@@ -109,6 +109,29 @@ describe('sfdl-compare-log-list', () => {
             });
         });
 
+        it('outlines its rows in place of the list while it loads', async () => {
+            let answer;
+            chrome.runtime.sendMessage.mockImplementation(
+                () =>
+                    new Promise((resolve) => {
+                        answer = resolve;
+                    })
+            );
+            const element = await createLogList({ side: 'both' });
+
+            const skeleton = element.shadowRoot.querySelector('sfdl-skeleton');
+            expect(skeleton.rowClass).toBe('sfdl-compare-log-row');
+            expect(skeleton.shape).toEqual([{ square: 14 }, { lines: 2 }]);
+            expect(element.shadowRoot.querySelector('sfdl-spinner')).toBeNull();
+            expect(count(element)).toBeNull();
+
+            answer({ apexLogList: LOGS });
+            await wait();
+
+            expect(element.shadowRoot.querySelector('sfdl-skeleton')).toBeNull();
+            expect(names(element)).toEqual(LOGS.map((log) => log.name));
+        });
+
         it('applies the where clause of the header filter', async () => {
             await createLogList({
                 sessionInformation: {

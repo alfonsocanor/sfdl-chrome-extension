@@ -28,6 +28,17 @@
             ondownloadprocesscompleted={handleDownloadProcessCompleted}>
         </sfdl-download-logs>
     </template>
+    <!-- Loading, the outline of the rows to come stands in their place. -->
+    <template if:true={isLoading}>
+        <sfdl-skeleton
+            rows="8"
+            shape={skeletonShape}
+            list-class="slds-has-dividers_around slds-has-block-links"
+            item-class="slds-item"
+            row-class="sfdl-log-row"
+            label="Loading the logs">
+        </sfdl-skeleton>
+    </template>
     <!-- Said in the list, the way the lists of the comparison say it. -->
     <template if:true={emptyMessage}>
         <p class="sfdl-log-list__message">{emptyMessage}</p>
