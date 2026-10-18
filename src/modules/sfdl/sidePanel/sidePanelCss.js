@@ -31,10 +31,12 @@ export const css = `
         min-height: 0;
     }
 
+    /* The actions stay level with the title when the header holds more than
+       a line, a picker under the title for instance. */
     .sfdl-side-panel .sfdl-side-panel__header {
         display: flex;
         flex: 0 0 auto;
-        align-items: center;
+        align-items: flex-start;
         gap: 8px;
         min-height: 52px;
         padding: 8px 12px;

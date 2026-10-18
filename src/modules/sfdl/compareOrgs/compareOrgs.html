@@ -33,10 +33,10 @@
             </sfdl-combobox>
         </div>
         <div class="sfdl-compare-orgs__body">
-            <sfdl-side-panel class="sfdl-compare-orgs__results-panel" title="Components" subtitle={resultsSubtitle} dock="left" width="24rem">
+            <sfdl-side-panel class="sfdl-compare-orgs__results-panel" title="Components" dock="left" width="24rem">
                 <sfdl-combobox
+                    slot="header"
                     class="sfdl-compare-orgs__type"
-                    label="Metadata"
                     placeholder="Pick what to compare"
                     options={typeOptions}
                     value={typeKey}

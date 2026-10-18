@@ -213,7 +213,6 @@ describe('sfdl-compare-orgs', () => {
                 element.shadowRoot.querySelector('.sfdl-compare-orgs__hint')
                     .textContent
             ).toBe('Pick the two orgs to compare.');
-            expect(resultsPanel(element).subtitle).toBe('Nothing compared yet');
         });
 
         it('takes the header org for the left side when it comes later', async () => {
@@ -299,9 +298,6 @@ describe('sfdl-compare-orgs', () => {
                     by: 'Jane Roe'
                 }
             });
-            expect(resultsPanel(element).subtitle).toBe(
-                'Apex Classes · API 60.0'
-            );
         });
 
         it('hands the list what a comparison of the type costs', async () => {
@@ -383,7 +379,7 @@ describe('sfdl-compare-orgs', () => {
             ]);
         });
 
-        it('keeps the orgs in the toolbar and what to compare in the components panel', async () => {
+        it('keeps the orgs in the toolbar and what to compare under the components title', async () => {
             const element = await createCompareOrgs();
             const toolbar = element.shadowRoot.querySelector(
                 '.sfdl-compare-orgs__toolbar'
@@ -398,9 +394,13 @@ describe('sfdl-compare-orgs', () => {
                 'sfdl-compare-orgs__swap',
                 'sfdl-compare-orgs__org'
             ]);
-            expect(
-                resultsPanel(element).querySelector('.sfdl-compare-orgs__type')
-            ).not.toBeNull();
+            const typePicker = resultsPanel(element).querySelector(
+                '.sfdl-compare-orgs__type'
+            );
+            expect(typePicker.getAttribute('slot')).toBe('header');
+            expect(typePicker.label).toBeUndefined();
+            expect(resultsPanel(element).title).toBe('Components');
+            expect(resultsPanel(element).subtitle).toBeUndefined();
             expect(
                 element.shadowRoot.querySelector(
                     '.sfdl-compare-orgs__managed-checkbox'

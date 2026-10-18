@@ -257,14 +257,6 @@ export default class CompareOrgs extends LightningElement{
         return this.selectedEntry ? this.selectedEntry.path + ' is identical in both orgs.' : undefined;
     }
 
-    get resultsSubtitle(){
-        if(!this.selectedType){
-            return 'Nothing compared yet';
-        }
-
-        return this.selectedType.label + (this.apiVersion ? ' · API ' + this.apiVersion : '');
-    }
-
     get sideProgress(){
         const isBusy = this.isListing || this.activeComparisons > 0;
 

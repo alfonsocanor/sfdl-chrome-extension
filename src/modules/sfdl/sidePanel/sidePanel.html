@@ -26,6 +26,7 @@
                     <template if:true={subtitle}>
                         <p class="sfdl-side-panel__subtitle slds-truncate" title={subtitle}>{subtitle}</p>
                     </template>
+                    <slot name="header"></slot>
                 </div>
                 <div class="sfdl-side-panel__actions">
                     <slot name="actions"></slot>

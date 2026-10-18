@@ -30,8 +30,9 @@ export const css = `
         margin-bottom: 5px;
     }
 
+    /* Under the Components title, in the header of the panel. */
     .sfdl-compare-orgs .sfdl-compare-orgs__type {
-        margin-bottom: 8px;
+        margin-top: 6px;
     }
 
     .sfdl-compare-orgs__body {

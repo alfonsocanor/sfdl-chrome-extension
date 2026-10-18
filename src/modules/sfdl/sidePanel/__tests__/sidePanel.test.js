@@ -121,4 +121,18 @@ describe('sfdl-side-panel', () => {
             'toggle_panel_left'
         );
     });
+
+    it('has room under its title for a header of its own', () => {
+        const element = createSidePanel({ subtitle: 'acme.my.salesforce.com' });
+        const titles = element.shadowRoot.querySelector(
+            '.sfdl-side-panel__titles'
+        );
+
+        expect(
+            [...titles.children].map((child) => child.tagName.toLowerCase())
+        ).toEqual(['h2', 'p', 'slot']);
+        expect(titles.querySelector('slot').getAttribute('name')).toBe(
+            'header'
+        );
+    });
 });
