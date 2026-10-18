@@ -5,6 +5,10 @@
         </template>
         <div class={controlClass}>
             <div class="slds-combobox_container">
+                <!-- The step this picker is, on its corner while it waits for a value. -->
+                <template if:true={showBadge}>
+                    <span class={badgeClass} title={badgeTitle} aria-hidden="true">{badge}</span>
+                </template>
                 <div class={comboboxClass}>
                     <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
                         <button

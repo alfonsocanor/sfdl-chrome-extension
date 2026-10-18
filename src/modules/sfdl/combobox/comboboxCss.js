@@ -57,6 +57,47 @@ export const css = `
         font-weight: 700;
     }
 
+    /* The badge of the step, the notification badge of slds a little larger,
+       on a white ring so it stands off the field under it. */
+    .sfdl-combobox .sfdl-combobox-badge {
+        top: -0.5rem;
+        right: -0.5rem;
+        z-index: 1;
+        min-width: 1.125rem;
+        min-height: 1.125rem;
+        font-size: 0.6875rem;
+        font-weight: 700;
+        line-height: 1;
+        box-shadow: 0 0 0 2px #ffffff;
+    }
+
+    /* The step to take next breathes: a ring of its red swells and fades,
+       again and again, after the ding it comes in with. */
+    .sfdl-combobox .sfdl-combobox-badge.sfdl-combobox-badge_pulse {
+        animation:
+            ding 0.8s ease-out,
+            sfdl-combobox-badge-pulse 1.8s ease-out 0.8s infinite;
+    }
+
+    @keyframes sfdl-combobox-badge-pulse {
+        0% {
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 2px rgba(186, 5, 23, 0.45);
+        }
+        70% {
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 9px rgba(186, 5, 23, 0);
+        }
+        100% {
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 9px rgba(186, 5, 23, 0);
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .sfdl-combobox .sfdl-combobox-badge,
+        .sfdl-combobox .sfdl-combobox-badge.sfdl-combobox-badge_pulse {
+            animation: none;
+        }
+    }
+
     .sfdl-combobox .sfdl-combobox-button {
         width: 100%;
         text-align: left;

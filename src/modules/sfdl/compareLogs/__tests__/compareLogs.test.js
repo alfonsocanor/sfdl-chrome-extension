@@ -188,6 +188,22 @@ describe('sfdl-compare-logs', () => {
             ]);
         });
 
+        it('numbers the org of each side until it is picked, the next one pulsing', async () => {
+            const element = await createCompareLogs({
+                sessionInformation: undefined
+            });
+
+            expect(orgPicker(element, 'left').badge).toBe(1);
+            expect(orgPicker(element, 'left').badgePulse).toBe(true);
+            expect(orgPicker(element, 'right').badge).toBe(2);
+            expect(orgPicker(element, 'right').badgePulse).toBe(false);
+
+            await pickOrg(element, 'left', ACME.instanceUrl);
+
+            expect(orgPicker(element, 'left').badge).toBeUndefined();
+            expect(orgPicker(element, 'right').badgePulse).toBe(true);
+        });
+
         it('takes the height it is given', async () => {
             const element = await createCompareLogs({ height: 640 });
 

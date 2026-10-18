@@ -17,6 +17,10 @@ export default class Combobox extends LightningElement{
     //left or right: the border takes the colour of that side and stands in
     //for the label, which shows on hover.
     @api side;
+    //The number of the step this picker is, in the alert red of slds on its
+    //top right corner while it has no value; pulsing for the step to take next.
+    @api badge;
+    @api badgePulse = false;
 
     @api
     get options(){
@@ -60,6 +64,19 @@ export default class Combobox extends LightningElement{
 
     get valueClass(){
         return 'slds-truncate' + (this.selectedOption ? '' : ' sfdl-combobox-placeholder');
+    }
+
+    get showBadge(){
+        return this.badge !== undefined && this.badge !== null && this.badge !== '' && !this.selectedOption;
+    }
+
+    get badgeClass(){
+        return 'slds-notification-badge slds-show-notification sfdl-combobox-badge' +
+            (this.badgePulse ? ' sfdl-combobox-badge_pulse' : '');
+    }
+
+    get badgeTitle(){
+        return 'Step ' + this.badge + (this.label ? ': ' + this.label : '');
     }
 
     get showLabel(){

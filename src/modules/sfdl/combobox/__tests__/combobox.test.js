@@ -273,6 +273,40 @@ describe('sfdl-combobox', () => {
         ).toBeNull();
     });
 
+    describe('the badge of a step', () => {
+        const badge = (element) =>
+            element.shadowRoot.querySelector('.sfdl-combobox-badge');
+
+        it('shows the number of its step on its corner while it has no value', () => {
+            const element = createCombobox({ label: 'Right org', badge: 2 });
+
+            expect(badge(element).textContent).toBe('2');
+            expect(badge(element).classList).toContain(
+                'slds-notification-badge'
+            );
+            expect(badge(element).title).toBe('Step 2: Right org');
+            expect(badge(element).classList).not.toContain(
+                'sfdl-combobox-badge_pulse'
+            );
+        });
+
+        it('pulses for the step to take next', () => {
+            const element = createCombobox({ badge: 1, badgePulse: true });
+
+            expect(badge(element).classList).toContain(
+                'sfdl-combobox-badge_pulse'
+            );
+        });
+
+        it('goes once it has a value, and has none without a step', () => {
+            const picked = createCombobox({ badge: 1, value: 'ApexClass' });
+            const plain = createCombobox();
+
+            expect(badge(picked)).toBeNull();
+            expect(badge(plain)).toBeNull();
+        });
+    });
+
     it('can be disabled', () => {
         const element = createCombobox({ disabled: true });
 

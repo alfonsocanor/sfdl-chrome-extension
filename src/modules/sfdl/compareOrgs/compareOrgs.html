@@ -9,6 +9,8 @@
                 empty-message="No other org session, log in to another org first"
                 options={leftOrgOptions}
                 value={leftOrgUrl}
+                badge={leftOrgBadge}
+                badge-pulse={leftOrgBadgePulse}
                 data-side="left"
                 onchange={handleOrgChange}>
             </sfdl-combobox>
@@ -20,6 +22,8 @@
                 empty-message="No other org session, log in to another org first"
                 options={rightOrgOptions}
                 value={rightOrgUrl}
+                badge={rightOrgBadge}
+                badge-pulse={rightOrgBadgePulse}
                 data-side="right"
                 onchange={handleOrgChange}>
             </sfdl-combobox>
@@ -32,6 +36,8 @@
                     placeholder="Pick what to compare"
                     options={typeOptions}
                     value={typeKey}
+                    badge={typeBadge}
+                    badge-pulse={typeBadgePulse}
                     onchange={handleTypeChange}>
                 </sfdl-combobox>
                 <template if:true={errorMessage}>

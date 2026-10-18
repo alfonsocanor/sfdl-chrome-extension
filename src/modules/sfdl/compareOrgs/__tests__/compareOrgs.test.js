@@ -199,6 +199,47 @@ describe('sfdl-compare-orgs', () => {
             expect(picker(element, 'left-org').value).toBe(ACME.instanceUrl);
         });
 
+        it('numbers the steps on their pickers, the next one pulsing', async () => {
+            mockListings({ [ACME.instanceUrl]: [], [GLOBEX.instanceUrl]: [] });
+            const element = await createCompareOrgs();
+            const badges = () =>
+                ['left-org', 'right-org', 'type'].map((name) => [
+                    picker(element, name).badge,
+                    picker(element, name).badgePulse
+                ]);
+
+            // The left org comes from the log list already.
+            expect(badges()).toEqual([
+                [undefined, false],
+                [2, true],
+                [3, false]
+            ]);
+
+            await pick(element, 'right-org', GLOBEX.instanceUrl);
+            expect(badges()).toEqual([
+                [undefined, false],
+                [undefined, false],
+                [3, true]
+            ]);
+
+            await pick(element, 'type', 'ApexClass');
+            expect(badges()).toEqual([
+                [undefined, false],
+                [undefined, false],
+                [undefined, false]
+            ]);
+        });
+
+        it('starts on step one without an org in the log list', async () => {
+            const element = await createCompareOrgs({
+                sessionInformation: undefined
+            });
+
+            expect(picker(element, 'left-org').badge).toBe(1);
+            expect(picker(element, 'left-org').badgePulse).toBe(true);
+            expect(picker(element, 'right-org').badgePulse).toBe(false);
+        });
+
         it('says nothing about an org that is not busy', async () => {
             const element = await createCompareOrgs();
 

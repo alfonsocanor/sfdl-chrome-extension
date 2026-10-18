@@ -188,6 +188,24 @@ export default class CompareLogs extends LightningElement{
         return this.orgOptionsBesides(undefined);
     }
 
+    //The steps to a comparison, each numbered on its picker until it is taken,
+    //the next one to take pulsing. The same org has a single one.
+    get leftOrgBadge(){
+        return this.leftOrgSession ? undefined : 1;
+    }
+
+    get rightOrgBadge(){
+        return this.rightOrgSession ? undefined : 2;
+    }
+
+    get leftOrgBadgePulse(){
+        return !this.leftOrgSession;
+    }
+
+    get rightOrgBadgePulse(){
+        return !!this.leftOrgSession && !this.rightOrgSession;
+    }
+
     get leftOrgUrl(){
         return this.leftOrgSession ? this.leftOrgSession.instanceUrl : undefined;
     }

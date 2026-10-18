@@ -123,6 +123,36 @@ export default class CompareOrgs extends LightningElement{
     isListing = false;
     //Nothing compared and no org at work, the bar of the diff has nothing to say.
     hideEmptySummary = true;
+
+    //The steps to a comparison, each numbered on its picker until it is taken,
+    //the next one to take pulsing.
+    get nextStep(){
+        return !this.leftOrgSession ? 1 : !this.rightOrgSession ? 2 : !this.typeKey ? 3 : undefined;
+    }
+
+    get leftOrgBadge(){
+        return this.leftOrgSession ? undefined : 1;
+    }
+
+    get rightOrgBadge(){
+        return this.rightOrgSession ? undefined : 2;
+    }
+
+    get typeBadge(){
+        return this.typeKey ? undefined : 3;
+    }
+
+    get leftOrgBadgePulse(){
+        return this.nextStep === 1;
+    }
+
+    get rightOrgBadgePulse(){
+        return this.nextStep === 2;
+    }
+
+    get typeBadgePulse(){
+        return this.nextStep === 3;
+    }
     hasListed = false;
     errorMessage;
     apiVersion;
