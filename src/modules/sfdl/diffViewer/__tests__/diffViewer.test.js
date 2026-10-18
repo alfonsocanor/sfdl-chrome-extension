@@ -62,6 +62,65 @@ describe('sfdl-diff-viewer', () => {
         });
     });
 
+    describe('the bar', () => {
+        const count = (element) =>
+            element.shadowRoot.querySelector('.sfdl-diff-count');
+
+        it('stays with nothing to compare, waiting', async () => {
+            const element = await createDiffViewer({
+                emptyMessage: 'Pick the two orgs to compare.'
+            });
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-summary')
+            ).not.toBeNull();
+            expect(count(element).textContent).toBe('Nothing compared yet');
+            expect(
+                element.shadowRoot
+                    .querySelector('.sfdl-diff-left-label')
+                    .textContent.trim()
+            ).toBe('Left');
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-next').disabled
+            ).toBe(true);
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-banner_identical')
+            ).toBeNull();
+        });
+
+        it('says it is comparing while the first comparison loads', async () => {
+            const element = await createDiffViewer({ loading: true });
+
+            expect(count(element).textContent).toBe('Comparing...');
+        });
+
+        it('forgets the differences of a comparison that went away', async () => {
+            const element = await createDiffViewer({
+                leftContent: 'a',
+                rightContent: 'b'
+            });
+            diffEditor().mockDiffComputed([
+                {
+                    originalStartLineNumber: 1,
+                    originalEndLineNumber: 1,
+                    modifiedStartLineNumber: 1,
+                    modifiedEndLineNumber: 1
+                }
+            ]);
+            await flushPromises();
+            expect(count(element).textContent).toBe('1 of 1 difference');
+
+            element.leftContent = undefined;
+            element.rightContent = undefined;
+            await flushPromises();
+
+            expect(count(element).textContent).toBe('Nothing compared yet');
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-next').disabled
+            ).toBe(true);
+        });
+    });
+
     describe('comparing', () => {
         it('compares the left content against the right content', async () => {
             const element = await createDiffViewer({

@@ -123,17 +123,22 @@ const resultsPanel = (element) =>
     element.shadowRoot.querySelector('.sfdl-compare-orgs__results-panel');
 const statuses = (element) =>
     results(element).components.map(({ name, status }) => name + ' ' + status);
+// The side and its status, or its org when it has no status to tell.
 const progressText = (element) =>
     [
         ...element.shadowRoot.querySelectorAll(
             '.sfdl-compare-orgs__progress-row'
         )
-    ].map((row) =>
-        [
+    ].map((row) => {
+        const status = row.querySelector('.sfdl-compare-orgs__progress-status');
+        return [
             row.dataset.side,
-            row.querySelector('.sfdl-compare-orgs__progress-status').textContent
-        ].join(' | ')
-    );
+            status
+                ? status.textContent
+                : row.querySelector('.sfdl-compare-orgs__progress-org')
+                      .textContent
+        ].join(' | ');
+    });
 
 async function pick(element, name, value) {
     picker(element, name).dispatchEvent(
@@ -202,6 +207,15 @@ describe('sfdl-compare-orgs', () => {
             await pick(element, 'left-org', GLOBEX.instanceUrl);
 
             expect(picker(element, 'left-org').value).toBe(ACME.instanceUrl);
+        });
+
+        it('tells where each org stands from the start', async () => {
+            const element = await createCompareOrgs();
+
+            expect(progressText(element)).toEqual([
+                'left | Waiting',
+                'right | No org picked yet'
+            ]);
         });
 
         it('starts the left side on the org of the header', async () => {

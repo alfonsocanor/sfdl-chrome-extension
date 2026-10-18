@@ -167,10 +167,6 @@ export default class DiffViewer extends LightningElement{
         return this.rightLabel || 'Right';
     }
 
-    get changeCount(){
-        return this.lineChanges ? this.lineChanges.length : 0;
-    }
-
     get isSideLoading(){
         return !!this.loadingSide && this.hasContent;
     }
@@ -188,15 +184,25 @@ export default class DiffViewer extends LightningElement{
             'left:' + leftPane + ';right:0;';
     }
 
+    //The bar stays with nothing to compare, what it counts only holds while
+    //there is something.
+    get changeCount(){
+        return this.hasContent && this.lineChanges ? this.lineChanges.length : 0;
+    }
+
     get hasNoDifferences(){
-        return !this.isSideLoading && !this.isComputing && this.lineChanges !== null && this.changeCount === 0;
+        return this.hasContent && !this.isSideLoading && !this.isComputing && this.lineChanges !== null && this.changeCount === 0;
     }
 
     get isNavigationDisabled(){
-        return this.isSideLoading || this.isComputing || !this.changeCount;
+        return !this.hasContent || this.isSideLoading || this.isComputing || !this.changeCount;
     }
 
     get changesLabel(){
+        if(!this.hasContent){
+            return this.loading ? 'Comparing...' : 'Nothing compared yet';
+        }
+
         if(this.isSideLoading || this.isComputing || this.lineChanges === null){
             return 'Comparing...';
         }

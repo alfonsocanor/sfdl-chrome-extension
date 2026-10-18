@@ -302,7 +302,9 @@ export default class CompareOrgs extends LightningElement{
         return [LEFT, RIGHT].map(side => {
             const state = this[side + 'State'];
             const problemCount = state.problems.length;
-            let statusLabel = STATUS_LABELS[state.status] || state.status || 'Waiting';
+            const orgName = this[side + 'OrgName'];
+            //An org waits for the type to compare, a side without one waits for its org.
+            let statusLabel = STATUS_LABELS[state.status] || state.status || (orgName ? 'Waiting' : '');
             let statusClass = 'sfdl-compare-orgs__progress-status';
             let statusTitle = statusLabel;
 
@@ -318,20 +320,13 @@ export default class CompareOrgs extends LightningElement{
 
             return {
                 side,
-                orgName: this[side + 'OrgName'],
+                orgName: orgName || 'No org picked yet',
                 swatchClass: 'sfdl-side-swatch sfdl-side-swatch_' + side,
                 statusLabel,
                 statusTitle,
                 statusClass
             };
         });
-    }
-
-    //While listing or retrieving, and afterwards when an org failed or left
-    //components out.
-    get showProgress(){
-        return this.isListing || this.activeComparisons > 0 ||
-            [this.leftState, this.rightState].some(state => state.error || state.problems.length);
     }
 
     get panelHint(){
