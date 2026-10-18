@@ -4,17 +4,17 @@
       <div class="slds-tabs_scoped slds-tabs_small sfdl-console-tabs">
         <ul class="slds-tabs_scoped__nav">
           <li class={debugLogsTabClass} title="Debug Logs">
-            <a class="slds-tabs_scoped__link" data-tabname="debugLogs" onclick={handleTabNavigation}>Debug Logs</a>
+            <a class="slds-tabs_scoped__link" data-tabname="debugLogs" onclick={handleTabNavigation}><span class="slds-text-title_caps">Debug Logs</span></a>
           </li>
           <li class={compareMetadataTabClass} title="Compare Metadata">
-            <a class="slds-tabs_scoped__link" data-tabname="compareMetadata" onclick={handleTabNavigation}>Compare Metadata</a>
+            <a class="slds-tabs_scoped__link" data-tabname="compareMetadata" onclick={handleTabNavigation}><span class="slds-text-title_caps">Compare Metadata</span></a>
           </li>
         </ul>
         <div class={debugLogsContentClass} style="padding:0; border-right:none;">
           <div class="sfdl-debug-logs__toolbar">
             <div class="slds-button-group" role="group">
-              <button class={analyseButtonClass} data-mode="analyse" aria-pressed={isAnalysePressed} onclick={handleLogsModeChange}>Analyse</button>
-              <button class={compareButtonClass} data-mode="compare" aria-pressed={isComparePressed} onclick={handleLogsModeChange}>Compare two orgs</button>
+              <button class={analyseButtonClass} data-mode="analyse" aria-pressed={isAnalysePressed} onclick={handleLogsModeChange}><span class="slds-text-title_caps">Analyse</span></button>
+              <button class={compareButtonClass} data-mode="compare" aria-pressed={isComparePressed} onclick={handleLogsModeChange}><span class="slds-text-title_caps">Compare two orgs</span></button>
             </div>
             <span class="sfdl-debug-logs__hint">{logsHint}</span>
           </div>
