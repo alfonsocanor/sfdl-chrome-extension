@@ -8,6 +8,9 @@
                     <span class="sfdl-side-swatch sfdl-side-swatch_left"></span>
                     <span>{leftLabelToDisplay}</span>
                 </span>
+                <template if:true={leftStatus}>
+                    <span class={leftStatusClass} title={leftStatus.title} data-side="left">{leftStatus.label}</span>
+                </template>
             </div>
             <div class="sfdl-diff-summary__center">
                 <div class="sfdl-diff-summary__actions">
@@ -50,6 +53,9 @@
                 </label>
             </div>
             <div class="sfdl-diff-summary__side sfdl-diff-summary__side_right">
+                <template if:true={rightStatus}>
+                    <span class={rightStatusClass} title={rightStatus.title} data-side="right">{rightStatus.label}</span>
+                </template>
                 <span class="sfdl-side-chip sfdl-side-chip_right sfdl-diff-right-label" title={rightLabel}>
                     <span class="sfdl-side-swatch sfdl-side-swatch_right"></span>
                     <span>{rightLabelToDisplay}</span>

@@ -54,23 +54,11 @@
                 </template>
             </sfdl-side-panel>
             <div class="sfdl-compare-orgs__diff">
-                <!-- Where each org stands, over the diff the retrieves will fill and
-                     each org on its own side. Always there, so neither the list of
-                     components nor the diff moves when a retrieve starts or ends. -->
-                <div class="sfdl-compare-orgs__progress">
-                    <template for:each={sideProgress} for:item="progress">
-                        <div key={progress.side} class="sfdl-compare-orgs__progress-row" data-side={progress.side}>
-                            <span class={progress.swatchClass}></span>
-                            <span class="sfdl-compare-orgs__progress-org" title={progress.orgName}>{progress.orgName}</span>
-                            <template if:true={progress.statusLabel}>
-                                <span class={progress.statusClass} title={progress.statusTitle}>{progress.statusLabel}</span>
-                            </template>
-                        </div>
-                    </template>
-                </div>
                 <sfdl-diff-viewer
                     left-label={leftOrgName}
                     right-label={rightOrgName}
+                    left-status={leftStatus}
+                    right-status={rightStatus}
                     left-content={leftContent}
                     right-content={rightContent}
                     language={selectedLanguage}

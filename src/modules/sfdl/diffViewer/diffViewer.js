@@ -66,6 +66,10 @@ export default class DiffViewer extends LightningElement{
     //hides what it holds while the other side stays readable.
     @api loadingSide;
     @api sideLoadingMessage;
+    //What the org of each side is doing, { label, title, tone }, tone being
+    //error or warning. Written next to the name of the side.
+    @api leftStatus;
+    @api rightStatus;
 
     @api
     get leftContent(){
@@ -167,6 +171,18 @@ export default class DiffViewer extends LightningElement{
         return this.rightLabel || 'Right';
     }
 
+    get leftStatusClass(){
+        return this.statusClass(this.leftStatus);
+    }
+
+    get rightStatusClass(){
+        return this.statusClass(this.rightStatus);
+    }
+
+    statusClass(status){
+        return 'sfdl-diff-side-status' + (status && status.tone ? ' sfdl-diff-side-status_' + status.tone : '');
+    }
+
     get isSideLoading(){
         return !!this.loadingSide && this.hasContent;
     }
@@ -199,8 +215,9 @@ export default class DiffViewer extends LightningElement{
     }
 
     get changesLabel(){
+        //Nothing to count says nothing, the place stays for when there is.
         if(!this.hasContent){
-            return this.loading ? 'Comparing...' : 'Nothing compared yet';
+            return this.loading ? 'Comparing...' : '';
         }
 
         if(this.isSideLoading || this.isComputing || this.lineChanges === null){

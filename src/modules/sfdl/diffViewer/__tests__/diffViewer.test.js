@@ -66,7 +66,7 @@ describe('sfdl-diff-viewer', () => {
         const count = (element) =>
             element.shadowRoot.querySelector('.sfdl-diff-count');
 
-        it('stays with nothing to compare, waiting', async () => {
+        it('stays with nothing to compare, counting nothing', async () => {
             const element = await createDiffViewer({
                 emptyMessage: 'Pick the two orgs to compare.'
             });
@@ -74,7 +74,7 @@ describe('sfdl-diff-viewer', () => {
             expect(
                 element.shadowRoot.querySelector('.sfdl-diff-summary')
             ).not.toBeNull();
-            expect(count(element).textContent).toBe('Nothing compared yet');
+            expect(count(element).textContent).toBe('');
             expect(
                 element.shadowRoot
                     .querySelector('.sfdl-diff-left-label')
@@ -86,6 +86,36 @@ describe('sfdl-diff-viewer', () => {
             expect(
                 element.shadowRoot.querySelector('.sfdl-diff-count_identical')
             ).toBeNull();
+        });
+
+        it('writes what the org of each side is doing next to its name', async () => {
+            const element = await createDiffViewer({
+                leftLabel: 'acme.my.salesforce.com',
+                leftStatus: { label: 'Retrieving', title: 'Retrieving' },
+                rightStatus: {
+                    label: 'INVALID_SESSION_ID',
+                    title: 'INVALID_SESSION_ID: Invalid Session ID',
+                    tone: 'error'
+                }
+            });
+            const status = (side) =>
+                element.shadowRoot.querySelector(
+                    `.sfdl-diff-side-status[data-side="${side}"]`
+                );
+
+            expect(status('left').textContent).toBe('Retrieving');
+            expect(status('left').previousElementSibling.classList).toContain(
+                'sfdl-diff-left-label'
+            );
+            expect(status('right').className).toBe(
+                'sfdl-diff-side-status sfdl-diff-side-status_error'
+            );
+            expect(status('right').title).toBe(
+                'INVALID_SESSION_ID: Invalid Session ID'
+            );
+            expect(status('right').nextElementSibling.classList).toContain(
+                'sfdl-diff-right-label'
+            );
         });
 
         it('says it is comparing while the first comparison loads', async () => {
@@ -114,7 +144,7 @@ describe('sfdl-diff-viewer', () => {
             element.rightContent = undefined;
             await flushPromises();
 
-            expect(count(element).textContent).toBe('Nothing compared yet');
+            expect(count(element).textContent).toBe('');
             expect(
                 element.shadowRoot.querySelector('.sfdl-diff-next').disabled
             ).toBe(true);

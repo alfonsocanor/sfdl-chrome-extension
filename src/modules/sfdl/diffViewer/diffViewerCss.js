@@ -27,8 +27,32 @@ export const css = `
         min-width: 0;
     }
 
+    .sfdl-diff-viewer .sfdl-diff-summary__side {
+        align-items: center;
+        gap: 6px;
+    }
+
     .sfdl-diff-viewer .sfdl-diff-summary__side_right {
         justify-content: flex-end;
+    }
+
+    /* What the org of the side is doing, next to its name. */
+    .sfdl-diff-viewer .sfdl-diff-side-status {
+        flex: 0 1 auto;
+        min-width: 0;
+        overflow: hidden;
+        color: #747474;
+        font-size: 12px;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sfdl-diff-viewer .sfdl-diff-side-status_error {
+        color: #b33a3a;
+    }
+
+    .sfdl-diff-viewer .sfdl-diff-side-status_warning {
+        color: #8c4b02;
     }
 
     .sfdl-diff-viewer .sfdl-diff-summary__center {

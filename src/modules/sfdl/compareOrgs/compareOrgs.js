@@ -290,37 +290,39 @@ export default class CompareOrgs extends LightningElement{
         return this.selectedEntry ? this.selectedEntry.path + ' is identical in both orgs.' : undefined;
     }
 
-    get sideProgress(){
+    get leftStatus(){
+        return this.statusOf(LEFT);
+    }
+
+    get rightStatus(){
+        return this.statusOf(RIGHT);
+    }
+
+    //What the org of a side is doing, while it is busy, or what went wrong
+    //with it. Nothing at all when it is idle and fine.
+    statusOf(side){
+        const state = this[side + 'State'];
         const isBusy = this.isListing || this.activeComparisons > 0;
+        const problemCount = state.problems.length;
 
-        return [LEFT, RIGHT].map(side => {
-            const state = this[side + 'State'];
-            const problemCount = state.problems.length;
-            const orgName = this[side + 'OrgName'];
-            //An org waits for the type to compare, a side without one waits for its org.
-            let statusLabel = STATUS_LABELS[state.status] || state.status || (orgName ? 'Waiting' : '');
-            let statusClass = 'sfdl-compare-orgs__progress-status';
-            let statusTitle = statusLabel;
+        if(state.error){
+            return { label: state.error, title: state.error, tone: 'error' };
+        }
 
-            if(state.error){
-                statusLabel = state.error;
-                statusTitle = state.error;
-                statusClass += ' sfdl-compare-orgs__progress-status_error';
-            } else if(problemCount && !isBusy){
-                statusLabel = problemCount + (problemCount === 1 ? ' component' : ' components') + ' could not be retrieved';
-                statusTitle = state.problems.join('\n');
-                statusClass += ' sfdl-compare-orgs__progress-status_warning';
-            }
+        if(isBusy){
+            const label = STATUS_LABELS[state.status] || state.status;
+            return label ? { label, title: label } : undefined;
+        }
 
+        if(problemCount){
             return {
-                side,
-                orgName: orgName || 'No org picked yet',
-                swatchClass: 'sfdl-side-swatch sfdl-side-swatch_' + side,
-                statusLabel,
-                statusTitle,
-                statusClass
+                label: problemCount + (problemCount === 1 ? ' component' : ' components') + ' could not be retrieved',
+                title: state.problems.join('\n'),
+                tone: 'warning'
             };
-        });
+        }
+
+        return undefined;
     }
 
     get panelHint(){

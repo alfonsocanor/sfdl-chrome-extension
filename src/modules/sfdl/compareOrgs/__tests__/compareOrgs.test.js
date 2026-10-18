@@ -123,21 +123,11 @@ const resultsPanel = (element) =>
     element.shadowRoot.querySelector('.sfdl-compare-orgs__results-panel');
 const statuses = (element) =>
     results(element).components.map(({ name, status }) => name + ' ' + status);
-// The side and its status, or its org when it has no status to tell.
+// What the bar of the diff says each org is doing, next to its name.
 const progressText = (element) =>
-    [
-        ...element.shadowRoot.querySelectorAll(
-            '.sfdl-compare-orgs__progress-row'
-        )
-    ].map((row) => {
-        const status = row.querySelector('.sfdl-compare-orgs__progress-status');
-        return [
-            row.dataset.side,
-            status
-                ? status.textContent
-                : row.querySelector('.sfdl-compare-orgs__progress-org')
-                      .textContent
-        ].join(' | ');
+    ['left', 'right'].map((side) => {
+        const status = diffViewer(element)[side + 'Status'];
+        return side + ' | ' + (status ? status.label : '');
     });
 
 async function pick(element, name, value) {
@@ -209,13 +199,13 @@ describe('sfdl-compare-orgs', () => {
             expect(picker(element, 'left-org').value).toBe(ACME.instanceUrl);
         });
 
-        it('tells where each org stands from the start', async () => {
+        it('says nothing about an org that is not busy', async () => {
             const element = await createCompareOrgs();
 
-            expect(progressText(element)).toEqual([
-                'left | Waiting',
-                'right | No org picked yet'
-            ]);
+            expect(progressText(element)).toEqual(['left | ', 'right | ']);
+            expect(
+                element.shadowRoot.querySelector('.sfdl-compare-orgs__progress')
+            ).toBeNull();
         });
 
         it('starts the left side on the org of the header', async () => {
@@ -615,26 +605,32 @@ describe('sfdl-compare-orgs', () => {
             ]);
         });
 
-        it('tells where each org stands over the diff, not in the list of components', async () => {
-            compareComponents.mockImplementation(() => new Promise(() => {}));
+        it('tells what each org is doing next to its name in the bar of the diff', async () => {
+            compareComponents.mockImplementation(
+                (left, right, type, apiVersion, components, options) => {
+                    options.onStatus('right', 'InProgress');
+                    return new Promise(() => {});
+                }
+            );
             const element = await listType();
 
             await openComponent(element, 'Utils');
 
-            const progress = element.shadowRoot.querySelector(
-                '.sfdl-compare-orgs__progress'
-            );
-            expect(progress.parentElement.classList).toContain(
-                'sfdl-compare-orgs__diff'
-            );
+            expect(diffViewer(element).rightStatus).toEqual({
+                label: 'Retrieving',
+                title: 'Retrieving'
+            });
             expect(
-                resultsPanel(element).querySelector(
-                    '.sfdl-compare-orgs__progress'
-                )
+                resultsPanel(element).querySelector('.sfdl-diff-side-status')
             ).toBeNull();
-            expect(
-                [...progress.children].map((row) => row.dataset.side)
-            ).toEqual(['left', 'right']);
+        });
+
+        it('says nothing more once both orgs are done', async () => {
+            const element = await listType();
+
+            await openComponent(element, 'Utils');
+
+            expect(progressText(element)).toEqual(['left | ', 'right | ']);
         });
 
         it('shows the org that failed and leaves the components as they were', async () => {
@@ -650,6 +646,7 @@ describe('sfdl-compare-orgs', () => {
             expect(progressText(element)[1]).toBe(
                 'right | INVALID_SESSION_ID: Invalid Session ID'
             );
+            expect(diffViewer(element).rightStatus.tone).toBe('error');
             expect(statuses(element)[3]).toBe('Utils notCompared');
         });
 
@@ -668,16 +665,12 @@ describe('sfdl-compare-orgs', () => {
             const element = await listType();
 
             await openComponent(element, 'Utils');
-            const leftStatus = element.shadowRoot.querySelector(
-                '.sfdl-compare-orgs__progress-status'
-            );
 
-            expect(leftStatus.textContent).toBe(
-                '1 component could not be retrieved'
-            );
-            expect(leftStatus.title).toBe(
-                'Entity of type ApexClass named Utils cannot be found'
-            );
+            expect(diffViewer(element).leftStatus).toEqual({
+                label: '1 component could not be retrieved',
+                title: 'Entity of type ApexClass named Utils cannot be found',
+                tone: 'warning'
+            });
         });
 
         it('drops a comparison of a listing that was replaced', async () => {
