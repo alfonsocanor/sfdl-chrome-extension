@@ -76,21 +76,14 @@ export default class CompareResults extends LightningElement{
     get components(){
         return this._components;
     }
+    //The filter, the search and the page stay as they are when the components
+    //change: a component compared, or an org changed on one side. Another type
+    //builds the list anew.
     set components(components){
         this._components = components || [];
-
-        //A new listing starts over, a component compared in the same listing
-        //keeps the filter where it was.
-        const namesKey = this._components.map(component => component.name).join('\n');
-        if(namesKey !== this.namesKey){
-            this.namesKey = namesKey;
-            this.statusFilter = ALL;
-            this.rowLimit = ROWS_PER_PAGE;
-        }
     }
 
     _components = [];
-    namesKey;
     statusFilter = ALL;
     searchText = '';
     rowLimit = ROWS_PER_PAGE;

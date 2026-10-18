@@ -125,6 +125,13 @@ export default class CompareOrgs extends LightningElement{
     //Comparisons run one after the other, so the orgs never package two
     //retrieves of ours at once.
     comparisonQueue = Promise.resolve();
+    //What each org listed of the type on screen, so a new org on one side
+    //only lists that side again.
+    listings = { [LEFT]: null, [RIGHT]: null };
+    listedTypeKey;
+    listingMessage;
+    //The api version two orgs share, asked once per pair of orgs.
+    commonApiVersions = new Map();
 
     swapIcon = SWAP_ICON;
     typeOptions = metadataTypeOptions();
@@ -303,12 +310,12 @@ export default class CompareOrgs extends LightningElement{
             return 'Pick the metadata to compare.';
         }
 
-        if(this.isListing){
-            return 'Listing the ' + this.selectedType.label + ' of both orgs...';
+        if(this.isSelectedComparing){
+            return 'Comparing ' + this.selectedName + '...';
         }
 
-        if(this.isSelectedComparing){
-            return 'Retrieving ' + this.selectedName + ' from both orgs...';
+        if(this.isListing){
+            return this.listingMessage;
         }
 
         return 'Open a component to compare it.';
@@ -321,7 +328,7 @@ export default class CompareOrgs extends LightningElement{
 
         if(org && org.label !== otherOrgUrl){
             this[side + 'OrgSession'] = { instanceUrl: org.label, authToken: org.value };
-            this.runListing();
+            this.runListing({ changedSide: side });
         }
     }
 
@@ -330,11 +337,37 @@ export default class CompareOrgs extends LightningElement{
         this.runListing();
     }
 
-    //What was retrieved stays cached, swapping only lists and compares the
-    //other way round.
     handleSwap(){
         [this.leftOrgSession, this.rightOrgSession] = [this.rightOrgSession, this.leftOrgSession];
-        this.runListing();
+
+        //With everything listed and nothing on its way, the two sides only
+        //trade places and no org is asked anything.
+        if(this.hasListed && !this.isListing && !this.activeComparisons){
+            this.swapResults();
+        } else {
+            this.runListing();
+        }
+    }
+
+    swapResults(){
+        const swapStatus = status => (status === LEFT_ONLY ? RIGHT_ONLY : status === RIGHT_ONLY ? LEFT_ONLY : status);
+        const swapPresence = presence => (presence === LEFT ? RIGHT : presence === RIGHT ? LEFT : presence);
+
+        this.components = this.components.map(component => ({
+            ...component,
+            presence: swapPresence(component.presence),
+            status: swapStatus(component.status),
+            leftModified: component.rightModified,
+            rightModified: component.leftModified,
+            files: component.files && component.files.map(file => ({
+                ...file,
+                left: file.right,
+                right: file.left,
+                status: swapStatus(file.status)
+            }))
+        }));
+        this.listings = { [LEFT]: this.listings[RIGHT], [RIGHT]: this.listings[LEFT] };
+        [this.leftState, this.rightState] = [this.rightState, this.leftState];
     }
 
     handleComponentOpen(event){
@@ -383,32 +416,70 @@ export default class CompareOrgs extends LightningElement{
         );
     }
 
-    async runListing(){
-        const sequence = ++this.listSequence;
+    commonApiVersion(leftSession, rightSession){
+        const key = [leftSession.instanceUrl, rightSession.instanceUrl].sort().join('|');
 
-        this.resetResults();
+        if(!this.commonApiVersions.has(key)){
+            this.commonApiVersions.set(key, getCommonApiVersion(leftSession, rightSession).catch(error => {
+                this.commonApiVersions.delete(key);
+                throw error;
+            }));
+        }
+
+        return this.commonApiVersions.get(key);
+    }
+
+    //Lists both orgs, or only the org of changedSide when the other one is
+    //listed already: the list stays on screen meanwhile, and what was compared
+    //before is compared again against the new org, in one go.
+    async runListing({ changedSide } = {}){
+        const sequence = ++this.listSequence;
+        const type = this.selectedType;
+        const otherSide = changedSide === LEFT ? RIGHT : LEFT;
+        const keepsOtherSide = !!changedSide && this.hasListed && !!this.listings[otherSide] && this.listedTypeKey === this.typeKey;
+        const comparedBefore = keepsOtherSide ? this.components.filter(component => component.files).map(component => component.name) : [];
+        const selectedName = keepsOtherSide ? this.selectedName : undefined;
+
+        if(keepsOtherSide){
+            //What was compared against the org that left cannot stay on screen.
+            this.errorMessage = undefined;
+            this[changedSide + 'State'] = emptySideState();
+            this.updateComponents(new Map(
+                [...comparedBefore, selectedName].filter(name => name).map(name => [name, { status: COMPARING, files: undefined }])
+            ));
+        } else {
+            this.resetResults();
+            this.listings = { [LEFT]: null, [RIGHT]: null };
+        }
 
         if(!this.canCompare){
             this.isListing = false;
             return;
         }
 
-        const type = this.selectedType;
         const sessions = { [LEFT]: this.leftOrgSession, [RIGHT]: this.rightOrgSession };
+        let sidesToList = keepsOtherSide ? [changedSide] : [LEFT, RIGHT];
 
         this.isListing = true;
-        [LEFT, RIGHT].forEach(side => this.updateSideState(side, { status: 'Listing the components' }));
+        this.listingMessage = 'Listing the ' + type.label + ' of ' + (keepsOtherSide ? this[changedSide + 'OrgName'] : 'both orgs') + '...';
+        sidesToList.forEach(side => this.updateSideState(side, { status: 'Listing the components', error: undefined }));
 
         try{
-            const apiVersion = await getCommonApiVersion(sessions[LEFT], sessions[RIGHT]);
+            const apiVersion = await this.commonApiVersion(sessions[LEFT], sessions[RIGHT]);
 
             if(sequence !== this.listSequence){
                 return;
             }
 
+            //Another api version lists both orgs in its own terms.
+            if(apiVersion !== this.apiVersion && sidesToList.length === 1){
+                sidesToList = [LEFT, RIGHT];
+                this.updateSideState(otherSide, { status: 'Listing the components' });
+            }
+
             this.apiVersion = apiVersion;
 
-            const [leftResult, rightResult] = await Promise.allSettled([LEFT, RIGHT].map(side =>
+            const results = await Promise.allSettled(sidesToList.map(side =>
                 listOrgComponents(sessions[side], type, apiVersion)
             ));
 
@@ -417,15 +488,31 @@ export default class CompareOrgs extends LightningElement{
                 return;
             }
 
-            [[LEFT, leftResult], [RIGHT, rightResult]].forEach(([side, result]) => {
-                this.updateSideState(side, result.status === 'fulfilled' ?
-                    { status: 'Listed' } :
-                    { error: result.reason.message });
+            let hasFailed = false;
+
+            sidesToList.forEach((side, index) => {
+                const result = results[index];
+
+                if(result.status === 'fulfilled'){
+                    this.listings[side] = result.value;
+                    this.updateSideState(side, { status: 'Listed' });
+                } else {
+                    this.listings[side] = null;
+                    hasFailed = true;
+                    this.updateSideState(side, { error: result.reason.message });
+                }
             });
 
-            if(leftResult.status === 'fulfilled' && rightResult.status === 'fulfilled'){
-                this.components = mergeListings(leftResult.value, rightResult.value);
+            if(hasFailed){
+                this.components = [];
+                this.hasListed = false;
+                this.selectedName = undefined;
+                this.selectedPath = undefined;
+            } else {
+                this.components = mergeListings(this.listings[LEFT], this.listings[RIGHT]);
+                this.listedTypeKey = type.key;
                 this.hasListed = true;
+                this.compareAgain(comparedBefore, selectedName);
             }
         } catch(error){
             if(sequence !== this.listSequence){
@@ -435,6 +522,23 @@ export default class CompareOrgs extends LightningElement{
         }
 
         this.isListing = false;
+    }
+
+    //The components compared against the org that left, compared against the
+    //new one in a single comparison. The other org has them cached already,
+    //only the new org retrieves anything.
+    compareAgain(comparedBefore, selectedName){
+        const listedNames = new Set(this.components.map(component => component.name));
+        const names = [...new Set([...comparedBefore, selectedName])].filter(name => name && listedNames.has(name));
+
+        if(!listedNames.has(selectedName)){
+            this.selectedName = undefined;
+            this.selectedPath = undefined;
+        }
+
+        if(names.length){
+            this.compare(names, { open: this.selectedName });
+        }
     }
 
     compare(names, { open } = {}){
@@ -489,8 +593,13 @@ export default class CompareOrgs extends LightningElement{
                 this.updateComponents(previousStatuses);
             }
 
+            //The file on screen stays on screen when the component still has
+            //it, otherwise the component opens on its first difference.
             if(open && this.selectedName === open){
-                this.selectedPath = firstFilePath(this.selectedComponent);
+                const files = this.selectedComponent.files || [];
+                if(!files.some(file => file.path === this.selectedPath)){
+                    this.selectedPath = firstFilePath(this.selectedComponent);
+                }
             }
         };
 

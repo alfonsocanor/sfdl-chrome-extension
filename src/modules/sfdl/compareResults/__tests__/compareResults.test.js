@@ -360,33 +360,28 @@ describe('sfdl-compare-results', () => {
         });
     });
 
-    describe('a new listing', () => {
-        it('starts over on every component', async () => {
+    describe('new components', () => {
+        it('keep the filter and the search where they were', async () => {
             const element = createResults();
             click(filterButton(element, 'left'));
-            await flushPromises();
-
-            element.components = [component('Other', 'notCompared')];
-            await flushPromises();
-
-            expect(
-                filterButton(element, 'all').getAttribute('aria-pressed')
-            ).toBe('true');
-        });
-
-        it('keeps the filter when a component of the same listing is compared', async () => {
-            const element = createResults();
-            click(filterButton(element, 'left'));
-            await flushPromises();
-
-            element.components = COMPONENTS.map((item) =>
-                item.name === 'InvoiceBatch' ? { ...item, files: [] } : item
+            type(
+                element.shadowRoot.querySelector(
+                    '.sfdl-compare-results__filter'
+                ),
+                'invoice'
             );
+            await flushPromises();
+
+            element.components = [
+                ...COMPONENTS,
+                component('InvoiceRetry', 'left')
+            ];
             await flushPromises();
 
             expect(
                 filterButton(element, 'left').getAttribute('aria-pressed')
             ).toBe('true');
+            expect(names(element)).toEqual(['InvoiceBatch', 'InvoiceRetry']);
         });
     });
 

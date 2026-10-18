@@ -351,7 +351,7 @@ describe('sfdl-compare-orgs', () => {
             ).toBe('The orgs do not share any api version');
         });
 
-        it('lists again when the type or an org changes', async () => {
+        it('lists both orgs again for another type, only the new org for another org', async () => {
             const element = await listType();
 
             await pick(element, 'type', 'ApexTrigger');
@@ -366,8 +366,7 @@ describe('sfdl-compare-orgs', () => {
                 GLOBEX.instanceUrl + ' ApexClass',
                 ACME.instanceUrl + ' ApexTrigger',
                 GLOBEX.instanceUrl + ' ApexTrigger',
-                INITECH.instanceUrl + ' ApexTrigger',
-                GLOBEX.instanceUrl + ' ApexTrigger'
+                INITECH.instanceUrl + ' ApexTrigger'
             ]);
         });
 
@@ -398,20 +397,6 @@ describe('sfdl-compare-orgs', () => {
                     '.sfdl-compare-orgs__managed-checkbox'
                 )
             ).toBeNull();
-        });
-
-        it('swaps the orgs of both sides', async () => {
-            const element = await listType();
-
-            picker(element, 'swap').click();
-            await wait();
-            await wait();
-
-            expect(picker(element, 'left-org').value).toBe(GLOBEX.instanceUrl);
-            expect(picker(element, 'right-org').value).toBe(ACME.instanceUrl);
-            expect(listOrgComponents.mock.calls[2][0].instanceUrl).toBe(
-                GLOBEX.instanceUrl
-            );
         });
 
         it('drops a listing that a newer one overtook', async () => {
@@ -513,9 +498,7 @@ describe('sfdl-compare-orgs', () => {
 
             expect(statuses(element)[3]).toBe('Utils comparing');
             expect(diffViewer(element).loading).toBe(true);
-            expect(diffViewer(element).emptyMessage).toBe(
-                'Retrieving Utils from both orgs...'
-            );
+            expect(diffViewer(element).emptyMessage).toBe('Comparing Utils...');
         });
 
         it('opens a component compared before without retrieving it again', async () => {
@@ -763,6 +746,171 @@ describe('sfdl-compare-orgs', () => {
 
             expect(diffViewer(element).leftContent).toBeUndefined();
             expect(diffViewer(element).rightContent).toBeUndefined();
+        });
+    });
+
+    describe('changing one org', () => {
+        const LISTINGS = {
+            [ACME.instanceUrl]: ['AccountService', 'InvoiceBatch', 'Utils'],
+            [GLOBEX.instanceUrl]: ['AccountService', 'LegacyHelper', 'Utils'],
+            [INITECH.instanceUrl]: ['AccountService', 'Utils', 'Payroll']
+        };
+        const FILES = {
+            [ACME.instanceUrl]: {
+                'classes/AccountService.cls': 'acme service',
+                'classes/AccountService.cls-meta.xml': '<ApexClass/>',
+                'classes/Utils.cls': 'same'
+            },
+            [GLOBEX.instanceUrl]: {
+                'classes/AccountService.cls': 'globex service',
+                'classes/AccountService.cls-meta.xml': '<ApexClass/>',
+                'classes/Utils.cls': 'same'
+            },
+            [INITECH.instanceUrl]: {
+                'classes/AccountService.cls': 'acme service',
+                'classes/AccountService.cls-meta.xml':
+                    '<ApexClass version="2"/>',
+                'classes/Utils.cls': 'initech utils'
+            }
+        };
+
+        beforeEach(() => {
+            mockListings(LISTINGS);
+            mockContents(FILES);
+        });
+
+        async function compareTwo() {
+            const element = await listType();
+            await openComponent(element, 'Utils');
+            await openComponent(element, 'AccountService');
+            listOrgComponents.mockClear();
+            compareComponents.mockClear();
+            return element;
+        }
+
+        it('lists only the new org and keeps what the other one listed', async () => {
+            const element = await compareTwo();
+
+            await pick(element, 'right-org', INITECH.instanceUrl);
+
+            expect(
+                listOrgComponents.mock.calls.map(
+                    ([session]) => session.instanceUrl
+                )
+            ).toEqual([INITECH.instanceUrl]);
+            expect(statuses(element)).toEqual([
+                'AccountService different',
+                'InvoiceBatch left',
+                'Payroll right',
+                'Utils different'
+            ]);
+        });
+
+        it('compares again what was compared, in one comparison against the new org', async () => {
+            const element = await compareTwo();
+
+            await pick(element, 'right-org', INITECH.instanceUrl);
+
+            expect(compareComponents).toHaveBeenCalledTimes(1);
+            expect(compareComponents.mock.calls[0][1]).toEqual(INITECH);
+            expect(
+                compareComponents.mock.calls[0][4]
+                    .map(({ name }) => name)
+                    .sort()
+            ).toEqual(['AccountService', 'Utils']);
+        });
+
+        it('keeps the component and the file on screen', async () => {
+            const element = await compareTwo();
+            results(element).dispatchEvent(
+                new CustomEvent('fileopen', {
+                    detail: {
+                        name: 'AccountService',
+                        path: 'classes/AccountService.cls-meta.xml'
+                    }
+                })
+            );
+            await wait();
+
+            await pick(element, 'right-org', INITECH.instanceUrl);
+
+            expect(results(element).selectedName).toBe('AccountService');
+            expect(results(element).selectedPath).toBe(
+                'classes/AccountService.cls-meta.xml'
+            );
+            expect(diffViewer(element).rightContent).toBe(
+                '<ApexClass version="2"/>'
+            );
+        });
+
+        it('drops what was compared against the org that left while the new one is listed', async () => {
+            const element = await compareTwo();
+            listOrgComponents.mockImplementation(() => new Promise(() => {}));
+
+            await pick(element, 'right-org', INITECH.instanceUrl);
+
+            expect(statuses(element)).toEqual([
+                'AccountService comparing',
+                'InvoiceBatch left',
+                'LegacyHelper right',
+                'Utils comparing'
+            ]);
+            expect(diffViewer(element).leftContent).toBeUndefined();
+            expect(diffViewer(element).loading).toBe(true);
+            expect(diffViewer(element).emptyMessage).toBe(
+                'Comparing AccountService...'
+            );
+            expect(progressText(element)).toEqual([
+                'left | Listed',
+                'right | Listing the components'
+            ]);
+        });
+
+        it('asks the api version of a pair of orgs once', async () => {
+            const element = await compareTwo();
+
+            await pick(element, 'right-org', INITECH.instanceUrl);
+            await pick(element, 'right-org', GLOBEX.instanceUrl);
+            await pick(element, 'right-org', INITECH.instanceUrl);
+
+            // acme and globex, then acme and initech: two pairs.
+            expect(getCommonApiVersion).toHaveBeenCalledTimes(2);
+        });
+
+        it('lists both orgs again when the new pair shares another api version', async () => {
+            const element = await compareTwo();
+            getCommonApiVersion.mockResolvedValue('59.0');
+
+            await pick(element, 'right-org', INITECH.instanceUrl);
+
+            expect(
+                listOrgComponents.mock.calls.map(([session, , apiVersion]) =>
+                    [session.instanceUrl, apiVersion].join(' ')
+                )
+            ).toEqual([
+                ACME.instanceUrl + ' 59.0',
+                INITECH.instanceUrl + ' 59.0'
+            ]);
+        });
+
+        it('swaps the two sides without asking the orgs anything', async () => {
+            const element = await compareTwo();
+
+            picker(element, 'swap').click();
+            await wait();
+
+            expect(picker(element, 'left-org').value).toBe(GLOBEX.instanceUrl);
+            expect(picker(element, 'right-org').value).toBe(ACME.instanceUrl);
+            expect(listOrgComponents).not.toHaveBeenCalled();
+            expect(compareComponents).not.toHaveBeenCalled();
+            expect(statuses(element)).toEqual([
+                'AccountService different',
+                'InvoiceBatch right',
+                'LegacyHelper left',
+                'Utils identical'
+            ]);
+            expect(diffViewer(element).leftContent).toBe('globex service');
+            expect(diffViewer(element).rightContent).toBe('acme service');
         });
     });
 });
