@@ -126,10 +126,36 @@ describe('sfdl-diff-viewer', () => {
             );
         });
 
-        it('says it is comparing while the first comparison loads', async () => {
+        it('only says it is comparing while the first comparison loads', async () => {
             const element = await createDiffViewer({ loading: true });
 
             expect(count(element).textContent).toBe('Comparing...');
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-inline')
+            ).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-whitespace')
+            ).toBeNull();
+        });
+
+        it('says it is comparing over a diff on screen while loading again', async () => {
+            const element = await createDiffViewer({
+                leftContent: 'same',
+                rightContent: 'same'
+            });
+            diffEditor().mockDiffComputed([]);
+            await flushPromises();
+
+            element.loading = true;
+            await flushPromises();
+
+            expect(count(element).textContent).toBe('Comparing...');
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-count_identical')
+            ).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-inline')
+            ).toBeNull();
         });
 
         it('forgets the differences of a comparison that went away', async () => {
@@ -544,12 +570,16 @@ describe('sfdl-diff-viewer', () => {
         });
 
         it('waits over the whole pane inline', async () => {
-            const element = await loadSide('left');
-
+            const element = await createDiffViewer({
+                leftContent: 'kept',
+                rightContent: 'kept'
+            });
             const inline =
                 element.shadowRoot.querySelector('.sfdl-diff-inline');
             inline.checked = true;
             inline.dispatchEvent(new CustomEvent('change'));
+
+            element.loadingSide = 'left';
             await flushPromises();
 
             expect(sideLoading(element).style.left).toBe('0px');
@@ -573,7 +603,7 @@ describe('sfdl-diff-viewer', () => {
             ).toBeNull();
         });
 
-        it('keeps the arrows of the differences on screen, disabled', async () => {
+        it('only says it is comparing, without its actions', async () => {
             const element = await loadSide('right');
 
             diffEditor().mockDiffComputed([
@@ -587,11 +617,39 @@ describe('sfdl-diff-viewer', () => {
             await flushPromises();
 
             expect(
-                element.shadowRoot.querySelector('.sfdl-diff-next').disabled
-            ).toBe(true);
+                element.shadowRoot.querySelector('.sfdl-diff-count').textContent
+            ).toBe('Comparing...');
+            [
+                '.sfdl-diff-previous',
+                '.sfdl-diff-next',
+                '.sfdl-diff-inline',
+                '.sfdl-diff-whitespace'
+            ].forEach((selector) =>
+                expect(element.shadowRoot.querySelector(selector)).toBeNull()
+            );
+        });
+
+        it('brings its actions back once the side is in', async () => {
+            const element = await loadSide('right');
+            diffEditor().mockDiffComputed([
+                {
+                    originalStartLineNumber: 1,
+                    originalEndLineNumber: 1,
+                    modifiedStartLineNumber: 1,
+                    modifiedEndLineNumber: 1
+                }
+            ]);
+            await flushPromises();
+
+            element.loadingSide = undefined;
+            await flushPromises();
+
             expect(
-                element.shadowRoot.querySelector('.sfdl-diff-previous').disabled
-            ).toBe(true);
+                element.shadowRoot.querySelector('.sfdl-diff-next').disabled
+            ).toBe(false);
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-inline')
+            ).not.toBeNull();
         });
     });
 });

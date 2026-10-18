@@ -202,32 +202,42 @@ export default class DiffViewer extends LightningElement{
         return this.hasContent || this.loading;
     }
 
+    //The comparison, or one side of it, is on its way. The bar only says it
+    //is comparing meanwhile, there is nothing yet to walk or show otherwise.
+    get isProcessing(){
+        return !!this.loading || this.isSideLoading;
+    }
+
     //The arrows only come with differences to step through.
     get hasDifferences(){
         return this.changeCount > 0;
     }
 
+    get showArrows(){
+        return this.hasDifferences && !this.isProcessing;
+    }
+
     get hasNoDifferences(){
-        return this.hasContent && !this.isSideLoading && !this.isComputing && this.lineChanges !== null && this.changeCount === 0;
+        return this.hasContent && !this.isProcessing && !this.isComputing && this.lineChanges !== null && this.changeCount === 0;
+    }
+
+    get showInlineOption(){
+        return !this.isProcessing && !this.hasNoDifferences;
     }
 
     //Identical sides have nothing to show otherwise, unless ignoring the
-    //whitespace is what made them so: it has to stay to be unticked.
+    //whitespace is what made them so: it has to stay to be unticked. It stays
+    //too while the diff is counted again after it is ticked.
     get showWhitespaceOption(){
-        return !this.hasNoDifferences || this.ignoreWhitespace;
+        return !this.isProcessing && (!this.hasNoDifferences || this.ignoreWhitespace);
     }
 
     get isNavigationDisabled(){
-        return this.isSideLoading || this.isComputing;
+        return this.isComputing;
     }
 
     get changesLabel(){
-        //Without content the controls only show while the first comparison loads.
-        if(!this.hasContent){
-            return 'Comparing...';
-        }
-
-        if(this.isSideLoading || this.isComputing || this.lineChanges === null){
+        if(!this.hasContent || this.isProcessing || this.isComputing || this.lineChanges === null){
             return 'Comparing...';
         }
 
