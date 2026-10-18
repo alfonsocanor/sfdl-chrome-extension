@@ -41,10 +41,12 @@ export const css = `
         cursor: pointer;
     }
 
-    .sfdl-compare-results .sfdl-status-filter_active {
-        border-color: #747474;
-        font-weight: 700;
-        box-shadow: inset 0 -2px 0 #747474;
+    /* The filter on screen reads like a brand button, whatever the tint of
+       its status. */
+    .sfdl-compare-results .sfdl-status-filter.sfdl-status-filter_active {
+        background: #0176d3;
+        border-color: #0176d3;
+        color: #ffffff;
     }
 
     .sfdl-compare-results__search-icon {
