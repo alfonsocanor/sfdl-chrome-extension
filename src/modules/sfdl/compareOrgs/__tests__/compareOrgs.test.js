@@ -29,8 +29,13 @@ const ACME = {
 };
 const ORGS = [
     { label: 'https://acme.my.salesforce.com', value: 'sid-acme' },
-    { label: 'https://globex.my.salesforce.com', value: 'sid-globex' }
+    { label: 'https://globex.my.salesforce.com', value: 'sid-globex' },
+    { label: 'https://initech.my.salesforce.com', value: 'sid-initech' }
 ];
+const INITECH = {
+    instanceUrl: 'https://initech.my.salesforce.com',
+    authToken: 'sid-initech'
+};
 const GLOBEX = {
     instanceUrl: 'https://globex.my.salesforce.com',
     authToken: 'sid-globex'
@@ -165,12 +170,17 @@ describe('sfdl-compare-orgs', () => {
     });
 
     describe('toolbar', () => {
-        it('offers every org session on both sides and every type', async () => {
+        it('offers each side the orgs the other side has not taken, and every type', async () => {
             const element = await createCompareOrgs();
+            await pick(element, 'right-org', GLOBEX.instanceUrl);
 
             expect(picker(element, 'left-org').options).toEqual([
                 { label: 'acme.my.salesforce.com', value: ORGS[0].label },
-                { label: 'globex.my.salesforce.com', value: ORGS[1].label }
+                { label: 'initech.my.salesforce.com', value: ORGS[2].label }
+            ]);
+            expect(picker(element, 'right-org').options).toEqual([
+                { label: 'globex.my.salesforce.com', value: ORGS[1].label },
+                { label: 'initech.my.salesforce.com', value: ORGS[2].label }
             ]);
             expect(picker(element, 'right-org').side).toBe('right');
             expect(picker(element, 'type').options).toEqual(
@@ -187,6 +197,15 @@ describe('sfdl-compare-orgs', () => {
                     }
                 ])
             );
+        });
+
+        it('ignores an org the other side has taken', async () => {
+            const element = await createCompareOrgs();
+            await pick(element, 'right-org', GLOBEX.instanceUrl);
+
+            await pick(element, 'left-org', GLOBEX.instanceUrl);
+
+            expect(picker(element, 'left-org').value).toBe(ACME.instanceUrl);
         });
 
         it('starts the left side on the org of the header', async () => {
@@ -369,7 +388,7 @@ describe('sfdl-compare-orgs', () => {
             const element = await listType();
 
             await pick(element, 'type', 'ApexTrigger');
-            await pick(element, 'left-org', GLOBEX.instanceUrl);
+            await pick(element, 'left-org', INITECH.instanceUrl);
             const managed = element.shadowRoot.querySelector(
                 '.sfdl-compare-orgs__managed-checkbox'
             );
@@ -391,9 +410,9 @@ describe('sfdl-compare-orgs', () => {
                 GLOBEX.instanceUrl + ' ApexClass false',
                 ACME.instanceUrl + ' ApexTrigger false',
                 GLOBEX.instanceUrl + ' ApexTrigger false',
+                INITECH.instanceUrl + ' ApexTrigger false',
                 GLOBEX.instanceUrl + ' ApexTrigger false',
-                GLOBEX.instanceUrl + ' ApexTrigger false',
-                GLOBEX.instanceUrl + ' ApexTrigger true',
+                INITECH.instanceUrl + ' ApexTrigger true',
                 GLOBEX.instanceUrl + ' ApexTrigger true'
             ]);
         });

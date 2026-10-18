@@ -17,8 +17,8 @@
                         side="left"
                         label="Org"
                         placeholder="Pick the left org"
-                        empty-message="No org session, log in to Salesforce first"
-                        options={orgOptions}
+                        empty-message="No other org session, log in to another org first"
+                        options={leftOrgOptions}
                         value={leftOrgUrl}
                         data-side="left"
                         onchange={handleOrgChange}>
@@ -73,8 +73,8 @@
                         side="right"
                         label="Org"
                         placeholder="Pick the right org"
-                        empty-message="No org session, log in to Salesforce first"
-                        options={orgOptions}
+                        empty-message="No other org session, log in to another org first"
+                        options={rightOrgOptions}
                         value={rightOrgUrl}
                         data-side="right"
                         onchange={handleOrgChange}>

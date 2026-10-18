@@ -13,9 +13,14 @@ const GLOBEX = {
     instanceUrl: 'https://globex.my.salesforce.com',
     authToken: 'sid-globex'
 };
+const INITECH = {
+    instanceUrl: 'https://initech.my.salesforce.com',
+    authToken: 'sid-initech'
+};
 const ORGS = [
     { label: 'https://acme.my.salesforce.com', value: 'sid-acme' },
-    { label: 'https://globex.my.salesforce.com', value: 'sid-globex' }
+    { label: 'https://globex.my.salesforce.com', value: 'sid-globex' },
+    { label: 'https://initech.my.salesforce.com', value: 'sid-initech' }
 ];
 const ACME_SESSION = {
     instanceUrl: ACME.instanceUrl,
@@ -188,6 +193,41 @@ describe('sfdl-compare-logs', () => {
             );
         });
 
+        it('offers each side the orgs the other side has not taken', async () => {
+            const element = await ready();
+            const values = (side) =>
+                orgPicker(element, side).options.map(({ value }) => value);
+
+            expect(values('left')).toEqual([
+                ACME.instanceUrl,
+                INITECH.instanceUrl
+            ]);
+            expect(values('right')).toEqual([
+                GLOBEX.instanceUrl,
+                INITECH.instanceUrl
+            ]);
+        });
+
+        it('ignores an org the other side has taken', async () => {
+            const element = await ready();
+
+            await pickOrg(element, 'left', GLOBEX.instanceUrl);
+
+            expect(orgPicker(element, 'left').value).toBe(ACME.instanceUrl);
+        });
+
+        it('leaves the left side empty when the right side has the org of the header', async () => {
+            const element = await createCompareLogs({
+                sessionInformation: undefined
+            });
+            await pickOrg(element, 'right', ACME.instanceUrl);
+
+            element.sessionInformation = ACME;
+            await wait();
+
+            expect(orgPicker(element, 'left').value).toBeUndefined();
+        });
+
         it('keeps its orgs when the header org changes', async () => {
             const element = await ready();
 
@@ -258,7 +298,7 @@ describe('sfdl-compare-logs', () => {
             const element = await ready();
             await selectLog(element, 'left', newLog());
 
-            await pickOrg(element, 'left', GLOBEX.instanceUrl);
+            await pickOrg(element, 'left', INITECH.instanceUrl);
 
             expect(sideList(element, 'left').leftLogId).toBeUndefined();
         });

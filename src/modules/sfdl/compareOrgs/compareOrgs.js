@@ -101,8 +101,9 @@ export default class CompareOrgs extends LightningElement{
         this._sessionInformation = sessionInformation;
 
         //The left side starts on the org of the header and goes its own way
-        //as soon as it has one.
-        if(!this.leftOrgSession && sessionInformation && sessionInformation.instanceUrl){
+        //as soon as it has one, unless the right side has that org already.
+        if(!this.leftOrgSession && sessionInformation && sessionInformation.instanceUrl &&
+            sessionInformation.instanceUrl !== this.rightOrgUrl){
             this.leftOrgSession = { instanceUrl: sessionInformation.instanceUrl, authToken: sessionInformation.authToken };
             this.runListing();
         }
@@ -142,8 +143,20 @@ export default class CompareOrgs extends LightningElement{
         return this.height ? 'height:' + this.height + 'px;' : 'height:100%;';
     }
 
-    get orgOptions(){
-        return (this.orgs || []).map(org => ({ label: domainOf(org.label), value: org.label }));
+    //Each side offers the orgs the other side has not taken, an org is never
+    //compared against itself.
+    orgOptionsBesides(takenOrgUrl){
+        return (this.orgs || [])
+            .filter(org => org.label !== takenOrgUrl)
+            .map(org => ({ label: domainOf(org.label), value: org.label }));
+    }
+
+    get leftOrgOptions(){
+        return this.orgOptionsBesides(this.rightOrgUrl);
+    }
+
+    get rightOrgOptions(){
+        return this.orgOptionsBesides(this.leftOrgUrl);
     }
 
     get leftOrgUrl(){
@@ -328,9 +341,10 @@ export default class CompareOrgs extends LightningElement{
 
     handleOrgChange(event){
         const side = event.currentTarget.dataset.side;
+        const otherOrgUrl = side === LEFT ? this.rightOrgUrl : this.leftOrgUrl;
         const org = (this.orgs || []).find(candidate => candidate.label === event.detail.value);
 
-        if(org){
+        if(org && org.label !== otherOrgUrl){
             this[side + 'OrgSession'] = { instanceUrl: org.label, authToken: org.value };
             this.runListing();
         }

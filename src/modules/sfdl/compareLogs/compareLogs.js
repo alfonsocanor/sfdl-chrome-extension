@@ -70,9 +70,10 @@ export default class CompareLogs extends LightningElement{
         this._sessionInformation = sessionInformation;
 
         //The left side starts on the org of the header, and goes its own way
-        //as soon as it has one.
-        if(!this.leftOrgSession){
-            this.leftOrgSession = this.headerOrgSession();
+        //as soon as it has one, unless the right side has that org already.
+        const headerOrgSession = this.headerOrgSession();
+        if(!this.leftOrgSession && headerOrgSession && headerOrgSession.instanceUrl !== this.rightOrgUrl){
+            this.leftOrgSession = headerOrgSession;
         }
     }
 
@@ -141,8 +142,20 @@ export default class CompareLogs extends LightningElement{
             shortOrgName(side.sessionInformation.instanceUrl) + ' \u00b7 ' + side.log.name;
     }
 
-    get orgOptions(){
-        return (this.orgs || []).map(org => ({ label: org.label.replace('https://', ''), value: org.label }));
+    //Each side offers the orgs the other side has not taken, an org is never
+    //compared against itself.
+    orgOptionsBesides(takenOrgUrl){
+        return (this.orgs || [])
+            .filter(org => org.label !== takenOrgUrl)
+            .map(org => ({ label: org.label.replace('https://', ''), value: org.label }));
+    }
+
+    get leftOrgOptions(){
+        return this.orgOptionsBesides(this.rightOrgUrl);
+    }
+
+    get rightOrgOptions(){
+        return this.orgOptionsBesides(this.leftOrgUrl);
     }
 
     get leftOrgUrl(){
@@ -203,9 +216,10 @@ export default class CompareLogs extends LightningElement{
 
     handleOrgChange(event){
         const side = event.currentTarget.dataset.side;
+        const otherOrgUrl = side === LEFT ? this.rightOrgUrl : this.leftOrgUrl;
         const org = (this.orgs || []).find(candidate => candidate.label === event.detail.value);
 
-        if(!org){
+        if(!org || org.label === otherOrgUrl){
             return;
         }
 
