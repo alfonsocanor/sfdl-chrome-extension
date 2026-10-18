@@ -23,4 +23,19 @@ export const css = `
         transition-duration: 0.6s;
         transition-behavior: allow-discrete;
     }
+
+    .sfdl-debug-logs__toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 8px 12px;
+        background: #ffffff;
+        border-bottom: 1px solid #dddbda;
+    }
+
+    .sfdl-debug-logs__hint {
+        min-width: 0;
+        color: #747474;
+        font-size: 12px;
+    }
 `;

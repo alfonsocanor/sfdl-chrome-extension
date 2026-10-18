@@ -11,59 +11,64 @@
     <div class="slds-tabs_default__content slds-show" style="flex: 1; padding:0;">
       <div class="slds-tabs_scoped slds-tabs_small">
         <ul class="slds-tabs_scoped__nav" style="border-radius: 0; border-top: none; border-right: none;">
-          <li class={analyseLogsTabClass} title="Analyse Logs" style="width:7%;">
-            <a class="slds-tabs_scoped__link" data-tabname="analyseLogs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Analyse Logs</a>
+          <li class={debugLogsTabClass} title="Debug Logs" style="width:7%;">
+            <a class="slds-tabs_scoped__link" data-tabname="debugLogs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Debug Logs</a>
           </li>
-          <li class={compareLogsTabClass} title="Compare Logs" style="width:7%;">
-            <a class="slds-tabs_scoped__link" data-tabname="compareLogs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Compare Logs</a>
-          </li>
-          <li class={compareOrgsTabClass} title="Compare Orgs" style="width:7%;">
-            <a class="slds-tabs_scoped__link" data-tabname="compareOrgs" onclick={handleTabNavigation} style="padding:0;text-align:center;">Compare Orgs</a>
+          <li class={compareMetadataTabClass} title="Compare Metadata" style="width:9%;">
+            <a class="slds-tabs_scoped__link" data-tabname="compareMetadata" onclick={handleTabNavigation} style="padding:0;text-align:center;">Compare Metadata</a>
           </li>
         </ul>
-        <div class={analyseLogsContentClass} style="padding:0; border-right:none;">
-          <div class="sfdl-body-tab" style={sectionStyle}>
-            <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
-              <div class="slds-panel__header" style="padding:15px;">
-                <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
-              </div>
-              <div class="slds-panel__body">
-                <template if:true={renderLogList}>
-                  <sfdl-log-list
-                    is-analise-logs="true"
-                    onlogdetails={handleLogDetails}
-                    onenablepicklistbuttons={handleActivateActionButtons}
-                    session-information={sessionInformation}
-                    onisloading={handleIsLoading}>
-                  </sfdl-log-list>
-                </template>
-              </div>
+        <div class={debugLogsContentClass} style="padding:0; border-right:none;">
+          <div class="sfdl-debug-logs__toolbar">
+            <div class="slds-button-group" role="group">
+              <button class={analyseButtonClass} data-mode="analyse" aria-pressed={isAnalysePressed} onclick={handleLogsModeChange}>Analyse</button>
+              <button class={compareButtonClass} data-mode="compare" aria-pressed={isComparePressed} onclick={handleLogsModeChange}>Compare two orgs</button>
             </div>
-            <div class="slds-col" style="position:relative;">
-              <sfdl-log-details 
-                is-analise-logs="true"
-                show-log-list-section={showLogListSection}
-                onenablepicklistbuttons={handleActivateActionButtons}
-                ondisplayloglistsection={handleDisplayLogListSection}
-                onmanipulationoptions={handleManipulationOptions}>
-              </sfdl-log-details>
+            <span class="sfdl-debug-logs__hint">{logsHint}</span>
+          </div>
+          <div class={analyseViewClass}>
+            <div class="sfdl-body-tab" style={sectionStyle}>
+              <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
+                <div class="slds-panel__header" style="padding:15px;">
+                  <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
+                </div>
+                <div class="slds-panel__body">
+                  <template if:true={renderLogList}>
+                    <sfdl-log-list
+                      is-analise-logs="true"
+                      onlogdetails={handleLogDetails}
+                      onenablepicklistbuttons={handleActivateActionButtons}
+                      session-information={sessionInformation}
+                      onisloading={handleIsLoading}>
+                    </sfdl-log-list>
+                  </template>
+                </div>
+              </div>
+              <div class="slds-col" style="position:relative;">
+                <sfdl-log-details 
+                  is-analise-logs="true"
+                  show-log-list-section={showLogListSection}
+                  onenablepicklistbuttons={handleActivateActionButtons}
+                  ondisplayloglistsection={handleDisplayLogListSection}
+                  onmanipulationoptions={handleManipulationOptions}>
+                </sfdl-log-details>
+              </div>
             </div>
           </div>
+          <!-- Built the first time it is opened, and hidden rather than destroyed
+               from then on so it keeps the comparison left on screen. -->
+          <template if:true={compareTwoOrgsRendered}>
+            <div class={compareTwoOrgsViewClass}>
+              <sfdl-compare-logs
+                orgs={orgs}
+                session-information={sessionInformation}
+                height={logsBodyHeight}>
+              </sfdl-compare-logs>
+            </div>
+          </template>
         </div>
-        <!-- The compare tabs are only built the first time they are opened, and
-             from then on they are hidden rather than destroyed so they keep the
-             comparison the user left on screen. -->
-        <template if:true={compareLogsRendered}>
-          <div class={compareLogsContentClass} style="padding:0; border-right:none;">
-            <sfdl-compare-logs
-              orgs={orgs}
-              session-information={sessionInformation}
-              height={bodyHeight}>
-            </sfdl-compare-logs>
-          </div>
-        </template>
-        <template if:true={compareOrgsRendered}>
-          <div class={compareOrgsContentClass} style="padding:0; border-right:none;">
+        <template if:true={compareMetadataRendered}>
+          <div class={compareMetadataContentClass} style="padding:0; border-right:none;">
             <sfdl-compare-orgs
               orgs={orgs}
               session-information={sessionInformation}

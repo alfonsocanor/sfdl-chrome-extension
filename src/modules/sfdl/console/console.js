@@ -3,11 +3,13 @@ import { getAllCookiesFromSalesforceDomain, isSessionInformationValid } from 'sf
 import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { css } from './consoleCss';
 
-const ANALYSE_LOGS_TAB = 'analyseLogs';
-const COMPARE_LOGS_TAB = 'compareLogs';
-const COMPARE_ORGS_TAB = 'compareOrgs';
+const DEBUG_LOGS_TAB = 'debugLogs';
+const COMPARE_METADATA_TAB = 'compareMetadata';
+const ANALYSE_MODE = 'analyse';
+const COMPARE_MODE = 'compare';
 const TAB_ITEM_CLASS = 'slds-tabs_scoped__item';
 const TAB_CONTENT_CLASS = 'slds-tabs_scoped__content';
+const BUTTON_CLASS = 'slds-button';
 
 export default class Console extends LightningElement {
     firstRender = true;
@@ -16,10 +18,13 @@ export default class Console extends LightningElement {
     
     manipulationOptions;
 
-    activeTab = ANALYSE_LOGS_TAB;
-    compareLogsRendered = false;
-    compareOrgsRendered = false;
+    activeTab = DEBUG_LOGS_TAB;
+    logsMode = ANALYSE_MODE;
+    compareTwoOrgsRendered = false;
+    compareMetadataRendered = false;
     bodyHeight = 0;
+    logsBodyHeight = 0;
+    logsToolbarHeight = 0;
     orgs = [];
 
     sectionStyle = 'background-color:#fafaf9;position:relative;overflow:hidden;display:flex;';
@@ -31,7 +36,7 @@ export default class Console extends LightningElement {
         this.showLogListSection = true;
         this.renderLogList = false;
         this.manipulationOptions = {};
-        this.activeTab = ANALYSE_LOGS_TAB;
+        this.activeTab = DEBUG_LOGS_TAB;
         this.picklistInformation = [];
         this.sessionInformation = {};
     }
@@ -52,14 +57,21 @@ export default class Console extends LightningElement {
         let sfdlConsoleHeader = this.template.querySelector('.sfdl-console-header');
         let sfdlFooterContainer = this.template.querySelector('.sfdl-footer-container');
         let tabs = this.template.querySelector('.slds-tabs_scoped__nav');
+        let logsToolbar = this.template.querySelector('.sfdl-debug-logs__toolbar');
         let sfdlBodyTab = this.template.querySelector('.sfdl-body-tab');
         var windowHeight = window.innerHeight;
-        
+
+        //The toolbar measures nothing while its tab is hidden, the last height
+        //it had stands in for it.
+        if(logsToolbar && logsToolbar.clientHeight){
+            this.logsToolbarHeight = logsToolbar.clientHeight;
+        }
+
         if(sfdlBodyTab) {
-            let sfdlBodyTabHeight = (windowHeight - sfdlConsoleHeader.clientHeight - sfdlFooterContainer.clientHeight - tabs.clientHeight - 4);
-            sfdlBodyTab.style.height = sfdlBodyTabHeight + 'px';
-            this.bodyHeight = sfdlBodyTabHeight;
-            this.template.querySelector('sfdl-log-details').setMonacoEditorHeight(sfdlBodyTabHeight - 50);
+            this.bodyHeight = (windowHeight - sfdlConsoleHeader.clientHeight - sfdlFooterContainer.clientHeight - tabs.clientHeight - 4);
+            this.logsBodyHeight = this.bodyHeight - this.logsToolbarHeight;
+            sfdlBodyTab.style.height = this.logsBodyHeight + 'px';
+            this.template.querySelector('sfdl-log-details').setMonacoEditorHeight(this.logsBodyHeight - 50);
         }
     }
 
@@ -155,28 +167,64 @@ export default class Console extends LightningElement {
         }
     }
 
-    get analyseLogsTabClass(){
-        return this.tabClass(ANALYSE_LOGS_TAB, 'liElementAnalyseLogs');
+    get debugLogsTabClass(){
+        return this.tabClass(DEBUG_LOGS_TAB, 'liElementDebugLogs');
     }
 
-    get compareLogsTabClass(){
-        return this.tabClass(COMPARE_LOGS_TAB, 'liElementCompareLogs');
+    get compareMetadataTabClass(){
+        return this.tabClass(COMPARE_METADATA_TAB, 'liElementCompareMetadata');
     }
 
-    get compareOrgsTabClass(){
-        return this.tabClass(COMPARE_ORGS_TAB, 'liElementCompareOrgs');
+    get debugLogsContentClass(){
+        return this.tabContentClass(DEBUG_LOGS_TAB, 'sfdl-debug-logs');
     }
 
-    get analyseLogsContentClass(){
-        return this.tabContentClass(ANALYSE_LOGS_TAB, 'sfdl-analise-logs');
+    get compareMetadataContentClass(){
+        return this.tabContentClass(COMPARE_METADATA_TAB, 'sfdl-compare-metadata');
     }
 
-    get compareLogsContentClass(){
-        return this.tabContentClass(COMPARE_LOGS_TAB, 'sfdl-compare-logs');
+    get isAnalyseMode(){
+        return this.logsMode === ANALYSE_MODE;
     }
 
-    get compareOrgsContentClass(){
-        return this.tabContentClass(COMPARE_ORGS_TAB, 'sfdl-compare-orgs');
+    get analyseButtonClass(){
+        return BUTTON_CLASS + (this.isAnalyseMode ? ' slds-button_brand' : ' slds-button_neutral');
+    }
+
+    get compareButtonClass(){
+        return BUTTON_CLASS + (this.isAnalyseMode ? ' slds-button_neutral' : ' slds-button_brand');
+    }
+
+    get isAnalysePressed(){
+        return this.isAnalyseMode ? 'true' : 'false';
+    }
+
+    get isComparePressed(){
+        return this.isAnalyseMode ? 'false' : 'true';
+    }
+
+    get analyseViewClass(){
+        return 'sfdl-debug-logs__analyse' + (this.isAnalyseMode ? '' : ' slds-hide');
+    }
+
+    get compareTwoOrgsViewClass(){
+        return 'sfdl-debug-logs__compare' + (this.isAnalyseMode ? ' slds-hide' : '');
+    }
+
+    get logsHint(){
+        return this.isAnalyseMode ?
+            'Pick a log to read it, or tick two logs and compare them side by side.' :
+            'Pick an org on each side, then click a log on each side to compare them. The arrows walk a list.';
+    }
+
+    //Analyse and the comparison of two orgs share the tab and each keeps its
+    //state while the other one is on screen.
+    handleLogsModeChange(event){
+        this.logsMode = event.currentTarget.dataset.mode;
+
+        if(this.logsMode === COMPARE_MODE){
+            this.compareTwoOrgsRendered = true;
+        }
     }
 
     tabClass(tabName, tabHtmlClass){
@@ -190,10 +238,8 @@ export default class Console extends LightningElement {
     handleTabNavigation(event){
         const tabName = event.currentTarget.dataset.tabname;
 
-        if(tabName === COMPARE_LOGS_TAB){
-            this.compareLogsRendered = true;
-        } else if(tabName === COMPARE_ORGS_TAB){
-            this.compareOrgsRendered = true;
+        if(tabName === COMPARE_METADATA_TAB){
+            this.compareMetadataRendered = true;
         }
 
         this.activeTab = tabName;

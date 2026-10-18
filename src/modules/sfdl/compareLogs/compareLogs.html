@@ -1,20 +1,16 @@
 <template>
     <div class="sfdl-compare-logs" style={containerStyle}>
         <div class="sfdl-compare-logs__toolbar">
-            <div class="slds-button-group" role="group">
-                <button class={sameOrgButtonClass} data-mode="sameOrg" aria-pressed={isSameOrgPressed} onclick={handleModeChange}>Same org</button>
-                <button class={twoOrgsButtonClass} data-mode="twoOrgs" aria-pressed={isTwoOrgsPressed} onclick={handleModeChange}>Two orgs</button>
-            </div>
             <sfdl-log-manipulation-menu
                 with-compare-options="true"
                 oncheckboxselection={handleOptionsChange}>
             </sfdl-log-manipulation-menu>
-            <span class="sfdl-compare-logs__hint">{hint}</span>
+            <span class="sfdl-compare-logs__hint"></span>
             <div class="sfdl-compare-logs__actions">
                 <button
                     class="sfdl-compare-logs__swap slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
                     style="width:22px;height:22px;padding:2px;"
-                    title={swapTitle}
+                    title="Swap the orgs and the logs of both sides"
                     disabled={isSwapDisabled}
                     onclick={handleSwap}>
                     <img class="sfdl-swap-icon" src={swapIcon} alt="swap sides"/>
@@ -22,20 +18,7 @@
             </div>
         </div>
         <div class="sfdl-compare-logs__body">
-            <template if:true={isSameOrg}>
-                <sfdl-side-panel class="sfdl-compare-logs__pair-panel" title="Logs" subtitle={headerOrgLabel} dock="left">
-                    <sfdl-compare-log-list
-                        mode="pair"
-                        session-information={sessionInformation}
-                        left-log-id={leftLogId}
-                        right-log-id={rightLogId}
-                        no-session-message="Pick an org in Organization Instances above"
-                        onlogselect={handleLogSelect}>
-                    </sfdl-compare-log-list>
-                </sfdl-side-panel>
-            </template>
-            <template if:true={isTwoOrgs}>
-                <sfdl-side-panel class="sfdl-compare-logs__left-panel" title="Left org" subtitle={leftOrgLabel} side="left" width="18rem">
+            <sfdl-side-panel class="sfdl-compare-logs__left-panel" title="Left org" subtitle={leftOrgLabel} side="left" width="18rem">
                     <sfdl-combobox
                         class="sfdl-compare-logs__org-picker"
                         side="left"
@@ -56,7 +39,6 @@
                         onlogselect={handleLogSelect}>
                     </sfdl-compare-log-list>
                 </sfdl-side-panel>
-            </template>
             <div class="sfdl-compare-logs__diff">
                 <sfdl-diff-viewer
                     language="apexlog"
@@ -68,7 +50,6 @@
                     empty-message={emptyMessage}>
                 </sfdl-diff-viewer>
             </div>
-            <template if:true={isTwoOrgs}>
                 <sfdl-side-panel class="sfdl-compare-logs__right-panel" title="Right org" subtitle={rightOrgLabel} side="right" width="18rem">
                     <sfdl-combobox
                         class="sfdl-compare-logs__org-picker"
@@ -90,7 +71,6 @@
                         onlogselect={handleLogSelect}>
                     </sfdl-compare-log-list>
                 </sfdl-side-panel>
-            </template>
         </div>
     </div>
 </template>

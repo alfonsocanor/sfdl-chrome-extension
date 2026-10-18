@@ -88,7 +88,7 @@ describe('sfdl-console', () => {
     });
 
     describe('layout', () => {
-        it('renders the org picker, the three tabs and the footer', async () => {
+        it('renders the org picker, the two tabs and the footer', async () => {
             const element = await createConsole();
 
             expect(picklist(element)).not.toBeNull();
@@ -98,7 +98,7 @@ describe('sfdl-console', () => {
                         '.slds-tabs_scoped__link'
                     )
                 ].map((link) => link.dataset.tabname)
-            ).toEqual(['analyseLogs', 'compareLogs', 'compareOrgs']);
+            ).toEqual(['debugLogs', 'compareMetadata']);
             expect(
                 element.shadowRoot.querySelector('sfdl-footer')
             ).not.toBeNull();
@@ -202,23 +202,35 @@ describe('sfdl-console', () => {
             element.shadowRoot.querySelector('.' + tabHtmlClass);
         const tabContent = (element, contentHtmlClass) =>
             element.shadowRoot.querySelector('.' + contentHtmlClass);
+        const modeButton = (element, mode) =>
+            element.shadowRoot.querySelector(`[data-mode="${mode}"]`);
+        const isShown = (element, contentHtmlClass) =>
+            !tabContent(element, contentHtmlClass).classList.contains(
+                'slds-hide'
+            );
 
-        it('opens on the analyse logs tab', async () => {
+        it('opens on the debug logs tab, analysing', async () => {
             const element = await createConsole();
 
             expect(
-                tabItem(element, 'liElementAnalyseLogs').classList.contains(
+                tabItem(element, 'liElementDebugLogs').classList.contains(
                     'slds-is-active'
                 )
             ).toBe(true);
+            expect(isShown(element, 'sfdl-debug-logs')).toBe(true);
+            expect(isShown(element, 'sfdl-debug-logs__analyse')).toBe(true);
+            expect(modeButton(element, 'analyse').classList).toContain(
+                'slds-button_brand'
+            );
             expect(
-                tabContent(element, 'sfdl-analise-logs').classList.contains(
-                    'slds-show'
-                )
-            ).toBe(true);
+                element.shadowRoot.querySelector('.sfdl-debug-logs__hint')
+                    .textContent
+            ).toBe(
+                'Pick a log to read it, or tick two logs and compare them side by side.'
+            );
         });
 
-        it('builds the compare tabs only once they are opened', async () => {
+        it('builds the comparisons only once they are opened', async () => {
             const element = await createConsole();
 
             expect(
@@ -229,70 +241,58 @@ describe('sfdl-console', () => {
             ).toBeNull();
         });
 
-        it.each([
-            ['compareLogs', 'liElementCompareLogs', 'sfdl-compare-logs'],
-            ['compareOrgs', 'liElementCompareOrgs', 'sfdl-compare-orgs']
-        ])(
-            'opens the %s tab and hides the analyse logs tab',
-            async (tabName, tabHtmlClass, contentHtmlClass) => {
-                const element = await createConsole();
-
-                click(tab(element, tabName));
-                await wait();
-
-                expect(
-                    tabItem(element, tabHtmlClass).classList.contains(
-                        'slds-is-active'
-                    )
-                ).toBe(true);
-                expect(
-                    tabItem(element, 'liElementAnalyseLogs').classList.contains(
-                        'slds-is-active'
-                    )
-                ).toBe(false);
-                expect(
-                    tabContent(element, contentHtmlClass).classList.contains(
-                        'slds-show'
-                    )
-                ).toBe(true);
-                expect(
-                    tabContent(element, 'sfdl-analise-logs').classList.contains(
-                        'slds-hide'
-                    )
-                ).toBe(true);
-                expect(
-                    element.shadowRoot.querySelector(contentHtmlClass)
-                ).not.toBeNull();
-            }
-        );
-
-        it('keeps every tab it built while another one is open', async () => {
+        it('compares two orgs in the same tab and keeps the analysis', async () => {
             const element = await createConsole();
 
-            click(tab(element, 'compareLogs'));
-            await wait();
-            click(tab(element, 'analyseLogs'));
+            click(modeButton(element, 'compare'));
             await wait();
 
+            expect(isShown(element, 'sfdl-debug-logs__analyse')).toBe(false);
+            expect(isShown(element, 'sfdl-debug-logs__compare')).toBe(true);
+            expect(modeButton(element, 'compare').classList).toContain(
+                'slds-button_brand'
+            );
             expect(
-                tabContent(element, 'sfdl-analise-logs').classList.contains(
-                    'slds-show'
-                )
-            ).toBe(true);
+                modeButton(element, 'compare').getAttribute('aria-pressed')
+            ).toBe('true');
+
+            click(modeButton(element, 'analyse'));
+            await wait();
+
+            expect(isShown(element, 'sfdl-debug-logs__analyse')).toBe(true);
+            expect(isShown(element, 'sfdl-debug-logs__compare')).toBe(false);
             expect(
-                tabContent(element, 'sfdl-compare-logs').classList.contains(
-                    'slds-hide'
-                )
-            ).toBe(true);
+                element.shadowRoot.querySelector('sfdl-compare-logs')
+            ).not.toBeNull();
             expect(logDetails(element)).not.toBeNull();
         });
 
-        it('hands the org sessions and the selected org to the compare tabs', async () => {
+        it('opens the compare metadata tab and hides the debug logs one', async () => {
+            const element = await createConsole();
+
+            click(tab(element, 'compareMetadata'));
+            await wait();
+
+            expect(
+                tabItem(element, 'liElementCompareMetadata').classList.contains(
+                    'slds-is-active'
+                )
+            ).toBe(true);
+            expect(
+                tabItem(element, 'liElementDebugLogs').classList.contains(
+                    'slds-is-active'
+                )
+            ).toBe(false);
+            expect(isShown(element, 'sfdl-compare-metadata')).toBe(true);
+            expect(isShown(element, 'sfdl-debug-logs')).toBe(false);
+        });
+
+        it('hands the org sessions and the selected org to the comparisons', async () => {
             const element = await createConsole();
             await selectOrg(element);
 
-            click(tab(element, 'compareLogs'));
-            click(tab(element, 'compareOrgs'));
+            click(modeButton(element, 'compare'));
+            click(tab(element, 'compareMetadata'));
             await wait();
 
             ['sfdl-compare-logs', 'sfdl-compare-orgs'].forEach((tagName) => {
