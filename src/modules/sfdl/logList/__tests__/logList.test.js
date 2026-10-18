@@ -100,6 +100,8 @@ async function createLogList() {
 }
 
 const rows = (element) => element.shadowRoot.querySelectorAll('.sfdl-log-row');
+const emptyMessage = (element) =>
+    element.shadowRoot.querySelector('.sfdl-log-list__message');
 const logButtons = (element) =>
     element.shadowRoot.querySelectorAll('.displayLogButton');
 const rowDownloadButtons = (element) =>
@@ -205,6 +207,32 @@ describe('sfdl-log-list', () => {
                 'There are no logs to retrieve',
                 SESSION_INFORMATION.instanceUrl
             );
+            expect(emptyMessage(element).textContent).toBe(
+                'There are no logs in this org'
+            );
+        });
+
+        it('says no log matches when a query filter left them all out', async () => {
+            mockSalesforceFetch([]);
+            const element = createElement('sfdl-log-list', { is: LogList });
+            element.isAnaliseLogs = true;
+            element.sessionInformation = {
+                ...SESSION_INFORMATION,
+                queryWhere: "WHERE Status = 'Failed'"
+            };
+            document.body.appendChild(element);
+            await flushPromises();
+            await flushPromises();
+
+            expect(emptyMessage(element).textContent).toBe(
+                'No logs match the query filter'
+            );
+        });
+
+        it('says nothing about an empty list while there are logs', async () => {
+            const element = await createLogList();
+
+            expect(emptyMessage(element)).toBeNull();
         });
     });
 

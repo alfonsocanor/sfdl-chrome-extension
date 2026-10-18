@@ -131,6 +131,12 @@ export const css = `
         color: #747474;
     }
 
+    .sfdl-log-list__message {
+        padding: 8px;
+        color: #747474;
+        text-align: center;
+    }
+
     .sfdl-clear-selection {
         flex: 0 0 auto;
         padding: 0;

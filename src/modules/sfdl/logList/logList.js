@@ -39,6 +39,8 @@ export default class LogList extends LightningElement{
     @track logList = [];
     
     thereAreLogsToDisplay = false;
+    //The query came back without a log, as opposed to not having run yet.
+    isListEmpty = false;
     isDownloading;
     firstRender = true;
 
@@ -88,6 +90,17 @@ export default class LogList extends LightningElement{
 
     get selectAllTitle(){
         return this.areAllLogsSelected ? 'Unselect every log' : 'Select all logs';
+    }
+
+    //A where clause can leave out every log of an org that has some.
+    get emptyMessage(){
+        if(!this.isListEmpty || this.isDownloading){
+            return '';
+        }
+
+        return this.sessionInformation && this.sessionInformation.queryWhere ?
+            'No logs match the query filter' :
+            'There are no logs in this org';
     }
 
     connectedCallback(){
@@ -199,6 +212,8 @@ export default class LogList extends LightningElement{
             showToastEvent('error', apexLogList.response.error, apexLogList.response.message);
             return;
         }
+
+        this.isListEmpty = !apexLogList.response.length;
 
         if(apexLogList.response.length){
             this.thereAreLogsToDisplay = true;

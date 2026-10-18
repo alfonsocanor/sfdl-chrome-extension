@@ -28,6 +28,10 @@
             ondownloadprocesscompleted={handleDownloadProcessCompleted}>
         </sfdl-download-logs>
     </template>
+    <!-- Said in the list, the way the lists of the comparison say it. -->
+    <template if:true={emptyMessage}>
+        <p class="sfdl-log-list__message">{emptyMessage}</p>
+    </template>
     <template if:true={thereAreLogsToDisplay}>
         <template if:false={isDownloading}>
             <div class="sfdl-log-list-actions slds-size_1-of-1 slds-m-bottom_small" style="text-align:left;">
