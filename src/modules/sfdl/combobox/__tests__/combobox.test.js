@@ -226,10 +226,10 @@ describe('sfdl-combobox', () => {
         const swatch = element.shadowRoot.querySelector('.sfdl-side-swatch');
 
         expect(swatch.classList.contains('sfdl-side-swatch_right')).toBe(true);
-        expect(swatch.title).toBe('Right org');
-        expect(swatch.parentElement.classList).toContain(
-            'sfdl-combobox-control_right'
-        );
+        expect(
+            swatch.querySelector('.sfdl-combobox-tooltip').textContent
+        ).toBe('Right org');
+        expect(swatch.parentElement.firstElementChild).toBe(swatch);
         expect(element.shadowRoot.querySelector('.sfdl-combobox-label')).toBeNull();
         expect(button(element).getAttribute('aria-label')).toBe('Right org');
     });

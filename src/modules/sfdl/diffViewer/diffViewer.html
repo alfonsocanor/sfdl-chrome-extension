@@ -4,10 +4,13 @@
              under it when one comes or goes. -->
         <div class="sfdl-diff-summary">
             <div class="sfdl-diff-summary__side">
-                <span class="sfdl-side-chip sfdl-side-chip_left sfdl-diff-left-label" title={leftLabel}>
-                    <span class="sfdl-side-swatch sfdl-side-swatch_left"></span>
-                    <span>{leftLabelToDisplay}</span>
-                </span>
+                <!-- A side only gets its name once it has one. -->
+                <template if:true={leftLabel}>
+                    <span class="sfdl-side-chip sfdl-side-chip_left sfdl-diff-left-label" title={leftLabel}>
+                        <span class="sfdl-side-swatch sfdl-side-swatch_left"></span>
+                        <span>{leftLabel}</span>
+                    </span>
+                </template>
                 <template if:true={leftStatus}>
                     <span class={leftStatusClass} title={leftStatus.title} data-side="left">{leftStatus.label}</span>
                 </template>
@@ -64,10 +67,12 @@
                 <template if:true={rightStatus}>
                     <span class={rightStatusClass} title={rightStatus.title} data-side="right">{rightStatus.label}</span>
                 </template>
-                <span class="sfdl-side-chip sfdl-side-chip_right sfdl-diff-right-label" title={rightLabel}>
-                    <span class="sfdl-side-swatch sfdl-side-swatch_right"></span>
-                    <span>{rightLabelToDisplay}</span>
-                </span>
+                <template if:true={rightLabel}>
+                    <span class="sfdl-side-chip sfdl-side-chip_right sfdl-diff-right-label" title={rightLabel}>
+                        <span class="sfdl-side-swatch sfdl-side-swatch_right"></span>
+                        <span>{rightLabel}</span>
+                    </span>
+                </template>
             </div>
         </div>
         <template if:true={hasContent}>

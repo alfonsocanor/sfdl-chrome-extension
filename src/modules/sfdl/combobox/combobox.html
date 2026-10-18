@@ -7,7 +7,13 @@
             <!-- The colour of the side says which one it is, the label only
                  comes on hover. -->
             <template if:true={side}>
-                <span class={swatchClass} title={label} data-side={side}></span>
+                <span class={swatchClass} data-side={side}>
+                    <template if:true={label}>
+                        <span class="slds-popover slds-popover_tooltip slds-nubbin_top-left sfdl-combobox-tooltip" role="tooltip">
+                            <span class="slds-popover__body">{label}</span>
+                        </span>
+                    </template>
+                </span>
             </template>
             <div class="slds-combobox_container">
                 <div class={comboboxClass}>

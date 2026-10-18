@@ -8,28 +8,41 @@ export const css = `
         align-items: center;
     }
 
-    .sfdl-combobox .sfdl-combobox-control_left,
-    .sfdl-combobox .sfdl-combobox-control_right {
+    .sfdl-combobox .sfdl-combobox-control_side {
         display: flex;
         align-items: center;
         gap: 8px;
     }
 
-    .sfdl-combobox .sfdl-combobox-control_right {
-        flex-direction: row-reverse;
-    }
-
-    .sfdl-combobox .sfdl-combobox-control_left > .slds-combobox_container,
-    .sfdl-combobox .sfdl-combobox-control_right > .slds-combobox_container {
+    .sfdl-combobox .sfdl-combobox-control_side > .slds-combobox_container {
         flex: 1 1 auto;
         min-width: 0;
     }
 
+    /* As high as the field next to it. */
     .sfdl-combobox .sfdl-combobox-swatch {
-        width: 16px;
-        height: 16px;
+        position: relative;
+        width: 2rem;
+        height: 2rem;
         margin-right: 0;
-        border-radius: 3px;
+        border-radius: 0.25rem;
+    }
+
+    /* Right on hover, where the title of the browser takes its time. */
+    .sfdl-combobox .sfdl-combobox-tooltip {
+        position: absolute;
+        top: calc(100% + 0.75rem);
+        left: 0;
+        width: max-content;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.1s;
+        pointer-events: none;
+    }
+
+    .sfdl-combobox .sfdl-combobox-swatch:hover > .sfdl-combobox-tooltip {
+        visibility: visible;
+        opacity: 1;
     }
 
     .sfdl-combobox .sfdl-combobox-button {

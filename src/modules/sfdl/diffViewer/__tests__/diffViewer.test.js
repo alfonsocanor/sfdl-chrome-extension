@@ -75,10 +75,11 @@ describe('sfdl-diff-viewer', () => {
                 element.shadowRoot.querySelector('.sfdl-diff-summary')
             ).not.toBeNull();
             expect(
-                element.shadowRoot
-                    .querySelector('.sfdl-diff-left-label')
-                    .textContent.trim()
-            ).toBe('Left');
+                element.shadowRoot.querySelector('.sfdl-diff-left-label')
+            ).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-right-label')
+            ).toBeNull();
             expect(
                 element.shadowRoot.querySelector('.sfdl-diff-summary__actions')
             ).not.toBeNull();
@@ -97,6 +98,7 @@ describe('sfdl-diff-viewer', () => {
         it('writes what the org of each side is doing next to its name', async () => {
             const element = await createDiffViewer({
                 leftLabel: 'acme.my.salesforce.com',
+                rightLabel: 'acme--uat.sandbox.my.salesforce.com',
                 leftStatus: { label: 'Retrieving', title: 'Retrieving' },
                 rightStatus: {
                     label: 'INVALID_SESSION_ID',

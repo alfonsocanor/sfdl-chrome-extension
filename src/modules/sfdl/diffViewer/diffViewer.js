@@ -163,14 +163,6 @@ export default class DiffViewer extends LightningElement{
         return this._language || 'plaintext';
     }
 
-    get leftLabelToDisplay(){
-        return this.leftLabel || 'Left';
-    }
-
-    get rightLabelToDisplay(){
-        return this.rightLabel || 'Right';
-    }
-
     get leftStatusClass(){
         return this.statusClass(this.leftStatus);
     }

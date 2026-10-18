@@ -11,10 +11,12 @@ export const css = `
         background: #fafaf9;
     }
 
+    /* The height of a chip, so the bar holds it before the sides have one. */
     .sfdl-diff-viewer .sfdl-diff-summary {
         display: flex;
         flex: 0 0 auto;
         align-items: center;
+        min-height: 39px;
         gap: 8px;
         padding: 6px 8px;
         background: #ffffff;
