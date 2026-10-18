@@ -106,6 +106,16 @@ export const css = `
         left: 0;
     }
 
+    /* Over the pane of the side being loaded again only, opaque so what it
+       holds meanwhile does not show. */
+    .sfdl-diff-viewer .sfdl-diff-side-loading {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        z-index: 20;
+        background: #fafaf9;
+    }
+
     .sfdl-diff-viewer .sfdl-diff-empty {
         position: absolute;
         top: 0;

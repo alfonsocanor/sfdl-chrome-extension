@@ -1,9 +1,18 @@
 // Minimal monaco-editor stand-in: the editor itself is not exercised by the unit tests.
 function createCodeEditor() {
+    const layoutListeners = [];
     return {
         revealLineInCenter: jest.fn(),
         setPosition: jest.fn(),
-        focus: jest.fn()
+        focus: jest.fn(),
+        onDidLayoutChange: jest.fn((listener) => {
+            layoutListeners.push(listener);
+            return { dispose: jest.fn() };
+        }),
+        // Test helper: plays monaco laying the editor out at this width.
+        mockLayout(width) {
+            layoutListeners.forEach((listener) => listener({ width }));
+        }
     };
 }
 

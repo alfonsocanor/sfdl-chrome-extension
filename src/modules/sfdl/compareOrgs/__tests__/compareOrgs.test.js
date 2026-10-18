@@ -843,7 +843,7 @@ describe('sfdl-compare-orgs', () => {
             );
         });
 
-        it('drops what was compared against the org that left while the new one is listed', async () => {
+        it('keeps the side that stays readable and spins over the other one', async () => {
             const element = await compareTwo();
             listOrgComponents.mockImplementation(() => new Promise(() => {}));
 
@@ -855,15 +855,69 @@ describe('sfdl-compare-orgs', () => {
                 'LegacyHelper right',
                 'Utils comparing'
             ]);
-            expect(diffViewer(element).leftContent).toBeUndefined();
-            expect(diffViewer(element).loading).toBe(true);
-            expect(diffViewer(element).emptyMessage).toBe(
-                'Comparing AccountService...'
+            expect(diffViewer(element).leftContent).toBe('acme service');
+            expect(diffViewer(element).rightContent).toBe('acme service');
+            expect(diffViewer(element).loading).toBe(false);
+            expect(diffViewer(element).loadingSide).toBe('right');
+            expect(diffViewer(element).sideLoadingMessage).toBe(
+                'Comparing with initech.my.salesforce.com...'
             );
+            expect(diffViewer(element).notice).toBeUndefined();
             expect(progressText(element)).toEqual([
                 'left | Listed',
                 'right | Listing the components'
             ]);
+        });
+
+        it('shows the files of the open component as comparing meanwhile', async () => {
+            const element = await compareTwo();
+            listOrgComponents.mockImplementation(() => new Promise(() => {}));
+
+            await pick(element, 'right-org', INITECH.instanceUrl);
+
+            const accountService = results(element).components.find(
+                ({ name }) => name === 'AccountService'
+            );
+            expect(
+                accountService.files.map(({ path, status, right }) => [
+                    path,
+                    status,
+                    right
+                ])
+            ).toEqual([
+                ['classes/AccountService.cls', 'comparing', undefined],
+                ['classes/AccountService.cls-meta.xml', 'comparing', undefined]
+            ]);
+        });
+
+        it('shows the new comparison once the new org is compared', async () => {
+            const element = await compareTwo();
+
+            await pick(element, 'right-org', INITECH.instanceUrl);
+
+            expect(diffViewer(element).loadingSide).toBeUndefined();
+            expect(diffViewer(element).rightContent).toBe('acme service');
+            expect(
+                results(element).components[0].files.map(({ status }) => status)
+            ).toEqual(['identical', 'different']);
+        });
+
+        it('leaves nothing waiting when the new org cannot be compared', async () => {
+            const element = await compareTwo();
+            compareComponents.mockResolvedValue({
+                components: new Map(),
+                left: { problems: [] },
+                right: { error: 'INVALID_SESSION_ID' }
+            });
+
+            await pick(element, 'right-org', INITECH.instanceUrl);
+
+            expect(diffViewer(element).loadingSide).toBeUndefined();
+            expect(
+                results(element).components.find(
+                    ({ name }) => name === 'AccountService'
+                ).files
+            ).toBeUndefined();
         });
 
         it('asks the api version of a pair of orgs once', async () => {

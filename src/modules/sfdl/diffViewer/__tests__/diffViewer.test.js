@@ -371,4 +371,72 @@ describe('sfdl-diff-viewer', () => {
             expect(count(element).textContent).toBe('Comparing...');
         });
     });
+
+    describe('one side loading again', () => {
+        const sideLoading = (element) =>
+            element.shadowRoot.querySelector('.sfdl-diff-side-loading');
+
+        async function loadSide(side, properties = {}) {
+            return createDiffViewer({
+                leftContent: 'kept',
+                rightContent: 'kept',
+                loadingSide: side,
+                sideLoadingMessage: 'Comparing with acme--qa...',
+                ...properties
+            });
+        }
+
+        it('spins over the pane of that side only', async () => {
+            const element = await loadSide('right');
+
+            expect(sideLoading(element).style.left).toBe('50%');
+            expect(sideLoading(element).style.right).toBe('0px');
+            expect(
+                sideLoading(element).querySelector('sfdl-spinner').message
+            ).toBe('Comparing with acme--qa...');
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-empty')
+            ).toBeNull();
+        });
+
+        it('follows the split where monaco lays it out', async () => {
+            const element = await loadSide('left');
+
+            diffEditor().getOriginalEditor().mockLayout(420);
+            await flushPromises();
+
+            expect(sideLoading(element).style.left).toBe('0px');
+            expect(sideLoading(element).style.width).toBe('420px');
+        });
+
+        it('waits over the whole pane inline', async () => {
+            const element = await loadSide('left');
+
+            const inline =
+                element.shadowRoot.querySelector('.sfdl-diff-inline');
+            inline.checked = true;
+            inline.dispatchEvent(new CustomEvent('change'));
+            await flushPromises();
+
+            expect(sideLoading(element).style.left).toBe('0px');
+            expect(sideLoading(element).style.right).toBe('0px');
+        });
+
+        it('says it is comparing, never that nothing differs', async () => {
+            const element = await loadSide('right');
+
+            diffEditor().mockDiffComputed([]);
+            await flushPromises();
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-count').textContent
+            ).toBe('Comparing...');
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-banner_identical')
+            ).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-next').disabled
+            ).toBe(true);
+        });
+    });
 });

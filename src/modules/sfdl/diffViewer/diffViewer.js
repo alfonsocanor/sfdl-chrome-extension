@@ -62,6 +62,10 @@ export default class DiffViewer extends LightningElement{
     @api notice;
     //Replaces the explanation that follows "No differences."
     @api identicalMessage;
+    //left or right: that side is being loaded again. Its pane alone spins and
+    //hides what it holds while the other side stays readable.
+    @api loadingSide;
+    @api sideLoadingMessage;
 
     @api
     get leftContent(){
@@ -110,6 +114,8 @@ export default class DiffViewer extends LightningElement{
 
     previousIcon = PREVIOUS_ICON;
     nextIcon = NEXT_ICON;
+    //Where the left pane ends, read from monaco since the split can be dragged.
+    leftPaneWidth;
 
     connectedCallback(){
         this.isComponentConnected = true;
@@ -165,16 +171,33 @@ export default class DiffViewer extends LightningElement{
         return this.lineChanges ? this.lineChanges.length : 0;
     }
 
+    get isSideLoading(){
+        return !!this.loadingSide && this.hasContent;
+    }
+
+    //Inline, both sides share one pane, and the whole of it waits.
+    get sideLoadingStyle(){
+        if(this.isInline){
+            return 'left:0;right:0;';
+        }
+
+        const leftPane = this.leftPaneWidth ? this.leftPaneWidth + 'px' : '50%';
+
+        return this.loadingSide === 'left' ?
+            'left:0;width:' + leftPane + ';' :
+            'left:' + leftPane + ';right:0;';
+    }
+
     get hasNoDifferences(){
-        return !this.isComputing && this.lineChanges !== null && this.changeCount === 0;
+        return !this.isSideLoading && !this.isComputing && this.lineChanges !== null && this.changeCount === 0;
     }
 
     get isNavigationDisabled(){
-        return this.isComputing || !this.changeCount;
+        return this.isSideLoading || this.isComputing || !this.changeCount;
     }
 
     get changesLabel(){
-        if(this.isComputing || this.lineChanges === null){
+        if(this.isSideLoading || this.isComputing || this.lineChanges === null){
             return 'Comparing...';
         }
 
@@ -247,6 +270,13 @@ export default class DiffViewer extends LightningElement{
                 }
             );
             this.diffEditor.onDidUpdateDiff(() => this.handleDiffUpdated());
+
+            const originalEditor = this.diffEditor.getOriginalEditor();
+            if(originalEditor.onDidLayoutChange){
+                originalEditor.onDidLayoutChange(layoutInfo => {
+                    this.leftPaneWidth = layoutInfo.width;
+                });
+            }
         }
 
         this.lineChanges = null;

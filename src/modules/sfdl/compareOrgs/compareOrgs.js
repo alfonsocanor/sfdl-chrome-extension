@@ -27,6 +27,15 @@ const STATUS_LABELS = {
     'Already retrieved': 'Unchanged since it was retrieved'
 };
 
+function otherSideOf(side){
+    return side === LEFT ? RIGHT : LEFT;
+}
+
+//Files that wait for their changed side, which is cleared, read as comparing.
+function isPending(files){
+    return !!files && files.some(file => file.status === COMPARING);
+}
+
 function domainOf(instanceUrl){
     return instanceUrl ? instanceUrl.replace('https://', '') : '';
 }
@@ -132,6 +141,9 @@ export default class CompareOrgs extends LightningElement{
     listingMessage;
     //The api version two orgs share, asked once per pair of orgs.
     commonApiVersions = new Map();
+    //The side whose org changed while its components are compared again. The
+    //other side of the file on screen stays readable meanwhile.
+    pendingSide;
 
     swapIcon = SWAP_ICON;
     typeOptions = metadataTypeOptions();
@@ -207,15 +219,44 @@ export default class CompareOrgs extends LightningElement{
     }
 
     get isDiffLoading(){
-        return this.isListing || this.isSelectedComparing;
+        return (this.isListing || this.isSelectedComparing) && !this.pendingSideOnScreen;
+    }
+
+    //The side of the file on screen waiting for its new org, when the other
+    //side has something to show meanwhile.
+    get pendingSideOnScreen(){
+        const entry = this.selectedEntry;
+
+        if(!this.pendingSide || !this.isSelectedComparing || !entry){
+            return undefined;
+        }
+
+        return entry[otherSideOf(this.pendingSide)] ? this.pendingSide : undefined;
+    }
+
+    get pendingMessage(){
+        return this.pendingSide ? 'Comparing with ' + this[this.pendingSide + 'OrgName'] + '...' : undefined;
+    }
+
+    //While one side waits, both sides hold what the other one has: the side
+    //waiting spins over its copy, and the side shown has nothing highlighted
+    //against an org that left.
+    contentForSide(side){
+        const entry = this.selectedEntry;
+
+        if(!entry){
+            return undefined;
+        }
+
+        return contentOf(this.pendingSideOnScreen ? entry[otherSideOf(this.pendingSideOnScreen)] : entry[side]);
     }
 
     get leftContent(){
-        return this.selectedEntry ? contentOf(this.selectedEntry.left) : undefined;
+        return this.contentForSide(LEFT);
     }
 
     get rightContent(){
-        return this.selectedEntry ? contentOf(this.selectedEntry.right) : undefined;
+        return this.contentForSide(RIGHT);
     }
 
     get selectedLanguage(){
@@ -231,7 +272,7 @@ export default class CompareOrgs extends LightningElement{
     get selectedNotice(){
         const entry = this.selectedEntry;
 
-        if(!entry){
+        if(!entry || this.pendingSideOnScreen){
             return undefined;
         }
 
@@ -440,14 +481,28 @@ export default class CompareOrgs extends LightningElement{
         const comparedBefore = keepsOtherSide ? this.components.filter(component => component.files).map(component => component.name) : [];
         const selectedName = keepsOtherSide ? this.selectedName : undefined;
 
+        //What was compared keeps the side that stays and loses the side whose
+        //org left, until the new org is compared.
+        const pendingFiles = new Map();
+
         if(keepsOtherSide){
-            //What was compared against the org that left cannot stay on screen.
             this.errorMessage = undefined;
+            this.pendingSide = changedSide;
             this[changedSide + 'State'] = emptySideState();
+
+            this.components
+                .filter(component => component.files && comparedBefore.includes(component.name))
+                .forEach(component => {
+                    pendingFiles.set(component.name, component.files
+                        .filter(file => file[otherSide])
+                        .map(file => ({ ...file, [changedSide]: undefined, status: COMPARING })));
+                });
+
             this.updateComponents(new Map(
-                [...comparedBefore, selectedName].filter(name => name).map(name => [name, { status: COMPARING, files: undefined }])
+                [...comparedBefore, selectedName].filter(name => name).map(name => [name, { status: COMPARING, files: pendingFiles.get(name) }])
             ));
         } else {
+            this.pendingSide = undefined;
             this.resetResults();
             this.listings = { [LEFT]: null, [RIGHT]: null };
         }
@@ -508,8 +563,11 @@ export default class CompareOrgs extends LightningElement{
                 this.hasListed = false;
                 this.selectedName = undefined;
                 this.selectedPath = undefined;
+                this.pendingSide = undefined;
             } else {
-                this.components = mergeListings(this.listings[LEFT], this.listings[RIGHT]);
+                this.components = mergeListings(this.listings[LEFT], this.listings[RIGHT]).map(component =>
+                    (pendingFiles.has(component.name) ? { ...component, files: pendingFiles.get(component.name) } : component)
+                );
                 this.listedTypeKey = type.key;
                 this.hasListed = true;
                 this.compareAgain(comparedBefore, selectedName);
@@ -536,9 +594,17 @@ export default class CompareOrgs extends LightningElement{
             this.selectedPath = undefined;
         }
 
-        if(names.length){
-            this.compare(names, { open: this.selectedName });
+        if(!names.length){
+            this.pendingSide = undefined;
+            return;
         }
+
+        const sequence = this.listSequence;
+        this.compare(names, { open: this.selectedName }).then(() => {
+            if(sequence === this.listSequence){
+                this.pendingSide = undefined;
+            }
+        });
     }
 
     compare(names, { open } = {}){
@@ -549,7 +615,12 @@ export default class CompareOrgs extends LightningElement{
             return this.comparisonQueue;
         }
 
-        const previousStatuses = new Map(targets.map(component => [component.name, { status: component.status }]));
+        //A comparison that fails leaves the components as they were, but for
+        //files still waiting for an org, which have nothing to show.
+        const previousStatuses = new Map(targets.map(component => [component.name, {
+            status: component.status,
+            files: isPending(component.files) ? undefined : component.files
+        }]));
         this.updateComponents(new Map(targets.map(component => [component.name, { status: COMPARING }])));
         this.activeComparisons++;
 
