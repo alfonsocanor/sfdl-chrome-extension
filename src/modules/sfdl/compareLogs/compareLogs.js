@@ -9,6 +9,7 @@ import { css } from './compareLogsCss';
 const LEFT = 'left';
 const RIGHT = 'right';
 const SWAP_ICON = '/slds/icons/utility/sort.svg';
+const CLOSE_ICON = '/slds/icons/utility/close.svg';
 const COMPARE_OPTION_NAMES = compareOptions().map(({ name }) => name);
 //Debug logs run to megabytes, only the latest ones are kept around.
 const LOG_BODIES_TO_KEEP = 20;
@@ -40,10 +41,26 @@ function downloadLogBody(sessionInformation, log){
 }
 
 //A log of one org against a log of another one: the logs of the left org, the
-//two logs, and the logs of the right org.
+//two logs, and the logs of the right org. Handed a pair, it only shows those
+//two logs, for two logs of the same org compared from the analyse list.
 export default class CompareLogs extends LightningElement{
     @api orgs = [];
     @api height;
+
+    //{ left, right }, each { log, sessionInformation }.
+    @api
+    get pair(){
+        return this._pair;
+    }
+    set pair(pair){
+        this._pair = pair;
+
+        if(pair){
+            this.left = pair.left;
+            this.right = pair.right;
+            this.refreshComparison();
+        }
+    }
 
     @api
     get sessionInformation(){
@@ -60,6 +77,7 @@ export default class CompareLogs extends LightningElement{
     }
 
     _sessionInformation;
+    _pair;
     //{ log, sessionInformation } of each side, null while a side is empty.
     left = null;
     right = null;
@@ -74,6 +92,7 @@ export default class CompareLogs extends LightningElement{
     rightBody;
     comparisonSequence = 0;
     swapIcon = SWAP_ICON;
+    closeIcon = CLOSE_ICON;
     //The filters both logs go through. The menu lives in the bar of the diff,
     //which comes and goes with it, so the comparison keeps them.
     options = [...analyseOptions(), ...compareOptions()];
@@ -81,6 +100,10 @@ export default class CompareLogs extends LightningElement{
     connectedCallback(){
         adoptStyleSheet(css);
         adoptCompareTheme();
+    }
+
+    get isPairMode(){
+        return !!this._pair;
     }
 
     get containerStyle(){
@@ -113,7 +136,9 @@ export default class CompareLogs extends LightningElement{
             return undefined;
         }
 
-        return shortOrgName(side.sessionInformation.instanceUrl) + ' \u00b7 ' + side.log.name;
+        return this.isPairMode ?
+            side.log.name :
+            shortOrgName(side.sessionInformation.instanceUrl) + ' \u00b7 ' + side.log.name;
     }
 
     get orgOptions(){
@@ -160,13 +185,20 @@ export default class CompareLogs extends LightningElement{
         return !this.left && !this.right && !this.leftOrgSession && !this.rightOrgSession;
     }
 
-    //Each side keeps its colour, what moves is the content: the orgs and their
-    //logs.
+    //Each side keeps its colour, what moves is the content: the logs, and the
+    //orgs they come from.
     handleSwap(){
         [this.left, this.right] = [this.right, this.left];
-        [this.leftOrgSession, this.rightOrgSession] = [this.rightOrgSession, this.leftOrgSession];
+
+        if(!this.isPairMode){
+            [this.leftOrgSession, this.rightOrgSession] = [this.rightOrgSession, this.leftOrgSession];
+        }
 
         this.refreshComparison();
+    }
+
+    handleClose(){
+        this.dispatchEvent(new CustomEvent('close'));
     }
 
     handleOrgChange(event){

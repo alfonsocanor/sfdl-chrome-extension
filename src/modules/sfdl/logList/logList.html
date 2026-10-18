@@ -39,6 +39,9 @@
                 <template if:true={thereAreSelectedLogs}>
                     <button class="clearSelectionButton sfdl-clear-selection" onclick={handleClearSelection} title="Unselect every log">unselect</button>
                 </template>
+                <template if:true={areTwoLogsSelected}>
+                    <button class="compareLogsButton sfdl-clear-selection" onclick={handleCompareSelected} title="Compare the two logs side by side">compare side by side</button>
+                </template>
             </div>
         </template>
         <ul class="slds-has-dividers_around slds-has-block-links">

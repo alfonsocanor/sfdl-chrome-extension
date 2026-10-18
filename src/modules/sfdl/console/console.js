@@ -26,6 +26,9 @@ export default class Console extends LightningElement {
     logsBodyHeight = 0;
     logsToolbarHeight = 0;
     orgs = [];
+    //Two logs of the org of the header compared in place of the editor,
+    //{ left, right } each being { log, sessionInformation }.
+    pairComparison = null;
 
     sectionStyle = 'background-color:#fafaf9;position:relative;overflow:hidden;display:flex;';
 
@@ -116,6 +119,8 @@ export default class Console extends LightningElement {
     }
 
     async handleLogDetails(event){
+        //Opening a log is going back to reading one.
+        this.pairComparison = null;
         let sfdlLogDetailsComponent = this.template.querySelector('sfdl-log-details');
         sfdlLogDetailsComponent.processLogsFromLogList(event.detail.logDetails, event.detail.logName);
     }
@@ -150,6 +155,7 @@ export default class Console extends LightningElement {
     }
 
     async handleSessionInformation(event){
+        this.pairComparison = null;
         this.hideMonacoEditor();
         this.renderLogList = false;
         await new Promise((resolve)=>{setTimeout(resolve, 100);});
@@ -165,6 +171,23 @@ export default class Console extends LightningElement {
         if(this.template.querySelector('sfdl-log-list')){
             this.template.querySelector('sfdl-log-list').handleManipulationOptionsForDownloading(event.detail.manipulationOptions);
         }
+    }
+
+    get logDetailsClass(){
+        return this.pairComparison ? 'slds-hide' : '';
+    }
+
+    handleCompareLogs(event){
+        const [left, right] = event.detail.logs;
+
+        this.pairComparison = {
+            left: { log: left, sessionInformation: this.sessionInformation },
+            right: { log: right, sessionInformation: this.sessionInformation }
+        };
+    }
+
+    handleClosePairComparison(){
+        this.pairComparison = null;
     }
 
     get debugLogsTabClass(){

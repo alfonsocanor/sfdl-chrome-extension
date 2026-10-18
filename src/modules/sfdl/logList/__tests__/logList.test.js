@@ -434,6 +434,42 @@ describe('sfdl-log-list', () => {
         });
     });
 
+    describe('comparing two logs', () => {
+        const compareButton = (element) =>
+            element.shadowRoot.querySelector('.compareLogsButton');
+
+        it('offers to compare only when exactly two logs are ticked', async () => {
+            const element = await createLogList();
+
+            expect(compareButton(element)).toBeNull();
+
+            check(rowCheckboxes(element)[0], true);
+            await flushPromises();
+            expect(compareButton(element)).toBeNull();
+
+            check(rowCheckboxes(element)[1], true);
+            await flushPromises();
+            expect(compareButton(element).textContent).toBe(
+                'compare side by side'
+            );
+        });
+
+        it('puts the log further down the list, the older one, on the left', async () => {
+            const element = await createLogList();
+            const handleCompare = jest.fn();
+            element.addEventListener('comparelogs', handleCompare);
+            check(rowCheckboxes(element)[0], true);
+            check(rowCheckboxes(element)[1], true);
+            await flushPromises();
+
+            click(compareButton(element));
+
+            expect(
+                handleCompare.mock.calls[0][0].detail.logs.map(({ id }) => id)
+            ).toEqual(['07L2', '07L1']);
+        });
+    });
+
     describe('clearing the selection', () => {
         it('offers a clear link only while something is selected', async () => {
             const element = await createLogList();

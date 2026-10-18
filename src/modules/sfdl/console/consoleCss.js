@@ -38,4 +38,8 @@ export const css = `
         color: #747474;
         font-size: 12px;
     }
+
+    .sfdl-debug-logs__pair {
+        height: 100%;
+    }
 `;

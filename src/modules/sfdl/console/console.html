@@ -37,6 +37,7 @@
                     <sfdl-log-list
                       is-analise-logs="true"
                       onlogdetails={handleLogDetails}
+                      oncomparelogs={handleCompareLogs}
                       onenablepicklistbuttons={handleActivateActionButtons}
                       session-information={sessionInformation}
                       onisloading={handleIsLoading}>
@@ -45,13 +46,21 @@
                 </div>
               </div>
               <div class="slds-col" style="position:relative;">
-                <sfdl-log-details 
+                <sfdl-log-details
+                  class={logDetailsClass}
                   is-analise-logs="true"
                   show-log-list-section={showLogListSection}
                   onenablepicklistbuttons={handleActivateActionButtons}
                   ondisplayloglistsection={handleDisplayLogListSection}
                   onmanipulationoptions={handleManipulationOptions}>
                 </sfdl-log-details>
+                <template if:true={pairComparison}>
+                  <sfdl-compare-logs
+                    class="sfdl-debug-logs__pair"
+                    pair={pairComparison}
+                    onclose={handleClosePairComparison}>
+                  </sfdl-compare-logs>
+                </template>
               </div>
             </div>
           </div>

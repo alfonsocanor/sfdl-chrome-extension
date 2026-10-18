@@ -382,4 +382,99 @@ describe('sfdl-console', () => {
             expect(panel.classList.contains('slds-is-open')).toBe(true);
         });
     });
+
+    describe('comparing two logs of the org', () => {
+        const LEFT_LOG = {
+            id: '07L2',
+            name: 'older',
+            attributes: { url: '/two' }
+        };
+        const RIGHT_LOG = {
+            id: '07L1',
+            name: 'newer',
+            attributes: { url: '/one' }
+        };
+        const pairComparison = (element) =>
+            element.shadowRoot.querySelector('.sfdl-debug-logs__pair');
+
+        async function compareTwoLogs(element) {
+            logList(element).dispatchEvent(
+                new CustomEvent('comparelogs', {
+                    detail: { logs: [LEFT_LOG, RIGHT_LOG] }
+                })
+            );
+            await wait();
+        }
+
+        it('compares them in place of the editor', async () => {
+            const element = await createConsole();
+            await selectOrg(element);
+
+            await compareTwoLogs(element);
+
+            expect(pairComparison(element).pair).toEqual({
+                left: {
+                    log: LEFT_LOG,
+                    sessionInformation: expect.objectContaining({
+                        instanceUrl: 'https://acme.my.salesforce.com'
+                    })
+                },
+                right: {
+                    log: RIGHT_LOG,
+                    sessionInformation: expect.objectContaining({
+                        instanceUrl: 'https://acme.my.salesforce.com'
+                    })
+                }
+            });
+            expect(logDetails(element).classList.contains('slds-hide')).toBe(
+                true
+            );
+        });
+
+        it('goes back to the log when the comparison is closed', async () => {
+            const element = await createConsole();
+            await selectOrg(element);
+            await compareTwoLogs(element);
+
+            pairComparison(element).dispatchEvent(new CustomEvent('close'));
+            await wait();
+
+            expect(pairComparison(element)).toBeNull();
+            expect(logDetails(element).classList.contains('slds-hide')).toBe(
+                false
+            );
+        });
+
+        it('goes back to reading when a log is opened', async () => {
+            const element = await createConsole();
+            await selectOrg(element);
+            await compareTwoLogs(element);
+            jest.spyOn(
+                logDetails(element),
+                'processLogsFromLogList'
+            ).mockImplementation(() => {});
+
+            logList(element).dispatchEvent(
+                new CustomEvent('logdetails', {
+                    detail: {
+                        logName: 'a log',
+                        logDetails: { response: 'body' }
+                    }
+                })
+            );
+            await wait();
+
+            expect(pairComparison(element)).toBeNull();
+        });
+
+        it('closes when another org is picked in the header', async () => {
+            const element = await createConsole();
+            await selectOrg(element);
+            await compareTwoLogs(element);
+
+            await selectOrg(element);
+
+            expect(pairComparison(element)).toBeNull();
+        });
+    });
 });

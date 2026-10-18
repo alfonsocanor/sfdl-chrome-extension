@@ -1,16 +1,17 @@
 <template>
     <div class="sfdl-compare-logs" style={containerStyle}>
         <div class="sfdl-compare-logs__body">
-            <sfdl-side-panel class="sfdl-compare-logs__left-panel" title="Left org" subtitle={leftOrgLabel} side="left" width="18rem">
-                <button
-                    slot="actions"
-                    class="sfdl-compare-logs__swap slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
-                    style="width:22px;height:22px;padding:2px;"
-                    title="Swap the orgs and the logs of both sides"
-                    disabled={isSwapDisabled}
-                    onclick={handleSwap}>
-                    <img class="sfdl-swap-icon" src={swapIcon} alt="swap sides"/>
-                </button>
+            <template if:false={isPairMode}>
+                <sfdl-side-panel class="sfdl-compare-logs__left-panel" title="Left org" subtitle={leftOrgLabel} side="left" width="18rem">
+                    <button
+                        slot="actions"
+                        class="sfdl-compare-logs__swap slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                        style="width:22px;height:22px;padding:2px;"
+                        title="Swap the orgs and the logs of both sides"
+                        disabled={isSwapDisabled}
+                        onclick={handleSwap}>
+                        <img class="sfdl-swap-icon" src={swapIcon} alt="swap sides"/>
+                    </button>
                     <sfdl-combobox
                         class="sfdl-compare-logs__org-picker"
                         side="left"
@@ -30,6 +31,7 @@
                         onlogselect={handleLogSelect}>
                     </sfdl-compare-log-list>
                 </sfdl-side-panel>
+            </template>
             <div class="sfdl-compare-logs__diff">
                 <sfdl-diff-viewer
                     language="apexlog"
@@ -44,8 +46,27 @@
                         options={options}
                         oncheckboxselection={handleOptionsChange}>
                     </sfdl-log-manipulation-menu>
+                    <template if:true={isPairMode}>
+                        <button
+                            slot="actions"
+                            class="sfdl-compare-logs__pair-swap slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                            style="width:22px;height:22px;padding:2px;"
+                            title="Swap the two logs"
+                            onclick={handleSwap}>
+                            <img class="sfdl-swap-icon" src={swapIcon} alt="swap the logs"/>
+                        </button>
+                        <button
+                            slot="actions"
+                            class="sfdl-compare-logs__close slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                            style="width:22px;height:22px;padding:2px;"
+                            title="Close the comparison and go back to the log"
+                            onclick={handleClose}>
+                            <img src={closeIcon} alt="close the comparison"/>
+                        </button>
+                    </template>
                 </sfdl-diff-viewer>
             </div>
+            <template if:false={isPairMode}>
                 <sfdl-side-panel class="sfdl-compare-logs__right-panel" title="Right org" subtitle={rightOrgLabel} side="right" width="18rem">
                     <sfdl-combobox
                         class="sfdl-compare-logs__org-picker"
@@ -66,6 +87,7 @@
                         onlogselect={handleLogSelect}>
                     </sfdl-compare-log-list>
                 </sfdl-side-panel>
+            </template>
         </div>
     </div>
 </template>

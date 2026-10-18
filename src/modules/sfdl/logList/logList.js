@@ -68,6 +68,10 @@ export default class LogList extends LightningElement{
         return this.selectedLogsCount > 0;
     }
 
+    get areTwoLogsSelected(){
+        return this.selectedLogsCount === 2;
+    }
+
     get isPartialSelection(){
         return this.thereAreSelectedLogs && !this.areAllLogsSelected;
     }
@@ -302,6 +306,16 @@ export default class LogList extends LightningElement{
         //Nothing ticked means the whole list, the way it behaved before the
         //checkboxes were introduced.
         this.startDownloadProcess(this.thereAreSelectedLogs ? this.selectedLogs : this.logList);
+    }
+
+    //The log further down the list goes on the left, the older one when the
+    //logs are listed newest first.
+    handleCompareSelected(){
+        const [newer, older] = this.selectedLogs;
+
+        this.dispatchEvent(new CustomEvent('comparelogs', {
+            detail: { logs: [older, newer] }
+        }));
     }
 
     handleDownloadSingleLog(event){

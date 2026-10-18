@@ -503,4 +503,92 @@ describe('sfdl-compare-logs', () => {
             expect(isFolded('left')).toBe(false);
         });
     });
+
+    describe('a pair of logs of one org', () => {
+        async function comparePair(left, right) {
+            return createCompareLogs({
+                pair: {
+                    left: { log: left, sessionInformation: ACME },
+                    right: { log: right, sessionInformation: ACME }
+                }
+            });
+        }
+
+        it('shows the two logs alone, named after themselves', async () => {
+            const [left, right] = [
+                newLog('Jane Roe | older'),
+                newLog('Jane Roe | newer')
+            ];
+            mockOrgs({
+                bodies: { [left.id]: 'older body', [right.id]: 'newer body' }
+            });
+
+            const element = await comparePair(left, right);
+            await wait();
+
+            expect(panel(element, 'left')).toBeNull();
+            expect(panel(element, 'right')).toBeNull();
+            expect(diffViewer(element).leftLabel).toBe('Jane Roe | older');
+            expect(diffViewer(element).rightLabel).toBe('Jane Roe | newer');
+            expect(diffViewer(element).leftContent).toBe('older body');
+            expect(diffViewer(element).rightContent).toBe('newer body');
+            expect(bodyDownloads()).toEqual([
+                'https://acme.my.salesforce.com' +
+                    left.attributes.url +
+                    '/Body',
+                'https://acme.my.salesforce.com' +
+                    right.attributes.url +
+                    '/Body'
+            ]);
+        });
+
+        it('swaps the two logs', async () => {
+            const [left, right] = [newLog('older'), newLog('newer')];
+            mockOrgs({ bodies: { [left.id]: 'a', [right.id]: 'b' } });
+            const element = await comparePair(left, right);
+            await wait();
+
+            element.shadowRoot
+                .querySelector('.sfdl-compare-logs__pair-swap')
+                .click();
+            await wait();
+
+            expect(diffViewer(element).leftLabel).toBe('newer');
+            expect(diffViewer(element).leftContent).toBe('b');
+        });
+
+        it('asks to be closed', async () => {
+            const [left, right] = [newLog(), newLog()];
+            mockOrgs({ bodies: { [left.id]: 'a', [right.id]: 'b' } });
+            const element = await comparePair(left, right);
+            const handleClose = jest.fn();
+            element.addEventListener('close', handleClose);
+            await wait();
+
+            element.shadowRoot
+                .querySelector('.sfdl-compare-logs__close')
+                .click();
+
+            expect(handleClose).toHaveBeenCalled();
+        });
+
+        it('compares a new pair it is handed', async () => {
+            const [left, right, other] = [newLog(), newLog(), newLog('other')];
+            mockOrgs({
+                bodies: { [left.id]: 'a', [right.id]: 'b', [other.id]: 'c' }
+            });
+            const element = await comparePair(left, right);
+            await wait();
+
+            element.pair = {
+                left: { log: left, sessionInformation: ACME },
+                right: { log: other, sessionInformation: ACME }
+            };
+            await wait();
+            await wait();
+
+            expect(diffViewer(element).rightLabel).toBe('other');
+            expect(diffViewer(element).rightContent).toBe('c');
+        });
+    });
 });
