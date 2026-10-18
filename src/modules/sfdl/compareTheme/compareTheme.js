@@ -12,6 +12,9 @@ export const SIDE_COLORS = {
 
 export const css = `
     :root {
+        /* The text, a dark blue of the family of the brand blue and of the
+           tokens of the editor rather than black. */
+        --sfdl-text: #16325c;
         --sfdl-left-tint: ${SIDE_COLORS.left.tint};
         --sfdl-left-border: ${SIDE_COLORS.left.border};
         --sfdl-left-text: ${SIDE_COLORS.left.text};

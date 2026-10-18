@@ -23,7 +23,7 @@ export const css = `
         border: 1px solid var(--sfdl-neutral-border, #dddbda);
         border-radius: 0.25rem;
         background: #ffffff;
-        color: #3e3e3c;
+        color: var(--sfdl-text, #16325c);
         font-size: 12px;
         line-height: 18px;
         white-space: nowrap;
@@ -37,7 +37,7 @@ export const css = `
     .sfdl-log-filters .sfdl-log-filter__pill.sfdl-log-filter__pill_on {
         background: #edf5fd;
         border-color: #0176d3;
-        color: #3e3e3c;
+        color: var(--sfdl-text, #16325c);
     }
 
     .sfdl-log-filters .sfdl-log-filter__pill.sfdl-log-filter__pill_on:hover {

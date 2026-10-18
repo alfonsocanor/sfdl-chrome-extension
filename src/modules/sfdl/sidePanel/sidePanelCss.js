@@ -106,7 +106,7 @@ export const css = `
     }
 
     .sfdl-side-panel__strip-title {
-        color: #3e3e3c;
+        color: var(--sfdl-text, #16325c);
         font-size: 12px;
         white-space: nowrap;
         writing-mode: vertical-rl;

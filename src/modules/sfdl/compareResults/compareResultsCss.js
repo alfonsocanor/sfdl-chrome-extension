@@ -14,7 +14,7 @@ export const css = `
         border: 1px solid var(--sfdl-neutral-border);
         border-radius: 0.25rem;
         background: var(--sfdl-neutral-tint);
-        color: #3e3e3c;
+        color: var(--sfdl-text, #16325c);
         font-size: 12px;
     }
 
@@ -35,7 +35,7 @@ export const css = `
         border: 1px solid var(--sfdl-neutral-border);
         border-radius: 0.25rem;
         background: #ffffff;
-        color: #3e3e3c;
+        color: var(--sfdl-text, #16325c);
         font-size: 11px;
         line-height: 16px;
         cursor: pointer;

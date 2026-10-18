@@ -1,4 +1,11 @@
 export const css = `
+    /* The text of the whole console, in place of the near black of slds,
+       dropdowns included since slds gives them a colour of their own. */
+    html,
+    .slds-dropdown {
+        color: var(--sfdl-text, #16325c);
+    }
+
     /* The tabs sit on a light grey strip. The open one takes the light blue
        of the panel headers and joins the toolbar of its tab, as light blue. */
     .sfdl-console-tabs > .slds-tabs_scoped__nav {
@@ -16,7 +23,7 @@ export const css = `
     .sfdl-console-tabs .slds-tabs_scoped__link:hover {
         background: #fafaf9;
         border-color: transparent;
-        color: #181818;
+        color: var(--sfdl-text, #16325c);
     }
 
     .sfdl-console-tabs .slds-is-active .slds-tabs_scoped__link,
@@ -24,7 +31,7 @@ export const css = `
         background: var(--sfdl-left-tint, #edf5fd);
         border-left-color: var(--sfdl-left-border, #b9d6f2);
         border-right-color: var(--sfdl-left-border, #b9d6f2);
-        color: #181818;
+        color: var(--sfdl-text, #16325c);
     }
 
     .sfdl-console-log-list-section .sfdl-log-list-panel__org {

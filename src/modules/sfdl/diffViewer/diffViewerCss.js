@@ -93,7 +93,7 @@ export const css = `
 
     .sfdl-diff-viewer .sfdl-diff-count {
         min-width: 8.5rem;
-        color: #3e3e3c;
+        color: var(--sfdl-text, #16325c);
         font-size: 12px;
         text-align: center;
     }
@@ -119,7 +119,7 @@ export const css = `
         align-items: center;
         gap: 4px;
         margin-left: 6px;
-        color: #3e3e3c;
+        color: var(--sfdl-text, #16325c);
         font-size: 12px;
         cursor: pointer;
         white-space: nowrap;
@@ -142,7 +142,7 @@ export const css = `
     .sfdl-diff-viewer .sfdl-diff-banner_notice {
         background: #f3f3f3;
         border-color: #dddbda;
-        color: #3e3e3c;
+        color: var(--sfdl-text, #16325c);
     }
 
     .sfdl-diff-viewer .sfdl-diff-body {

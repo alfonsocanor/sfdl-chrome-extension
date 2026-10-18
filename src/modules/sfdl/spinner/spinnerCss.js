@@ -7,7 +7,7 @@ export const css = `
         right: 0;
         left: 0;
         padding: 0 1rem;
-        color: #3e3e3c;
+        color: var(--sfdl-text, #16325c);
         text-align: center;
     }
 `;
