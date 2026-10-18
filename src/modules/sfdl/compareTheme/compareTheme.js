@@ -2,7 +2,9 @@ import { adoptStyleSheet } from 'sfdl/styleSheets';
 
 //One set of light tints for everything the compare tabs show: whatever comes
 //from the left side is blue and whatever comes from the right side is amber,
-//from the panel headers down to the highlighted lines of the diff.
+//from the panel headers down to the highlighted lines of the diff. What two
+//orgs hold alike is green, what they hold differently is a warning yellow,
+//apart from the amber of the right side.
 export const SIDE_COLORS = {
     left: { tint: '#edf5fd', border: '#b9d6f2', text: '#0b5cab', swatch: '#5a9be0' },
     right: { tint: '#fdf5ea', border: '#efd3a8', text: '#8c4b02', swatch: '#e3a04f' }
@@ -18,9 +20,12 @@ export const css = `
         --sfdl-right-border: ${SIDE_COLORS.right.border};
         --sfdl-right-text: ${SIDE_COLORS.right.text};
         --sfdl-right-swatch: ${SIDE_COLORS.right.swatch};
-        --sfdl-different-tint: #f3f1fb;
-        --sfdl-different-border: #d7d0f0;
-        --sfdl-different-text: #5a4a9e;
+        --sfdl-different-tint: #fdf3d1;
+        --sfdl-different-border: #efd27a;
+        --sfdl-different-text: #6b4f00;
+        --sfdl-identical-tint: #ebf7e6;
+        --sfdl-identical-border: #b7dfab;
+        --sfdl-identical-text: #22683e;
         --sfdl-neutral-tint: #f3f3f3;
         --sfdl-neutral-border: #dddbda;
         --sfdl-neutral-text: #706e6b;
@@ -110,9 +115,9 @@ export const css = `
     }
 
     .sfdl-status-badge_identical {
-        background: var(--sfdl-neutral-tint);
-        border-color: var(--sfdl-neutral-border);
-        color: var(--sfdl-neutral-text);
+        background: var(--sfdl-identical-tint);
+        border-color: var(--sfdl-identical-border);
+        color: var(--sfdl-identical-text);
     }
 `;
 

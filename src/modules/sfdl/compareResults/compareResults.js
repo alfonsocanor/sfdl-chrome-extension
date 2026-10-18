@@ -27,7 +27,8 @@ const BADGE_COLORS = {
     [LEFT_ONLY]: 'left',
     [RIGHT_ONLY]: 'right',
     [IDENTICAL]: 'identical',
-    [UNAVAILABLE]: 'identical'
+    //Nothing came back to tell, it is no match either.
+    [UNAVAILABLE]: 'pending'
 };
 
 //What the listings tell before anything is compared: which org holds a

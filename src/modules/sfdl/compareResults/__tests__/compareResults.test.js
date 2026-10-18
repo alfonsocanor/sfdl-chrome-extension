@@ -228,6 +228,14 @@ describe('sfdl-compare-results', () => {
             expect(
                 rows(element)[1].querySelector('.sfdl-status-badge').textContent
             ).toBe('Not retrieved');
+            expect(
+                rows(element).map(
+                    (row) => row.querySelector('.sfdl-status-badge').className
+                )
+            ).toEqual([
+                'sfdl-status-badge sfdl-status-badge_identical',
+                'sfdl-status-badge sfdl-status-badge_pending'
+            ]);
         });
 
         it('shows a long list a page at a time', async () => {

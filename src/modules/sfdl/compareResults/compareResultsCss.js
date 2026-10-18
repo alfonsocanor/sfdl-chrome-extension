@@ -19,9 +19,9 @@ export const css = `
     }
 
     .sfdl-compare-results__summary_identical {
-        background: #ebf7e6;
-        border-color: #b7dfab;
-        color: #22683e;
+        background: var(--sfdl-identical-tint);
+        border-color: var(--sfdl-identical-border);
+        color: var(--sfdl-identical-text);
     }
 
     .sfdl-compare-results__filters {
