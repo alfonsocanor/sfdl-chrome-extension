@@ -36,7 +36,7 @@ describe('sfdl-diff-viewer', () => {
             expect(monaco.editor.createDiffEditor).not.toHaveBeenCalled();
         });
 
-        it('draws the two panes of the diff while loading, what it waits for above them', async () => {
+        it('draws the two panes of the diff alone while loading, what it waits for only read out', async () => {
             const element = await createDiffViewer({
                 loading: true,
                 emptyMessage: 'Retrieving Utils from both orgs...'
@@ -47,7 +47,8 @@ describe('sfdl-diff-viewer', () => {
 
             expect(stencil.type).toBe('diff');
             expect(stencil.panes).toBe(2);
-            expect(stencil.message).toBe('Retrieving Utils from both orgs...');
+            expect(stencil.label).toBe('Retrieving Utils from both orgs...');
+            expect(stencil.message).toBeUndefined();
             expect(emptyState(element)).toBeNull();
         });
 
@@ -68,7 +69,7 @@ describe('sfdl-diff-viewer', () => {
             ).toBe(1);
         });
 
-        it('writes no message over a diff already on screen', async () => {
+        it('reads out that it is comparing over a diff already on screen', async () => {
             const element = await createDiffViewer({
                 loading: true,
                 leftContent: 'a',
@@ -77,8 +78,8 @@ describe('sfdl-diff-viewer', () => {
             });
 
             expect(
-                element.shadowRoot.querySelector('sfdl-loading-stencil').message
-            ).toBeUndefined();
+                element.shadowRoot.querySelector('sfdl-loading-stencil').label
+            ).toBe('Comparing');
         });
     });
 
@@ -100,9 +101,6 @@ describe('sfdl-diff-viewer', () => {
             expect(
                 element.shadowRoot.querySelector('.sfdl-diff-right-label')
             ).toBeNull();
-            expect(
-                element.shadowRoot.querySelector('.sfdl-diff-summary__actions')
-            ).not.toBeNull();
             expect(count(element)).toBeNull();
             expect(
                 element.shadowRoot.querySelector('.sfdl-diff-next')
@@ -592,7 +590,7 @@ describe('sfdl-diff-viewer', () => {
             expect(sideLoading(element).style.right).toBe('0px');
             expect(stencil.type).toBe('diff');
             expect(stencil.panes).toBe('1');
-            expect(stencil.message).toBe('Comparing with acme--qa...');
+            expect(stencil.label).toBe('Comparing with acme--qa...');
             expect(
                 element.shadowRoot.querySelector('.sfdl-diff-empty')
             ).toBeNull();

@@ -190,6 +190,10 @@ export default class DiffViewer extends LightningElement{
         return this.sideLoadingMessage || 'Loading';
     }
 
+    get loadingLabel(){
+        return this.loadingMessage || 'Comparing';
+    }
+
     //Inline, both sides share one pane, and the whole of it waits.
     get sideLoadingStyle(){
         if(this.isInline){

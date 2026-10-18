@@ -23,15 +23,15 @@ export const css = `
         border-bottom: 1px solid #dddbda;
     }
 
+    /* Each side as wide as its name, and the first to give way when the bar
+       runs short. The middle takes the room between them and centres what it
+       holds there, so the name of each side is as far from it as the other. */
     .sfdl-diff-viewer .sfdl-diff-summary__side {
         display: flex;
-        flex: 1 1 0;
-        min-width: 0;
-    }
-
-    .sfdl-diff-viewer .sfdl-diff-summary__side {
+        flex: 0 1000 auto;
         align-items: center;
         gap: 6px;
+        min-width: 0;
     }
 
     .sfdl-diff-viewer .sfdl-diff-summary__side_right {
@@ -71,24 +71,15 @@ export const css = `
 
     .sfdl-diff-viewer .sfdl-diff-summary__center {
         display: flex;
-        flex: 0 1 auto;
+        flex: 1 1 auto;
         align-items: center;
+        justify-content: center;
         gap: 6px;
         min-width: 0;
     }
 
     .sfdl-diff-viewer .sfdl-diff-summary__center > * {
         flex: 0 0 auto;
-    }
-
-    .sfdl-diff-viewer .sfdl-diff-summary__actions {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-    }
-
-    .sfdl-diff-viewer .sfdl-diff-summary__actions:not(:empty) {
-        margin-right: 10px;
     }
 
     .sfdl-diff-viewer .sfdl-diff-count {

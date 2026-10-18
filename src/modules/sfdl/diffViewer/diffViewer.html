@@ -17,9 +17,6 @@
                 </template>
             </div>
             <div class="sfdl-diff-summary__center">
-                <div class="sfdl-diff-summary__actions">
-                    <slot name="actions"></slot>
-                </div>
                 <!-- With nothing to compare there is nothing to count or show
                      differently, the chips keep the height of the bar. While
                      comparing, it only says so. -->
@@ -99,20 +96,18 @@
                     <sfdl-loading-stencil
                         type="diff"
                         panes="1"
-                        message={sideLoadingMessage}
                         label={sideLoadingLabel}>
                     </sfdl-loading-stencil>
                 </div>
             </template>
-            <!-- Loading, the lines of the diff stand where it will, what it waits
-                 for written above them. -->
+            <!-- Loading, the lines of the diff stand where it will, alone: what
+                 it waits for is only read out. -->
             <template if:true={loading}>
                 <sfdl-loading-stencil
                     class="sfdl-diff-stencil"
                     type="diff"
                     panes={stencilPanes}
-                    message={loadingMessage}
-                    label="Comparing">
+                    label={loadingLabel}>
                 </sfdl-loading-stencil>
             </template>
         </div>
