@@ -1,13 +1,5 @@
 <template>
   <div style="display: flex; flex-direction: column; min-height: 100vh;">
-    <header class="sfdl-console-header slds-theme_default slds-border_bottom slds-p-around_small" style="z-index:1;">
-      <sfdl-picklist 
-        onsessioninformation={handleSessionInformation}
-        onenablepicklistbuttons={handleActivateActionButtons}
-        placeholder="Select your domain">
-      </sfdl-picklist> 
-    </header>
-
     <div class="slds-tabs_default__content slds-show" style="flex: 1; padding:0;">
       <div class="slds-tabs_scoped slds-tabs_small">
         <ul class="slds-tabs_scoped__nav" style="border-radius: 0; border-top: none; border-right: none;">
@@ -29,8 +21,14 @@
           <div class={analyseViewClass}>
             <div class="sfdl-body-tab" style={sectionStyle}>
               <div class="slds-size_3-of-12 sfdl-console-log-list-section slds-panel slds-size_medium slds-panel_docked slds-panel_docked-left slds-panel_drawer slds-is-open">
-                <div class="slds-panel__header" style="padding:15px;">
-                  <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Panel Header">Log List</h2>
+                <!-- The org whose logs are listed, picked under the title. -->
+                <div class="slds-panel__header sfdl-log-list-panel__header">
+                  <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title="Log List">Log List</h2>
+                  <sfdl-picklist
+                    onsessioninformation={handleSessionInformation}
+                    onenablepicklistbuttons={handleActivateActionButtons}
+                    placeholder="Select your domain">
+                  </sfdl-picklist>
                 </div>
                 <div class="slds-panel__body">
                   <template if:true={renderLogList}>

@@ -42,6 +42,11 @@ export const css = `
         padding: 8px 12px;
     }
 
+    /* What the header holds in place of a title sits level with the toggle. */
+    .sfdl-side-panel_untitled .sfdl-side-panel__header {
+        align-items: center;
+    }
+
     .sfdl-side-panel_left .sfdl-side-panel__header {
         background: var(--sfdl-left-tint);
         border-bottom-color: var(--sfdl-left-border);

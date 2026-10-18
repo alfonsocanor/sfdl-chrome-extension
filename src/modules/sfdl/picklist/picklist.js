@@ -1,5 +1,12 @@
 import { LightningElement, api } from 'lwc';
 import { showToastEvent, getValueLocalStorage, clearLocalStorage } from 'sfdl/utils';
+import { adoptStyleSheet } from 'sfdl/styleSheets';
+import { css } from './picklistCss';
+
+//The address of an org without its scheme, what fits a narrow column.
+function withoutScheme(url){
+    return url ? url.replace('https://', '') : url;
+}
 
 export default class Picklist extends LightningElement {
     searchIcon = '/slds/icons/utility/search.svg';
@@ -20,7 +27,16 @@ export default class Picklist extends LightningElement {
     futureFunctionality = true;
     
     connectedCallback(){
+        adoptStyleSheet(css);
         this.valueSelected = this.placeholder ? this.placeholder : 'Pick up an org...';
+    }
+
+    get valueToDisplay(){
+        return withoutScheme(this.valueSelected);
+    }
+
+    get orgOptions(){
+        return this.picklist.map(org => ({ ...org, name: withoutScheme(org.label) }));
     }
 
     handlerClearLocalStorage(){

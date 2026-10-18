@@ -29,7 +29,7 @@ export default class Console extends LightningElement {
     logsBodyHeight = 0;
     logsToolbarHeight = 0;
     orgs = [];
-    //Two logs of the org of the header compared in place of the editor,
+    //Two logs of the org of the log list compared in place of the editor,
     //{ left, right } each being { log, sessionInformation }.
     pairComparison = null;
 
@@ -60,7 +60,6 @@ export default class Console extends LightningElement {
     }
 
     updateHeight(){
-        let sfdlConsoleHeader = this.template.querySelector('.sfdl-console-header');
         let sfdlFooterContainer = this.template.querySelector('.sfdl-footer-container');
         let tabs = this.template.querySelector('.slds-tabs_scoped__nav');
         let logsToolbar = this.template.querySelector('.sfdl-debug-logs__toolbar');
@@ -74,7 +73,7 @@ export default class Console extends LightningElement {
         }
 
         if(sfdlBodyTab) {
-            this.bodyHeight = (windowHeight - sfdlConsoleHeader.clientHeight - sfdlFooterContainer.clientHeight - tabs.clientHeight - 4);
+            this.bodyHeight = (windowHeight - sfdlFooterContainer.clientHeight - tabs.clientHeight - 4);
             this.logsBodyHeight = this.bodyHeight - this.logsToolbarHeight;
             sfdlBodyTab.style.height = this.logsBodyHeight + 'px';
             this.template.querySelector('sfdl-log-details').setMonacoEditorHeight(this.logsBodyHeight - 50);
@@ -245,7 +244,7 @@ export default class Console extends LightningElement {
 
     get logsHint(){
         return this.isAnalyseMode ?
-            'Pick a log to read it, or tick two logs and compare them side by side.' :
+            'Pick an org in the log list, then a log to read it, or tick two logs and compare them side by side.' :
             'Pick an org on each side, then click a log on each side to compare them. The arrows walk a list.';
     }
 

@@ -2,17 +2,11 @@
     <div class="sfdl-compare-logs" style={containerStyle}>
         <div class="sfdl-compare-logs__body">
             <template if:false={isPairMode}>
-                <sfdl-side-panel class="sfdl-compare-logs__left-panel" title="Left org" subtitle={leftOrgLabel} side="left" width="18rem">
-                    <button
-                        slot="actions"
-                        class="sfdl-compare-logs__swap slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
-                        style="width:22px;height:22px;padding:2px;"
-                        title="Swap the orgs and the logs of both sides"
-                        disabled={isSwapDisabled}
-                        onclick={handleSwap}>
-                        <img class="sfdl-swap-icon" src={swapIcon} alt="swap sides"/>
-                    </button>
+                <!-- The org of each side is picked where its title would be, its
+                     colour telling the side. -->
+                <sfdl-side-panel class="sfdl-compare-logs__left-panel" label="Left org" side="left" width="18rem">
                     <sfdl-combobox
+                        slot="header"
                         class="sfdl-compare-logs__org-picker"
                         side="left"
                         label="Left org"
@@ -67,8 +61,9 @@
                 </sfdl-diff-viewer>
             </div>
             <template if:false={isPairMode}>
-                <sfdl-side-panel class="sfdl-compare-logs__right-panel" title="Right org" subtitle={rightOrgLabel} side="right" width="18rem">
+                <sfdl-side-panel class="sfdl-compare-logs__right-panel" label="Right org" side="right" width="18rem">
                     <sfdl-combobox
+                        slot="header"
                         class="sfdl-compare-logs__org-picker"
                         side="right"
                         label="Right org"

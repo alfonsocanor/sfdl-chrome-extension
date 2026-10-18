@@ -135,4 +135,22 @@ describe('sfdl-side-panel', () => {
             'header'
         );
     });
+
+    it('gives its header to what it holds when it has no title', async () => {
+        const element = createSidePanel({ title: undefined, label: 'Left org' });
+
+        expect(
+            element.shadowRoot.querySelector('.slds-panel__header-title')
+        ).toBeNull();
+        expect(panel(element).classList).toContain('sfdl-side-panel_untitled');
+        expect(collapseButton(element).title).toBe('Collapse Left org');
+
+        click(collapseButton(element));
+        await flushPromises();
+
+        expect(
+            element.shadowRoot.querySelector('.sfdl-side-panel__strip-title')
+                .textContent
+        ).toBe('Left org');
+    });
 });

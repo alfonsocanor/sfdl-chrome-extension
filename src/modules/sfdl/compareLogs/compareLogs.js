@@ -69,7 +69,7 @@ export default class CompareLogs extends LightningElement{
     set sessionInformation(sessionInformation){
         this._sessionInformation = sessionInformation;
 
-        //The left side starts on the org of the header, and goes its own way
+        //The left side starts on the org of the log list, and goes its own way
         //as soon as it has one, unless the right side has that org already.
         const headerOrgSession = this.headerOrgSession();
         if(!this.leftOrgSession && headerOrgSession && headerOrgSession.instanceUrl !== this.rightOrgUrl){
@@ -166,15 +166,7 @@ export default class CompareLogs extends LightningElement{
         return this.rightOrgSession ? this.rightOrgSession.instanceUrl : undefined;
     }
 
-    get leftOrgLabel(){
-        return this.leftOrgUrl ? this.leftOrgUrl.replace('https://', '') : 'No org picked yet';
-    }
-
-    get rightOrgLabel(){
-        return this.rightOrgUrl ? this.rightOrgUrl.replace('https://', '') : 'No org picked yet';
-    }
-
-    //The where clause of the header belongs to the analyse list, each side
+    //The where clause of the log list belongs to the analyse list, each side
     //here filters its own list.
     headerOrgSession(){
         return this.hasHeaderOrg ?
@@ -198,19 +190,9 @@ export default class CompareLogs extends LightningElement{
         return 'Pick a log on each side to compare them.';
     }
 
-    get isSwapDisabled(){
-        return !this.left && !this.right && !this.leftOrgSession && !this.rightOrgSession;
-    }
-
-    //Each side keeps its colour, what moves is the content: the logs, and the
-    //orgs they come from.
+    //The two logs of a pair change places, each side keeping its colour.
     handleSwap(){
         [this.left, this.right] = [this.right, this.left];
-
-        if(!this.isPairMode){
-            [this.leftOrgSession, this.rightOrgSession] = [this.rightOrgSession, this.leftOrgSession];
-        }
-
         this.refreshComparison();
     }
 

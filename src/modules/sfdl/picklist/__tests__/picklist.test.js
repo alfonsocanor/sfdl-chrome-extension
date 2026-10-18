@@ -65,10 +65,10 @@ describe('sfdl-picklist', () => {
 
         expect(
             [...options(element)].map((option) => option.textContent.trim())
-        ).toEqual([
-            'https://acme.my.salesforce.com',
-            'https://globex.my.salesforce.com'
-        ]);
+        ).toEqual(['acme.my.salesforce.com', 'globex.my.salesforce.com']);
+        expect(options(element)[0].dataset.domain).toBe(
+            'https://acme.my.salesforce.com'
+        );
     });
 
     it('warns the user when there is no active org session', async () => {
@@ -142,7 +142,7 @@ describe('sfdl-picklist', () => {
             instanceUrl: 'https://globex.my.salesforce.com',
             queryWhere: ''
         });
-        expect(selectedValue(element)).toBe('https://globex.my.salesforce.com');
+        expect(selectedValue(element)).toBe('globex.my.salesforce.com');
     });
 
     it('carries the query filter into the session information', async () => {

@@ -20,7 +20,9 @@ Boosts productivity during debugging process Apex log analysis
 
 ## Downloading logs
 
-The log list offers three ways of getting logs out of the org:
+Pick the org under the **Log List** title of the Debug Logs tab, next to the buttons that
+query its logs again and filter that query. The log list then offers three ways of
+getting logs out of the org:
 
 - **One log at a time**: every row in the log list has a download icon on its right. It
   saves that single log as a plain `.log` file, no zip involved.
@@ -45,11 +47,12 @@ shows in light blue, whatever comes only from the right log in light amber.
   the editor, the one further down the list, the older one, on the left. The buttons of
   the diff swap them or close the comparison and go back to the log.
 - **Two orgs**: four columns, the logs of the left org, the left log, the right log and
-  the logs of the right org. Each side picks its own org, the left one starts on the
-  org of the header, and an org picked on one side is not offered on the other. Click a
-  log to compare it on its side, or walk a list with the arrow keys to compare each log
-  against the other side as you go. Both lists filter by any word of the log name and
-  fold away, and the button next to the left org swaps the sides.
+  the logs of the right org. Each side picks its own org at the top of its column, the
+  border of the picker in the colour of its side and its name on hover. The left one
+  starts on the org of the log list, and an org picked on one side is not offered on
+  the other. Click a log to compare it on its side, or walk a list with the arrow keys
+  to compare each log against the other side as you go. Both lists filter by any word
+  of the log name and fold away.
 
 The bar above the diff counts the differences, walks them with the chevrons and switches
 to a single column or to ignoring whitespace. Its filter menu holds the filters of the
@@ -139,7 +142,7 @@ the LWC jest transformer does not ship with.
 3. Log in to the Salesforce org you want to analyse in the same browser profile, then
    click the sfdl icon and **Launch sfdl Console Station**.
 4. Walk through the checklist:
-   - the org shows up in the picker and the log list fills in
+   - the org shows up in the picker under the Log List title and the list fills in
    - clicking a log renders it in the editor with the log name in the header
    - the download icon on a single row saves one `.log` file
    - ticking rows turns the button into `Download selected logs (n)` and saves only

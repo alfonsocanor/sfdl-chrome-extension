@@ -94,6 +94,12 @@ describe('sfdl-console', () => {
 
             expect(picklist(element)).not.toBeNull();
             expect(
+                picklist(element).closest('.sfdl-console-log-list-section')
+            ).not.toBeNull();
+            expect(
+                element.shadowRoot.querySelector('.sfdl-console-header')
+            ).toBeNull();
+            expect(
                 [
                     ...element.shadowRoot.querySelectorAll(
                         '.slds-tabs_scoped__link'
@@ -227,7 +233,7 @@ describe('sfdl-console', () => {
                 element.shadowRoot.querySelector('.sfdl-debug-logs__hint')
                     .textContent
             ).toBe(
-                'Pick a log to read it, or tick two logs and compare them side by side.'
+                'Pick an org in the log list, then a log to read it, or tick two logs and compare them side by side.'
             );
         });
 
@@ -523,7 +529,7 @@ describe('sfdl-console', () => {
             expect(pairComparison(element)).toBeNull();
         });
 
-        it('closes when another org is picked in the header', async () => {
+        it('closes when another org is picked for the log list', async () => {
             const element = await createConsole();
             await selectOrg(element);
             await compareTwoLogs(element);

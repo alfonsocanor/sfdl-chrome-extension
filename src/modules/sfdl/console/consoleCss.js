@@ -30,6 +30,13 @@ export const css = `
         transition-behavior: allow-discrete;
     }
 
+    .sfdl-console-log-list-section .sfdl-log-list-panel__header {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+        padding: 12px 15px;
+    }
+
     .sfdl-debug-logs__toolbar {
         display: flex;
         align-items: center;

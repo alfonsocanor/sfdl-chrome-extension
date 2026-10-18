@@ -12,6 +12,9 @@ const COLLAPSED_WIDTH = '2.5rem';
 export default class SidePanel extends LightningElement{
     @api title;
     @api subtitle;
+    //Names a panel without a title, whose header holds a picker instead: on
+    //its toggle and on its folded strip.
+    @api label;
     //left or right: the colour of the panel, none for a neutral one.
     @api side;
     //left or right: the edge the panel is docked to, the side when not given.
@@ -44,6 +47,7 @@ export default class SidePanel extends LightningElement{
     get panelClass(){
         return 'sfdl-side-panel sfdl-side-panel_dock-' + this.dockedTo +
             (this.side ? ' sfdl-side-panel_' + this.side : '') +
+            (this.title ? '' : ' sfdl-side-panel_untitled') +
             (this._collapsed ? ' sfdl-side-panel_collapsed' : '');
     }
 
@@ -69,12 +73,16 @@ export default class SidePanel extends LightningElement{
         return this.isDockedRight ? TOGGLE_PANEL_LEFT_ICON : TOGGLE_PANEL_RIGHT_ICON;
     }
 
+    get name(){
+        return this.title || this.label;
+    }
+
     get collapseTitle(){
-        return 'Collapse ' + (this.title || 'panel');
+        return 'Collapse ' + (this.name || 'panel');
     }
 
     get expandTitle(){
-        return 'Expand ' + (this.title || 'panel');
+        return 'Expand ' + (this.name || 'panel');
     }
 
     handleToggle(){

@@ -99,8 +99,6 @@ const panel = (element, side) =>
     element.shadowRoot.querySelector(`.sfdl-compare-logs__${side}-panel`);
 const diffViewer = (element) =>
     element.shadowRoot.querySelector('sfdl-diff-viewer');
-const swapButton = (element) =>
-    element.shadowRoot.querySelector('.sfdl-compare-logs__swap');
 const bodyDownloads = () =>
     fetch.mock.calls.map(([url]) => url).filter((url) => url.endsWith('/Body'));
 
@@ -168,7 +166,7 @@ describe('sfdl-compare-logs', () => {
             expect(
                 sideList(element, 'right').sessionInformation
             ).toBeUndefined();
-            expect(panel(element, 'right').subtitle).toBe('No org picked yet');
+            expect(orgPicker(element, 'right').value).toBeUndefined();
         });
 
         it('takes the header org for the left side when it comes later', async () => {
@@ -188,8 +186,8 @@ describe('sfdl-compare-logs', () => {
             expect(sideList(element, 'right').sessionInformation).toEqual(
                 GLOBEX
             );
-            expect(panel(element, 'right').subtitle).toBe(
-                'globex.my.salesforce.com'
+            expect(orgPicker(element, 'right').value).toBe(
+                GLOBEX.instanceUrl
             );
         });
 
@@ -504,30 +502,21 @@ describe('sfdl-compare-logs', () => {
         });
     });
 
-    describe('swapping and folding', () => {
-        it('cannot swap before an org or a log is on either side', async () => {
-            const element = await createCompareLogs({
-                sessionInformation: undefined
+    describe('the panels', () => {
+        it('pick the org of each side in place of a title, with no swap', async () => {
+            const element = await createCompareLogs();
+
+            ['left', 'right'].forEach((side) => {
+                expect(panel(element, side).title).toBeUndefined();
+                expect(panel(element, side).subtitle).toBeUndefined();
+                expect(orgPicker(element, side).slot).toBe('header');
+                expect(orgPicker(element, side).side).toBe(side);
             });
-
-            expect(swapButton(element).disabled).toBe(true);
-        });
-
-        it('swaps the orgs along with their logs', async () => {
-            const log = newLog('Jane Roe | Api');
-            const element = await ready();
-            await selectLog(element, 'left', log);
-
-            swapButton(element).click();
-            await wait();
-
-            expect(sideList(element, 'left').sessionInformation).toEqual(
-                GLOBEX
-            );
-            expect(sideList(element, 'right').sessionInformation).toEqual(
-                ACME_SESSION
-            );
-            expect(sideList(element, 'right').rightLogId).toBe(log.id);
+            expect(panel(element, 'left').label).toBe('Left org');
+            expect(panel(element, 'right').label).toBe('Right org');
+            expect(
+                element.shadowRoot.querySelector('.sfdl-swap-icon')
+            ).toBeNull();
         });
 
         it('folds either side on its own', async () => {
