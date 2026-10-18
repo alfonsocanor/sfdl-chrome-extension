@@ -1,6 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { adoptCompareTheme } from 'sfdl/compareTheme';
+import { areStepBadgesDismissed, dismissStepBadges, onStepBadgesDismissed } from 'sfdl/stepBadges';
 import { css } from './comboboxCss';
 
 const DOWN_ICON = '/slds/icons/utility/down.svg';
@@ -44,9 +45,27 @@ export default class Combobox extends LightningElement{
     highlightedValue;
     downIcon = DOWN_ICON;
 
+    //Hidden until the storage says the user did not close them for good.
+    areBadgesDismissed = true;
+    //The ding the badge comes in with plays once: shown again with its tab or
+    //its view, it stays still.
+    isBadgeSettled = false;
+
     connectedCallback(){
         adoptStyleSheet(css);
         adoptCompareTheme();
+        this.stopListeningToBadges = onStepBadgesDismissed(() => {
+            this.areBadgesDismissed = true;
+        });
+        areStepBadgesDismissed().then(dismissed => {
+            this.areBadgesDismissed = dismissed;
+        });
+    }
+
+    disconnectedCallback(){
+        if(this.stopListeningToBadges){
+            this.stopListeningToBadges();
+        }
     }
 
     get selectedOption(){
@@ -67,16 +86,30 @@ export default class Combobox extends LightningElement{
     }
 
     get showBadge(){
-        return this.badge !== undefined && this.badge !== null && this.badge !== '' && !this.selectedOption;
+        return !this.areBadgesDismissed &&
+            this.badge !== undefined && this.badge !== null && this.badge !== '' &&
+            !this.selectedOption;
     }
 
     get badgeClass(){
-        return 'slds-notification-badge slds-show-notification sfdl-combobox-badge' +
+        return 'slds-notification-badge sfdl-combobox-badge' +
+            (this.isBadgeSettled ? '' : ' sfdl-combobox-badge_entering') +
             (this.badgePulse ? ' sfdl-combobox-badge_pulse' : '');
     }
 
     get badgeTitle(){
-        return 'Step ' + this.badge + (this.label ? ': ' + this.label : '');
+        return 'Step ' + this.badge + (this.label ? ': ' + this.label : '') + '. Click to hide the numbers of the steps';
+    }
+
+    handleBadgeAnimationEnd(event){
+        if(event.animationName === 'ding'){
+            this.isBadgeSettled = true;
+        }
+    }
+
+    handleBadgeDismiss(event){
+        event.stopPropagation();
+        dismissStepBadges();
     }
 
     get showLabel(){

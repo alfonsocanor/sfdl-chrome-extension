@@ -5,9 +5,21 @@
         </template>
         <div class={controlClass}>
             <div class="slds-combobox_container">
-                <!-- The step this picker is, on its corner while it waits for a value. -->
+                <!-- The step this picker is, on its corner while it waits for a
+                     value. Hovered, an X takes the place of the number, to close
+                     the numbers of the steps for good. -->
                 <template if:true={showBadge}>
-                    <span class={badgeClass} title={badgeTitle} aria-hidden="true">{badge}</span>
+                    <button
+                        type="button"
+                        class={badgeClass}
+                        title={badgeTitle}
+                        aria-label="Hide the numbers of the steps"
+                        tabindex="-1"
+                        onclick={handleBadgeDismiss}
+                        onanimationend={handleBadgeAnimationEnd}>
+                        <span class="sfdl-combobox-badge__number">{badge}</span>
+                        <span class="sfdl-combobox-badge__close" aria-hidden="true">&times;</span>
+                    </button>
                 </template>
                 <div class={comboboxClass}>
                     <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">

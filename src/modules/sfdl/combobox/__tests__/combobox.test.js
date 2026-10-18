@@ -277,33 +277,127 @@ describe('sfdl-combobox', () => {
         const badge = (element) =>
             element.shadowRoot.querySelector('.sfdl-combobox-badge');
 
-        it('shows the number of its step on its corner while it has no value', () => {
-            const element = createCombobox({ label: 'Right org', badge: 2 });
+        // The badges wait for the storage to say they were not closed.
+        async function createWithBadge(properties) {
+            const element = createCombobox(properties);
+            await new Promise((resolve) => setTimeout(resolve, 0));
+            return element;
+        }
 
-            expect(badge(element).textContent).toBe('2');
+        function endAnimation(node, animationName) {
+            const event = new CustomEvent('animationend');
+            event.animationName = animationName;
+            node.dispatchEvent(event);
+        }
+
+        it('shows the number of its step on its corner while it has no value', async () => {
+            const element = await createWithBadge({
+                label: 'Right org',
+                badge: 2
+            });
+
+            expect(
+                badge(element).querySelector('.sfdl-combobox-badge__number')
+                    .textContent
+            ).toBe('2');
             expect(badge(element).classList).toContain(
                 'slds-notification-badge'
             );
-            expect(badge(element).title).toBe('Step 2: Right org');
+            expect(badge(element).title).toBe(
+                'Step 2: Right org. Click to hide the numbers of the steps'
+            );
             expect(badge(element).classList).not.toContain(
                 'sfdl-combobox-badge_pulse'
             );
         });
 
-        it('pulses for the step to take next', () => {
-            const element = createCombobox({ badge: 1, badgePulse: true });
+        it('pulses for the step to take next', async () => {
+            const element = await createWithBadge({
+                badge: 1,
+                badgePulse: true
+            });
 
             expect(badge(element).classList).toContain(
                 'sfdl-combobox-badge_pulse'
             );
         });
 
-        it('goes once it has a value, and has none without a step', () => {
-            const picked = createCombobox({ badge: 1, value: 'ApexClass' });
-            const plain = createCombobox();
+        it('goes once it has a value, and has none without a step', async () => {
+            const picked = await createWithBadge({
+                badge: 1,
+                value: 'ApexClass'
+            });
+            const plain = await createWithBadge();
 
             expect(badge(picked)).toBeNull();
             expect(badge(plain)).toBeNull();
+        });
+
+        it('dings in once, and stays still when its view is shown again', async () => {
+            const element = await createWithBadge({
+                badge: 1,
+                badgePulse: true
+            });
+            expect(badge(element).classList).toContain(
+                'sfdl-combobox-badge_entering'
+            );
+
+            endAnimation(badge(element), 'sfdl-combobox-badge-pulse');
+            await flushPromises();
+            expect(badge(element).classList).toContain(
+                'sfdl-combobox-badge_entering'
+            );
+
+            endAnimation(badge(element), 'ding');
+            await flushPromises();
+            expect(badge(element).classList).not.toContain(
+                'sfdl-combobox-badge_entering'
+            );
+            expect(badge(element).classList).toContain(
+                'sfdl-combobox-badge_pulse'
+            );
+        });
+
+        it('has an X for the hover, to close the numbers of the steps', async () => {
+            const element = await createWithBadge({ badge: 1 });
+
+            expect(
+                badge(element).querySelector('.sfdl-combobox-badge__close')
+                    .textContent
+            ).toBe('\u00d7');
+            expect(badge(element).getAttribute('aria-label')).toBe(
+                'Hide the numbers of the steps'
+            );
+        });
+
+        it('closes them on every picker, for good, without opening the list', async () => {
+            const first = await createWithBadge({ badge: 1 });
+            const second = await createWithBadge({ badge: 2 });
+            expect(badge(first)).not.toBeNull();
+            expect(badge(second)).not.toBeNull();
+
+            badge(first).click();
+            await flushPromises();
+
+            expect(chrome.storage.local.set).toHaveBeenCalledWith({
+                stepBadgesDismissed: true
+            });
+            expect(badge(first)).toBeNull();
+            expect(badge(second)).toBeNull();
+            expect(combobox(first).classList).not.toContain('slds-is-open');
+        });
+
+        it('stays closed once the storage says so, until it is cleared', async () => {
+            chrome.storage.local.get.mockResolvedValue({
+                stepBadgesDismissed: true
+            });
+            const closed = await createWithBadge({ badge: 1 });
+
+            chrome.storage.local.get.mockResolvedValue({});
+            const cleared = await createWithBadge({ badge: 1 });
+
+            expect(badge(closed)).toBeNull();
+            expect(badge(cleared)).not.toBeNull();
         });
     });
 

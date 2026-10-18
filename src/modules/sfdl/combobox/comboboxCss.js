@@ -69,15 +69,53 @@ export const css = `
         z-index: 1;
         min-width: 1.125rem;
         min-height: 1.125rem;
+        padding: 0;
         font-size: 0.6875rem;
         font-weight: 700;
         line-height: 1;
         box-shadow: 0 0 0 2px #ffffff;
+        opacity: 1;
+        pointer-events: auto;
+        cursor: pointer;
+        transition: transform 0.15s ease-out;
+    }
+
+    /* Hovered, the X to close them takes the place of the number. */
+    .sfdl-combobox .sfdl-combobox-badge__close {
+        display: none;
+        font-size: 0.875rem;
+        font-weight: 400;
+    }
+
+    .sfdl-combobox .sfdl-combobox-badge:hover {
+        transform: scale(1.12);
+    }
+
+    .sfdl-combobox .sfdl-combobox-badge:hover .sfdl-combobox-badge__number {
+        display: none;
+    }
+
+    .sfdl-combobox .sfdl-combobox-badge:hover .sfdl-combobox-badge__close {
+        display: inline;
+    }
+
+    /* On the badge, the tooltip of the picker would cover the X. */
+    .sfdl-combobox .sfdl-combobox-control_side:has(.sfdl-combobox-badge:hover) > .sfdl-combobox-tooltip {
+        display: none;
+    }
+
+    /* The ding of slds, once, when the badge first comes. */
+    .sfdl-combobox .sfdl-combobox-badge.sfdl-combobox-badge_entering {
+        animation: ding 0.8s ease-out;
     }
 
     /* The step to take next breathes: a ring of its green swells and fades,
        again and again, after the ding it comes in with. */
     .sfdl-combobox .sfdl-combobox-badge.sfdl-combobox-badge_pulse {
+        animation: sfdl-combobox-badge-pulse 1.8s ease-out infinite;
+    }
+
+    .sfdl-combobox .sfdl-combobox-badge.sfdl-combobox-badge_entering.sfdl-combobox-badge_pulse {
         animation:
             ding 0.8s ease-out,
             sfdl-combobox-badge-pulse 1.8s ease-out 0.8s infinite;
@@ -97,7 +135,9 @@ export const css = `
 
     @media (prefers-reduced-motion: reduce) {
         .sfdl-combobox .sfdl-combobox-badge,
-        .sfdl-combobox .sfdl-combobox-badge.sfdl-combobox-badge_pulse {
+        .sfdl-combobox .sfdl-combobox-badge.sfdl-combobox-badge_entering,
+        .sfdl-combobox .sfdl-combobox-badge.sfdl-combobox-badge_pulse,
+        .sfdl-combobox .sfdl-combobox-badge.sfdl-combobox-badge_entering.sfdl-combobox-badge_pulse {
             animation: none;
         }
     }

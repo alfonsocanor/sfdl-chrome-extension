@@ -68,7 +68,8 @@ only from the right log in light amber.
 
 A new log on one side only reloads that side, the other one stays on screen. Each org
 picker still to fill carries the number of its step on its corner, in light green, the next
-one pulsing, and so does the metadata picker of Compare Metadata. A long
+one pulsing, an X on hover hiding them for good until the storage of the extension is
+cleared, and so does the metadata picker of Compare Metadata. A long
 list rises a `Back to the top` at the foot of its panel once scrolled half a panel down.
 
 The filters of a log are pills, outlined in blue on a light blue fill while on, each
