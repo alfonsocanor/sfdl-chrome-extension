@@ -17,8 +17,8 @@ export default class Combobox extends LightningElement{
     //left or right: the border takes the colour of that side and stands in
     //for the label, which shows on hover.
     @api side;
-    //The number of the step this picker is, in the alert red of slds on its
-    //top right corner while it has no value; pulsing for the step to take next.
+    //The number of the step this picker is, in light green on its top right
+    //corner while it has no value; pulsing for the step to take next.
     @api badge;
     @api badgePulse = false;
 

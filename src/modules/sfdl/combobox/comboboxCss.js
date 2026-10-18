@@ -58,8 +58,12 @@ export const css = `
     }
 
     /* The badge of the step, the notification badge of slds a little larger,
-       on a white ring so it stands off the field under it. */
+       in the light green of identical rather than its alert red, nothing
+       strong, on a white ring so it stands off the field. */
     .sfdl-combobox .sfdl-combobox-badge {
+        border: 1px solid var(--sfdl-identical-border, #b7dfab);
+        background: var(--sfdl-identical-tint, #ebf7e6);
+        color: var(--sfdl-identical-text, #22683e);
         top: -0.5rem;
         right: -0.5rem;
         z-index: 1;
@@ -71,7 +75,7 @@ export const css = `
         box-shadow: 0 0 0 2px #ffffff;
     }
 
-    /* The step to take next breathes: a ring of its red swells and fades,
+    /* The step to take next breathes: a ring of its green swells and fades,
        again and again, after the ding it comes in with. */
     .sfdl-combobox .sfdl-combobox-badge.sfdl-combobox-badge_pulse {
         animation:
@@ -81,13 +85,13 @@ export const css = `
 
     @keyframes sfdl-combobox-badge-pulse {
         0% {
-            box-shadow: 0 0 0 2px #ffffff, 0 0 0 2px rgba(186, 5, 23, 0.45);
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 2px rgba(34, 104, 62, 0.3);
         }
         70% {
-            box-shadow: 0 0 0 2px #ffffff, 0 0 0 9px rgba(186, 5, 23, 0);
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 9px rgba(34, 104, 62, 0);
         }
         100% {
-            box-shadow: 0 0 0 2px #ffffff, 0 0 0 9px rgba(186, 5, 23, 0);
+            box-shadow: 0 0 0 2px #ffffff, 0 0 0 9px rgba(34, 104, 62, 0);
         }
     }
 
