@@ -23,7 +23,9 @@ export const css = `
         box-shadow: inset 0 0 0 1px var(--sfdl-left-swatch), 0 0 3px #0176d3;
     }
 
-    /* One line per org, wider than the field when a name needs it. */
+    /* One line per org, wider than the field when a name needs it. It opens
+       from the left edge of the field and grows to the right, where the log
+       details have room, never past the left edge of the window. */
     .sfdl-picklist .slds-dropdown.slds-dropdown_fluid {
         width: max-content;
         min-width: 100%;

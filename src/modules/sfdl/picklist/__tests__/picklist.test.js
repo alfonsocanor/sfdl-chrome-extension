@@ -71,6 +71,14 @@ describe('sfdl-picklist', () => {
         );
     });
 
+    it('opens its list from the left edge of the field, towards the log details', () => {
+        const element = createPicklist();
+        const dropdown = element.shadowRoot.querySelector('.slds-dropdown');
+
+        expect(dropdown.classList).toContain('slds-dropdown_left');
+        expect(dropdown.classList).toContain('slds-dropdown_fluid');
+    });
+
     it('warns the user when there is no active org session', async () => {
         const element = createPicklist();
         element.setPicklistValues([]);
