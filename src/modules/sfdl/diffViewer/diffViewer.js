@@ -206,18 +206,27 @@ export default class DiffViewer extends LightningElement{
         return this.hasContent && this.lineChanges ? this.lineChanges.length : 0;
     }
 
+    get showControls(){
+        return this.hasContent || this.loading;
+    }
+
+    //The arrows only come with differences to step through.
+    get hasDifferences(){
+        return this.changeCount > 0;
+    }
+
     get hasNoDifferences(){
         return this.hasContent && !this.isSideLoading && !this.isComputing && this.lineChanges !== null && this.changeCount === 0;
     }
 
     get isNavigationDisabled(){
-        return !this.hasContent || this.isSideLoading || this.isComputing || !this.changeCount;
+        return this.isSideLoading || this.isComputing;
     }
 
     get changesLabel(){
-        //Nothing to count says nothing, the place stays for when there is.
+        //Without content the controls only show while the first comparison loads.
         if(!this.hasContent){
-            return this.loading ? 'Comparing...' : '';
+            return 'Comparing...';
         }
 
         if(this.isSideLoading || this.isComputing || this.lineChanges === null){

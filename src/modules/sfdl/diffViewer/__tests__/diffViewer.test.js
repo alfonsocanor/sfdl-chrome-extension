@@ -66,7 +66,7 @@ describe('sfdl-diff-viewer', () => {
         const count = (element) =>
             element.shadowRoot.querySelector('.sfdl-diff-count');
 
-        it('stays with nothing to compare, counting nothing', async () => {
+        it('stays with nothing to compare, without its controls', async () => {
             const element = await createDiffViewer({
                 emptyMessage: 'Pick the two orgs to compare.'
             });
@@ -74,17 +74,23 @@ describe('sfdl-diff-viewer', () => {
             expect(
                 element.shadowRoot.querySelector('.sfdl-diff-summary')
             ).not.toBeNull();
-            expect(count(element).textContent).toBe('');
             expect(
                 element.shadowRoot
                     .querySelector('.sfdl-diff-left-label')
                     .textContent.trim()
             ).toBe('Left');
             expect(
-                element.shadowRoot.querySelector('.sfdl-diff-next').disabled
-            ).toBe(true);
+                element.shadowRoot.querySelector('.sfdl-diff-summary__actions')
+            ).not.toBeNull();
+            expect(count(element)).toBeNull();
             expect(
-                element.shadowRoot.querySelector('.sfdl-diff-count_identical')
+                element.shadowRoot.querySelector('.sfdl-diff-next')
+            ).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-inline')
+            ).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-whitespace')
             ).toBeNull();
         });
 
@@ -144,10 +150,10 @@ describe('sfdl-diff-viewer', () => {
             element.rightContent = undefined;
             await flushPromises();
 
-            expect(count(element).textContent).toBe('');
+            expect(count(element)).toBeNull();
             expect(
-                element.shadowRoot.querySelector('.sfdl-diff-next').disabled
-            ).toBe(true);
+                element.shadowRoot.querySelector('.sfdl-diff-next')
+            ).toBeNull();
         });
     });
 
@@ -336,7 +342,7 @@ describe('sfdl-diff-viewer', () => {
             const element = await compare();
 
             expect(count(element).textContent).toBe('Comparing...');
-            expect(nextButton(element).disabled).toBe(true);
+            expect(nextButton(element)).toBeNull();
         });
 
         it('counts the differences and opens on the first one', async () => {
@@ -381,7 +387,8 @@ describe('sfdl-diff-viewer', () => {
             expect(identicalBanner(element).textContent).toContain(
                 'Both sides are identical.'
             );
-            expect(nextButton(element).disabled).toBe(true);
+            expect(nextButton(element)).toBeNull();
+            expect(previousButton(element)).toBeNull();
         });
 
         it('tells when the sides only differ in whitespace', async () => {
@@ -547,7 +554,28 @@ describe('sfdl-diff-viewer', () => {
                 element.shadowRoot.querySelector('.sfdl-diff-count_identical')
             ).toBeNull();
             expect(
+                element.shadowRoot.querySelector('.sfdl-diff-next')
+            ).toBeNull();
+        });
+
+        it('keeps the arrows of the differences on screen, disabled', async () => {
+            const element = await loadSide('right');
+
+            diffEditor().mockDiffComputed([
+                {
+                    originalStartLineNumber: 1,
+                    originalEndLineNumber: 1,
+                    modifiedStartLineNumber: 1,
+                    modifiedEndLineNumber: 1
+                }
+            ]);
+            await flushPromises();
+
+            expect(
                 element.shadowRoot.querySelector('.sfdl-diff-next').disabled
+            ).toBe(true);
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-previous').disabled
             ).toBe(true);
         });
     });

@@ -16,41 +16,49 @@
                 <div class="sfdl-diff-summary__actions">
                     <slot name="actions"></slot>
                 </div>
-                <button
-                    class="sfdl-diff-previous slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
-                    style="width:22px;height:22px;padding:2px;"
-                    title="Previous difference"
-                    disabled={isNavigationDisabled}
-                    onclick={handlePreviousChange}>
-                    <img src={previousIcon} alt="previous difference"/>
-                </button>
-                <!-- Identical sides are told here, where the differences are counted,
-                     rather than in a row of their own that would push the diff down. -->
-                <template if:true={hasNoDifferences}>
-                    <span class="sfdl-diff-count sfdl-diff-count_identical" role="status" title={noDifferencesText}>
-                        <strong>No differences.</strong>
-                        <span class="slds-m-left_xx-small">{noDifferencesDetail}</span>
-                    </span>
+                <!-- With nothing to compare there is nothing to count or show
+                     differently, the chips keep the height of the bar. -->
+                <template if:true={showControls}>
+                    <template if:true={hasDifferences}>
+                        <button
+                            class="sfdl-diff-previous slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                            style="width:22px;height:22px;padding:2px;"
+                            title="Previous difference"
+                            disabled={isNavigationDisabled}
+                            onclick={handlePreviousChange}>
+                            <img src={previousIcon} alt="previous difference"/>
+                        </button>
+                    </template>
+                    <!-- Identical sides are told here, where the differences are counted,
+                         rather than in a row of their own that would push the diff down. -->
+                    <template if:true={hasNoDifferences}>
+                        <span class="sfdl-diff-count sfdl-diff-count_identical" role="status" title={noDifferencesText}>
+                            <strong>No differences.</strong>
+                            <span class="slds-m-left_xx-small">{noDifferencesDetail}</span>
+                        </span>
+                    </template>
+                    <template if:false={hasNoDifferences}>
+                        <span class="sfdl-diff-count" title={changesTitle}>{changesLabel}</span>
+                    </template>
+                    <template if:true={hasDifferences}>
+                        <button
+                            class="sfdl-diff-next slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                            style="width:22px;height:22px;padding:2px;"
+                            title="Next difference"
+                            disabled={isNavigationDisabled}
+                            onclick={handleNextChange}>
+                            <img src={nextIcon} alt="next difference"/>
+                        </button>
+                    </template>
+                    <label class="sfdl-diff-option" title="Show both sides in a single column">
+                        <input type="checkbox" class="sfdl-diff-inline" checked={isInline} onchange={handleInlineChange}/>
+                        <span>Inline</span>
+                    </label>
+                    <label class="sfdl-diff-option" title="Leading and trailing whitespace does not count as a difference">
+                        <input type="checkbox" class="sfdl-diff-whitespace" checked={ignoreWhitespace} onchange={handleWhitespaceChange}/>
+                        <span>Ignore whitespace</span>
+                    </label>
                 </template>
-                <template if:false={hasNoDifferences}>
-                    <span class="sfdl-diff-count" title={changesTitle}>{changesLabel}</span>
-                </template>
-                <button
-                    class="sfdl-diff-next slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
-                    style="width:22px;height:22px;padding:2px;"
-                    title="Next difference"
-                    disabled={isNavigationDisabled}
-                    onclick={handleNextChange}>
-                    <img src={nextIcon} alt="next difference"/>
-                </button>
-                <label class="sfdl-diff-option" title="Show both sides in a single column">
-                    <input type="checkbox" class="sfdl-diff-inline" checked={isInline} onchange={handleInlineChange}/>
-                    <span>Inline</span>
-                </label>
-                <label class="sfdl-diff-option" title="Leading and trailing whitespace does not count as a difference">
-                    <input type="checkbox" class="sfdl-diff-whitespace" checked={ignoreWhitespace} onchange={handleWhitespaceChange}/>
-                    <span>Ignore whitespace</span>
-                </label>
             </div>
             <div class="sfdl-diff-summary__side sfdl-diff-summary__side_right">
                 <template if:true={rightStatus}>
