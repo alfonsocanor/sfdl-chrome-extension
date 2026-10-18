@@ -18,12 +18,7 @@
             <div class="slds-panel__header sfdl-side-panel__header">
                 <div class="sfdl-side-panel__titles">
                     <template if:true={title}>
-                        <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title={title}>
-                            <template if:true={side}>
-                                <span class={swatchClass}></span>
-                            </template>
-                            {title}
-                        </h2>
+                        <h2 class="slds-panel__header-title slds-text-heading_small slds-truncate" title={title}>{title}</h2>
                     </template>
                     <template if:true={subtitle}>
                         <p class="sfdl-side-panel__subtitle slds-truncate" title={subtitle}>{subtitle}</p>

@@ -10,20 +10,12 @@ function createLogDetails(props = {}) {
     const element = createElement('sfdl-log-details', { is: LogDetails });
     Object.assign(element, {
         isAnaliseLogs: true,
-        showLogListSection: true,
         ...props
     });
     document.body.appendChild(element);
     return element;
 }
 
-function click(node) {
-    node.dispatchEvent(
-        new CustomEvent('click', { bubbles: true, composed: true })
-    );
-}
-
-const toggleButton = (element) => element.shadowRoot.querySelector('button');
 const manipulationMenu = (element) =>
     element.shadowRoot.querySelector('sfdl-log-manipulation-menu');
 
@@ -115,26 +107,12 @@ describe('sfdl-log-details', () => {
         expect(monaco.editor.create).toHaveBeenCalledTimes(1);
     });
 
-    it('asks the console to collapse and expand the log list', () => {
-        const element = createLogDetails({ showLogListSection: true });
-        const handler = jest.fn();
-        element.addEventListener('displayloglistsection', handler);
+    it('leaves folding the log list to its own panel', () => {
+        const element = createLogDetails();
 
-        click(toggleButton(element));
-
-        expect(handler.mock.calls[0][0].detail).toEqual({
-            classAction: 'remove'
-        });
-    });
-
-    it('asks the console to expand the log list when it is already collapsed', () => {
-        const element = createLogDetails({ showLogListSection: false });
-        const handler = jest.fn();
-        element.addEventListener('displayloglistsection', handler);
-
-        click(toggleButton(element));
-
-        expect(handler.mock.calls[0][0].detail).toEqual({ classAction: 'add' });
+        expect(
+            element.shadowRoot.querySelector('button[title="Toggle panel"]')
+        ).toBeNull();
     });
 
     it('sizes the editor to the space the console gives it', async () => {

@@ -3,18 +3,13 @@ import { manipulationDetailLogs } from 'sfdl/logDetailsManipulation';
 import { monacoThemes, tokenizerRoot } from 'util/monacoThemes';
 import * as monaco from 'monaco-editor';
 
-const TOGGLE_IMAGE_RIGHT = '/slds/icons/utility/toggle_panel_right.svg';
-const TOGGLE_IMAGE_LEFT = '/slds/icons/utility/toggle_panel_left.svg';
-
 export default class LogDetails extends LightningElement{
-    @api showLogListSection;
     @api isAnaliseLogs = false;
 
     logName = '';
     logDetails; 
 
     showMonacoEditor;
-    toggleImage = TOGGLE_IMAGE_RIGHT;
 
     formatMethodEntryExitHierarchy = false;
     heapStatementRemoveLines = false;
@@ -80,16 +75,6 @@ export default class LogDetails extends LightningElement{
         this.showMonacoEditor = true;
         await new Promise((resolve)=>{setTimeout(resolve, 100);});
         this.isProcessing = false;
-    }
-
-    handleHideShowSections(){
-        this.toggleImage = this.showLogListSection ? TOGGLE_IMAGE_LEFT : TOGGLE_IMAGE_RIGHT ;
-
-        this.dispatchEvent(new CustomEvent('displayloglistsection',{
-            detail: { 
-                classAction: this.showLogListSection ? 'remove' : 'add'
-            }
-        }))
     }
 
     handleManipulationOptions(event){

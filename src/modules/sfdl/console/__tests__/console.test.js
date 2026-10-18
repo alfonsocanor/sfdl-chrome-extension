@@ -366,82 +366,39 @@ describe('sfdl-console', () => {
             );
         });
 
-        it('collapses and expands the log list panel', async () => {
-            const element = await createConsole();
-            const panel = element.shadowRoot.querySelector(
-                '.sfdl-console-log-list-section'
-            );
-
-            logDetails(element).dispatchEvent(
-                new CustomEvent('displayloglistsection', {
-                    detail: { classAction: 'remove' }
-                })
-            );
-            await wait(150);
-            expect(panel.classList.contains('slds-is-open')).toBe(false);
-
-            logDetails(element).dispatchEvent(
-                new CustomEvent('displayloglistsection', {
-                    detail: { classAction: 'add' }
-                })
-            );
-            await wait(150);
-            expect(panel.classList.contains('slds-is-open')).toBe(true);
-        });
     });
 
     describe('the log list panel', () => {
         const panel = (element) =>
             element.shadowRoot.querySelector('.sfdl-console-log-list-section');
 
-        async function toggleLogList(element, classAction) {
-            logDetails(element).dispatchEvent(
-                new CustomEvent('displayloglistsection', {
-                    detail: { classAction }
-                })
-            );
-            await wait(150);
-        }
-
-        it('grows from nothing only while its toggle opens it', async () => {
-            const element = await createConsole();
-            await toggleLogList(element, 'remove');
-
-            await toggleLogList(element, 'add');
-
-            expect(panel(element).classList).toContain('log-list-is-opening');
-            expect(panel(element).classList).not.toContain(
-                'log-list-is-closed'
-            );
-
-            await wait(750);
-
-            expect(panel(element).classList).not.toContain(
-                'log-list-is-opening'
-            );
-        });
-
-        it('does not open again when its tab is shown again', async () => {
+        it('is a side panel with the org picked in place of a title', async () => {
             const element = await createConsole();
 
-            click(tab(element, 'compareMetadata'));
-            await wait();
-            click(tab(element, 'debugLogs'));
-            await wait();
-
-            expect(panel(element).classList).not.toContain(
-                'log-list-is-opening'
+            expect(panel(element).tagName.toLowerCase()).toBe(
+                'sfdl-side-panel'
             );
+            expect(panel(element).title).toBeUndefined();
+            expect(panel(element).label).toBe('Log List');
+            expect(panel(element).side).toBe('left');
+            expect(picklist(element).slot).toBe('header');
+            expect(picklist(element).parentElement).toBe(panel(element));
         });
 
-        it('keeps its starting style to its own opening', () => {
-            // A starting style applies whenever an element starts being
-            // rendered, showing the tab again included.
-            expect(css).not.toMatch(/^\s*\.slds-is-open\s*\{/m);
-            expect(css).toMatch(
-                /@starting-style\s*\{\s*\.sfdl-console-log-list-section\.log-list-is-opening\s*\{/
-            );
-            expect(css.match(/@starting-style/g)).toHaveLength(1);
+        it('folds on its own, the log details have no toggle of their own', async () => {
+            const element = await createConsole();
+
+            panel(element)
+                .shadowRoot.querySelector('.sfdl-side-panel__collapse')
+                .click();
+            await wait();
+
+            expect(
+                panel(element).shadowRoot.querySelector(
+                    '.sfdl-side-panel__strip-title'
+                ).textContent
+            ).toBe('Log List');
+            expect(css).not.toMatch(/log-list-is-opening|@starting-style/);
         });
     });
 

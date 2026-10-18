@@ -54,9 +54,9 @@ describe('sfdl-side-panel', () => {
         ).toBe(true);
         expect(
             element.shadowRoot
-                .querySelector('.sfdl-side-swatch')
-                .classList.contains('sfdl-side-swatch_right')
-        ).toBe(true);
+                .querySelector('.slds-panel__header-title')
+                .textContent.trim()
+        ).toBe('Left logs');
     });
 
     it('stays neutral without a side', () => {
@@ -65,9 +65,9 @@ describe('sfdl-side-panel', () => {
         expect(
             panel(element).classList.contains('sfdl-side-panel_dock-left')
         ).toBe(true);
-        expect(
-            element.shadowRoot.querySelector('.sfdl-side-swatch')
-        ).toBeNull();
+        expect(panel(element).className).not.toMatch(
+            /sfdl-side-panel_(left|right)\b/
+        );
     });
 
     it('folds into a strip and opens again', async () => {

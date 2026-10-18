@@ -20,9 +20,10 @@ Boosts productivity during debugging process Apex log analysis
 
 ## Downloading logs
 
-Pick the org under the **Log List** title of the Debug Logs tab, next to the buttons that
-query its logs again and filter that query. The log list then offers three ways of
-getting logs out of the org:
+Pick the org at the top of the log list of the Debug Logs tab, next to the buttons that
+query its logs again and filter that query, a click anywhere else closing the filter.
+The list folds into a strip reading Log List. It then offers three ways of getting logs
+out of the org:
 
 - **One log at a time**: every row in the log list has a download icon on its right. It
   saves that single log as a plain `.log` file, no zip involved.
@@ -152,7 +153,7 @@ the LWC jest transformer does not ship with.
 3. Log in to the Salesforce org you want to analyse in the same browser profile, then
    click the sfdl icon and **Launch sfdl Console Station**.
 4. Walk through the checklist:
-   - the org shows up in the picker under the Log List title and the list fills in
+   - the org shows up in the picker at the top of the log list and the list fills in
    - clicking a log renders it in the editor with the log name in the header
    - the download icon on a single row saves one `.log` file
    - ticking rows turns the button into `Download selected logs (n)` and saves only

@@ -1,12 +1,5 @@
 <template>
   <div class="slds-grid slds-panel__header" style="padding-top:14px;">
-    <button 
-      onclick={handleHideShowSections} 
-      style="width:22px;height:22px;" 
-      class="slds-m-right_small slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" 
-      title="Toggle panel">
-        <img src={toggleImage} alt="wide full log details"/>
-    </button>
     <sfdl-log-manipulation-menu
       oncheckboxselection={handleManipulationOptions}>
     </sfdl-log-manipulation-menu>

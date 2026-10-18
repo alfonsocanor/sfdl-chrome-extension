@@ -10,13 +10,9 @@ const COMPARE_MODE = 'compare';
 const TAB_ITEM_CLASS = 'slds-tabs_scoped__item';
 const TAB_CONTENT_CLASS = 'slds-tabs_scoped__content';
 const BUTTON_CLASS = 'slds-button';
-const LOG_LIST_OPENING_CLASS = 'log-list-is-opening';
-//The transition of consoleCss, and a little more.
-const LOG_LIST_TRANSITION_MILLISECONDS = 700;
 
 export default class Console extends LightningElement {
     firstRender = true;
-    showLogListSection = true;
     renderLogList = false;
     
     manipulationOptions;
@@ -39,7 +35,6 @@ export default class Console extends LightningElement {
     @track sessionInformation;
 
     resetConsoleProperties(){
-        this.showLogListSection = true;
         this.renderLogList = false;
         this.manipulationOptions = {};
         this.activeTab = DEBUG_LOGS_TAB;
@@ -130,32 +125,6 @@ export default class Console extends LightningElement {
     handleIsLoading(){
         let sfdlLogDetailsComponent = this.template.querySelector('sfdl-log-details');
         sfdlLogDetailsComponent.handleIsLoading();
-    }
-
-    handleDisplayLogListSection(event){
-        this.initializeCustomCss();
-
-        setTimeout(() => {
-            this.showLogListSection = !this.showLogListSection;
-            const logListPanel = this.template.querySelector('.sfdl-console-log-list-section');
-            if(event.detail.classAction === 'remove') {
-                logListPanel.classList.add('log-list-is-closed');
-                setTimeout(() => {
-                    logListPanel.classList[event.detail.classAction]('slds-is-open');
-                },50);            
-            } else {
-                logListPanel.classList[event.detail.classAction]('slds-is-open');
-                setTimeout(() => {
-                    //Only this opening grows the panel from nothing, not the
-                    //tab holding it being shown again.
-                    logListPanel.classList.add(LOG_LIST_OPENING_CLASS);
-                    logListPanel.classList.remove('log-list-is-closed');
-                    setTimeout(() => {
-                        logListPanel.classList.remove(LOG_LIST_OPENING_CLASS);
-                    }, LOG_LIST_TRANSITION_MILLISECONDS);
-                },50);
-            }
-        },50);
     }
 
     hideMonacoEditor(){

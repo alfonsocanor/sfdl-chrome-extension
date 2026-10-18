@@ -3,8 +3,8 @@
         <div class="sfdl-compare-logs__body">
             <template if:false={isPairMode}>
                 <!-- The org of each side is picked where its title would be, its
-                     colour telling the side. -->
-                <sfdl-side-panel class="sfdl-compare-logs__left-panel" label="Left org" side="left" width="18rem">
+                     colour telling the side. Folded, each reads Log List. -->
+                <sfdl-side-panel class="sfdl-compare-logs__left-panel" label="Log List" side="left" width="18rem">
                     <sfdl-combobox
                         slot="header"
                         class="sfdl-compare-logs__org-picker"
@@ -63,7 +63,7 @@
                 </sfdl-diff-viewer>
             </div>
             <template if:false={isPairMode}>
-                <sfdl-side-panel class="sfdl-compare-logs__right-panel" label="Right org" side="right" width="18rem">
+                <sfdl-side-panel class="sfdl-compare-logs__right-panel" label="Log List" side="right" width="18rem">
                     <sfdl-combobox
                         slot="header"
                         class="sfdl-compare-logs__org-picker"

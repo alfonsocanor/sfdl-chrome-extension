@@ -59,10 +59,6 @@ export default class SidePanel extends LightningElement{
         return 'sfdl-side-panel__content' + (this._collapsed ? ' slds-hide' : '');
     }
 
-    get swatchClass(){
-        return 'sfdl-side-swatch sfdl-side-swatch_' + this.side;
-    }
-
     //A left panel folds towards the left edge and opens towards the right,
     //a right panel the other way round.
     get collapseIcon(){

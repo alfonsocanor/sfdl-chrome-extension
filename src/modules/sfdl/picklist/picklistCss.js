@@ -10,4 +10,27 @@ export const css = `
         flex: 1 1 auto;
         min-width: 0;
     }
+
+    /* The look of the org pickers of the compare tabs, the blue of the left
+       side and a line thicker than a plain field. */
+    .sfdl-picklist .slds-combobox__input,
+    .sfdl-picklist .slds-combobox__input:focus {
+        border-color: var(--sfdl-left-swatch);
+        box-shadow: inset 0 0 0 1px var(--sfdl-left-swatch);
+    }
+
+    .sfdl-picklist .slds-combobox__input:focus {
+        box-shadow: inset 0 0 0 1px var(--sfdl-left-swatch), 0 0 3px #0176d3;
+    }
+
+    /* One line per org, wider than the field when a name needs it. */
+    .sfdl-picklist .slds-dropdown.slds-dropdown_fluid {
+        width: max-content;
+        min-width: 100%;
+        max-width: 24rem;
+    }
+
+    .sfdl-picklist .slds-listbox__option {
+        white-space: nowrap;
+    }
 `;

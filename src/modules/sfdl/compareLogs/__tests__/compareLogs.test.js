@@ -518,8 +518,10 @@ describe('sfdl-compare-logs', () => {
                 expect(orgPicker(element, side).slot).toBe('header');
                 expect(orgPicker(element, side).side).toBe(side);
             });
-            expect(panel(element, 'left').label).toBe('Left org');
-            expect(panel(element, 'right').label).toBe('Right org');
+            expect(panel(element, 'left').label).toBe('Log List');
+            expect(panel(element, 'right').label).toBe('Log List');
+            expect(orgPicker(element, 'left').label).toBe('Left org');
+            expect(orgPicker(element, 'right').label).toBe('Right org');
             expect(
                 element.shadowRoot.querySelector('.sfdl-swap-icon')
             ).toBeNull();

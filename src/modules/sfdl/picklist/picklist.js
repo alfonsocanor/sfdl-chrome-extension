@@ -1,6 +1,7 @@
 import { LightningElement, api } from 'lwc';
 import { showToastEvent, getValueLocalStorage, clearLocalStorage } from 'sfdl/utils';
 import { adoptStyleSheet } from 'sfdl/styleSheets';
+import { adoptCompareTheme } from 'sfdl/compareTheme';
 import { css } from './picklistCss';
 
 //The address of an org without its scheme, what fits a narrow column.
@@ -28,6 +29,7 @@ export default class Picklist extends LightningElement {
     
     connectedCallback(){
         adoptStyleSheet(css);
+        adoptCompareTheme();
         this.valueSelected = this.placeholder ? this.placeholder : 'Pick up an org...';
     }
 
