@@ -8,10 +8,12 @@ import { css } from './compareLogListCss';
 const SEARCH_ICON = '/resources/searchGrey.svg';
 const REFRESH_ICON = '/slds/icons/utility/refresh.svg';
 const ROW_CLASS = 'sfdl-compare-log-row';
+const BOTH = 'both';
 
-//The logs of one org, to pick the one to compare on the side the list feeds.
+//The logs of one org, to pick the one to compare on the side the list feeds,
+//or, feeding both sides, to tick the two to compare.
 export default class CompareLogList extends LightningElement{
-    //left or right, the side the list feeds.
+    //left, right or both, the side the list feeds.
     @api side = 'left';
     @api leftLogId;
     @api rightLogId;
@@ -84,15 +86,30 @@ export default class CompareLogList extends LightningElement{
             .map(log => this.decorateLog(log));
     }
 
-    decorateLog(log){
+    get isTickable(){
+        return this.side === BOTH;
+    }
+
+    //The side a log is on, if any.
+    sideOf(logId){
+        if(this.side === BOTH){
+            return logId === this.leftLogId ? 'left' : logId === this.rightLogId ? 'right' : undefined;
+        }
+
         const selectedLogId = this.side === 'right' ? this.rightLogId : this.leftLogId;
-        const isSelected = log.id === selectedLogId;
+        return logId === selectedLogId ? this.side : undefined;
+    }
+
+    decorateLog(log){
+        const side = this.sideOf(log.id);
 
         return {
             id: log.id,
             name: log.name,
-            title: log.name + (isSelected ? ' (' + this.side + ')' : ''),
-            rowClass: ROW_CLASS + (isSelected ? ' ' + ROW_CLASS + '_' + this.side : '')
+            isTicked: !!side,
+            title: log.name + (side ? ' (' + side + ')' : ''),
+            tickTitle: side ? 'Compared on the ' + side + ', untick to take it off' : 'Tick to compare it',
+            rowClass: ROW_CLASS + (side ? ' ' + ROW_CLASS + '_' + side : '')
         };
     }
 
@@ -190,18 +207,20 @@ export default class CompareLogList extends LightningElement{
         this.selectLog(event.currentTarget.dataset.logid, this.side);
     }
 
+    //Feeding both sides, the list leaves the side to the comparison.
     selectLog(logId, side){
         const log = this.getLog(logId);
 
         if(log){
             this.dispatchEvent(new CustomEvent('logselect', {
-                detail: { log, side }
+                detail: { log, side: side === BOTH ? undefined : side }
             }));
         }
     }
 
     //Up and down walk the list and compare every log they walk on, so a side
-    //can be scanned against the other one log after the other.
+    //can be scanned against the other one log after the other. Feeding both
+    //sides, a ticked log walked on stays ticked, it is the one compared against.
     handleRowKeyDown(event){
         if(event.key !== 'ArrowDown' && event.key !== 'ArrowUp'){
             return;
@@ -214,6 +233,11 @@ export default class CompareLogList extends LightningElement{
         const nextButton = logButtons[(index + (event.key === 'ArrowDown' ? 1 : -1) + logButtons.length) % logButtons.length];
 
         nextButton.focus();
+
+        if(this.side === BOTH && this.sideOf(nextButton.dataset.logid)){
+            return;
+        }
+
         this.selectLog(nextButton.dataset.logid, this.side);
     }
 }

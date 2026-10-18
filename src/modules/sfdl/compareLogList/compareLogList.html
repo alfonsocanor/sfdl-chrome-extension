@@ -34,6 +34,17 @@
                 <template for:each={visibleLogs} for:item="log">
                     <li key={log.id} class="slds-item">
                         <div class={log.rowClass}>
+                            <!-- Feeding both sides, a tick tells the two logs compared. -->
+                            <template if:true={isTickable}>
+                                <input
+                                    type="checkbox"
+                                    class="sfdl-compare-log-tick"
+                                    tabindex="-1"
+                                    data-logid={log.id}
+                                    checked={log.isTicked}
+                                    title={log.tickTitle}
+                                    onclick={handleRowClick}/>
+                            </template>
                             <button
                                 class="sfdl-compare-log-name"
                                 data-logid={log.id}

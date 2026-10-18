@@ -69,6 +69,12 @@ export const css = `
         box-shadow: inset 3px 0 0 var(--sfdl-right-swatch);
     }
 
+    .sfdl-compare-log-row .sfdl-compare-log-tick {
+        flex: 0 0 auto;
+        margin: 0;
+        cursor: pointer;
+    }
+
     .sfdl-compare-log-row .sfdl-compare-log-name {
         flex: 1 1 auto;
         min-width: 0;

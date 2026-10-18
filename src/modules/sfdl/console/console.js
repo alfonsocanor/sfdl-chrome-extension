@@ -7,6 +7,8 @@ const DEBUG_LOGS_TAB = 'debugLogs';
 const COMPARE_METADATA_TAB = 'compareMetadata';
 const ANALYSE_MODE = 'analyse';
 const COMPARE_MODE = 'compare';
+const SAME_ORG_SCOPE = 'sameOrg';
+const TWO_ORGS_SCOPE = 'twoOrgs';
 const TAB_ITEM_CLASS = 'slds-tabs_scoped__item';
 const TAB_CONTENT_CLASS = 'slds-tabs_scoped__content';
 const BUTTON_CLASS = 'slds-button';
@@ -19,14 +21,17 @@ export default class Console extends LightningElement {
 
     activeTab = DEBUG_LOGS_TAB;
     logsMode = ANALYSE_MODE;
+    compareScope = SAME_ORG_SCOPE;
+    compareSameOrgRendered = false;
     compareTwoOrgsRendered = false;
     compareMetadataRendered = false;
     bodyHeight = 0;
     logsBodyHeight = 0;
     logsToolbarHeight = 0;
     orgs = [];
-    //Two logs of the org of the log list compared in place of the editor,
-    //{ left, right } each being { log, sessionInformation }.
+    //Two logs of the org of the log list ticked to compare them, handed to
+    //the comparison of the same org: { left, right } each being
+    //{ log, sessionInformation }.
     pairComparison = null;
 
     sectionStyle = 'background-color:#fafaf9;position:relative;overflow:hidden;display:flex;';
@@ -116,8 +121,6 @@ export default class Console extends LightningElement {
     }
 
     async handleLogDetails(event){
-        //Opening a log is going back to reading one.
-        this.pairComparison = null;
         let sfdlLogDetailsComponent = this.template.querySelector('sfdl-log-details');
         sfdlLogDetailsComponent.processLogsFromLogList(event.detail.logDetails, event.detail.logName);
     }
@@ -132,7 +135,6 @@ export default class Console extends LightningElement {
     }
 
     async handleSessionInformation(event){
-        this.pairComparison = null;
         this.hideMonacoEditor();
         this.renderLogList = false;
         await new Promise((resolve)=>{setTimeout(resolve, 100);});
@@ -150,10 +152,9 @@ export default class Console extends LightningElement {
         }
     }
 
-    get logDetailsClass(){
-        return this.pairComparison ? 'slds-hide' : '';
-    }
-
+    //Two logs ticked in the analyse list are compared where logs of the same
+    //org are, the way an editor opens a diff of two files in a view of its
+    //own. Analyse keeps the log it shows.
     handleCompareLogs(event){
         const [left, right] = event.detail.logs;
 
@@ -161,10 +162,9 @@ export default class Console extends LightningElement {
             left: { log: left, sessionInformation: this.sessionInformation },
             right: { log: right, sessionInformation: this.sessionInformation }
         };
-    }
-
-    handleClosePairComparison(){
-        this.pairComparison = null;
+        this.logsMode = COMPARE_MODE;
+        this.compareScope = SAME_ORG_SCOPE;
+        this.compareSameOrgRendered = true;
     }
 
     get debugLogsTabClass(){
@@ -207,23 +207,65 @@ export default class Console extends LightningElement {
         return 'sfdl-debug-logs__analyse' + (this.isAnalyseMode ? '' : ' slds-hide');
     }
 
+    get isSameOrgScope(){
+        return this.compareScope === SAME_ORG_SCOPE;
+    }
+
+    get sameOrgButtonClass(){
+        return BUTTON_CLASS + (this.isSameOrgScope ? ' slds-button_brand' : ' slds-button_neutral');
+    }
+
+    get twoOrgsButtonClass(){
+        return BUTTON_CLASS + (this.isSameOrgScope ? ' slds-button_neutral' : ' slds-button_brand');
+    }
+
+    get isSameOrgPressed(){
+        return this.isSameOrgScope ? 'true' : 'false';
+    }
+
+    get isTwoOrgsPressed(){
+        return this.isSameOrgScope ? 'false' : 'true';
+    }
+
+    get compareSameOrgViewClass(){
+        return 'sfdl-debug-logs__same-org' + (!this.isAnalyseMode && this.isSameOrgScope ? '' : ' slds-hide');
+    }
+
     get compareTwoOrgsViewClass(){
-        return 'sfdl-debug-logs__compare' + (this.isAnalyseMode ? ' slds-hide' : '');
+        return 'sfdl-debug-logs__two-orgs' + (!this.isAnalyseMode && !this.isSameOrgScope ? '' : ' slds-hide');
     }
 
     get logsHint(){
-        return this.isAnalyseMode ?
-            'Pick an org in the log list, then a log to read it, or tick two logs and compare them side by side.' :
+        if(this.isAnalyseMode){
+            return 'Pick an org in the log list, then a log to read it, or tick two logs and compare them side by side.';
+        }
+
+        return this.isSameOrgScope ?
+            'Tick two logs to compare them. A new tick replaces the last one, the first stays to compare against. The arrows walk the list.' :
             'Pick an org on each side, then click a log on each side to compare them. The arrows walk a list.';
     }
 
-    //Analyse and the comparison of two orgs share the tab and each keeps its
-    //state while the other one is on screen.
+    //Analyse and the comparisons share the tab and each keeps its state while
+    //another one is on screen.
     handleLogsModeChange(event){
         this.logsMode = event.currentTarget.dataset.mode;
+        this.renderCompareScope();
+    }
 
-        if(this.logsMode === COMPARE_MODE){
+    handleCompareScopeChange(event){
+        this.compareScope = event.currentTarget.dataset.scope;
+        this.renderCompareScope();
+    }
+
+    renderCompareScope(){
+        if(this.logsMode !== COMPARE_MODE){
+            return;
+        }
+
+        if(this.compareScope === TWO_ORGS_SCOPE){
             this.compareTwoOrgsRendered = true;
+        } else {
+            this.compareSameOrgRendered = true;
         }
     }
 

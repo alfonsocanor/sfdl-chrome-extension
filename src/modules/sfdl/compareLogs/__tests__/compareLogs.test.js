@@ -544,91 +544,208 @@ describe('sfdl-compare-logs', () => {
         });
     });
 
-    describe('a pair of logs of one org', () => {
-        async function comparePair(left, right) {
-            return createCompareLogs({
-                pair: {
-                    left: { log: left, sessionInformation: ACME },
-                    right: { log: right, sessionInformation: ACME }
-                }
+    describe('reloading one side', () => {
+        it('keeps the other side on screen while the new log downloads', async () => {
+            const [left, first, second] = [newLog(), newLog(), newLog()];
+            mockOrgs({
+                bodies: { [left.id]: 'a', [first.id]: 'b', [second.id]: 'c' },
+                delays: { [second.id]: 30 }
             });
+            const element = await ready();
+            await selectLog(element, 'left', left);
+            await selectLog(element, 'right', first);
+            await wait();
+
+            await selectLog(element, 'right', second);
+
+            expect(diffViewer(element).loading).toBe(false);
+            expect(diffViewer(element).loadingSide).toBe('right');
+            expect(diffViewer(element).sideLoadingMessage).toBe(
+                'Downloading the right log...'
+            );
+            expect(diffViewer(element).leftContent).toBe('a');
+
+            await wait(50);
+
+            expect(diffViewer(element).loadingSide).toBeUndefined();
+            expect(diffViewer(element).rightContent).toBe('c');
+        });
+    });
+
+    describe('logs of the same org', () => {
+        const ALPHA = newLog('Jane Roe | alpha');
+        const BETA = newLog('Jane Roe | beta');
+        const GAMMA = newLog('Jane Roe | gamma');
+        const DELTA = newLog('Jane Roe | delta');
+        const BODIES = {
+            [ALPHA.id]: 'alpha body',
+            [BETA.id]: 'beta body',
+            [GAMMA.id]: 'gamma body',
+            [DELTA.id]: 'delta body'
+        };
+        const sameOrgList = (element) =>
+            element.shadowRoot.querySelector(
+                '.sfdl-compare-logs__list-panel sfdl-compare-log-list'
+            );
+        const sameOrgPicker = (element) =>
+            element.shadowRoot.querySelector(
+                '.sfdl-compare-logs__list-panel sfdl-combobox'
+            );
+        const ticked = (element) => [
+            sameOrgList(element).leftLogId,
+            sameOrgList(element).rightLogId
+        ];
+
+        async function createSameOrg(properties = {}) {
+            mockOrgs({ bodies: BODIES });
+            return createCompareLogs({ scope: 'sameOrg', ...properties });
         }
 
-        it('shows the two logs alone, named after themselves', async () => {
-            const [left, right] = [
-                newLog('Jane Roe | older'),
-                newLog('Jane Roe | newer')
-            ];
-            mockOrgs({
-                bodies: { [left.id]: 'older body', [right.id]: 'newer body' }
-            });
-
-            const element = await comparePair(left, right);
+        async function tick(element, log) {
+            sameOrgList(element).dispatchEvent(
+                new CustomEvent('logselect', {
+                    detail: { log, side: undefined }
+                })
+            );
             await wait();
+        }
+
+        it('lists the logs of one org, the list feeding both sides', async () => {
+            const element = await createSameOrg();
 
             expect(panel(element, 'left')).toBeNull();
             expect(panel(element, 'right')).toBeNull();
-            expect(diffViewer(element).leftLabel).toBe('Jane Roe | older');
-            expect(diffViewer(element).rightLabel).toBe('Jane Roe | newer');
-            expect(diffViewer(element).leftContent).toBe('older body');
-            expect(diffViewer(element).rightContent).toBe('newer body');
-            expect(bodyDownloads()).toEqual([
-                'https://acme.my.salesforce.com' +
-                    left.attributes.url +
-                    '/Body',
-                'https://acme.my.salesforce.com' +
-                    right.attributes.url +
-                    '/Body'
-            ]);
+            expect(sameOrgList(element).side).toBe('both');
+            expect(sameOrgList(element).sessionInformation).toEqual(
+                ACME_SESSION
+            );
+            expect(sameOrgPicker(element).value).toBe(ACME.instanceUrl);
+            expect(
+                sameOrgPicker(element).options.map(({ value }) => value)
+            ).toEqual(ORGS.map(({ label }) => label));
+            expect(diffViewer(element).emptyMessage).toBe(
+                'Tick two logs of the list to compare them.'
+            );
         });
 
-        it('swaps the two logs', async () => {
-            const [left, right] = [newLog('older'), newLog('newer')];
-            mockOrgs({ bodies: { [left.id]: 'a', [right.id]: 'b' } });
-            const element = await comparePair(left, right);
+        it('compares the first two logs ticked, named after themselves', async () => {
+            const element = await createSameOrg();
+
+            await tick(element, ALPHA);
+            expect(diffViewer(element).emptyMessage).toBe(
+                'Now tick a second log.'
+            );
+            await tick(element, BETA);
             await wait();
 
-            element.shadowRoot
-                .querySelector('.sfdl-compare-logs__pair-swap')
-                .click();
-            await wait();
-
-            expect(diffViewer(element).leftLabel).toBe('newer');
-            expect(diffViewer(element).leftContent).toBe('b');
+            expect(ticked(element)).toEqual([ALPHA.id, BETA.id]);
+            expect(diffViewer(element).leftLabel).toBe('Jane Roe | alpha');
+            expect(diffViewer(element).rightLabel).toBe('Jane Roe | beta');
+            expect(diffViewer(element).leftContent).toBe('alpha body');
+            expect(diffViewer(element).rightContent).toBe('beta body');
         });
 
-        it('asks to be closed', async () => {
-            const [left, right] = [newLog(), newLog()];
-            mockOrgs({ bodies: { [left.id]: 'a', [right.id]: 'b' } });
-            const element = await comparePair(left, right);
-            const handleClose = jest.fn();
-            element.addEventListener('close', handleClose);
+        it('replaces the last tick, the first stays to compare against', async () => {
+            const element = await createSameOrg();
+            await tick(element, ALPHA);
+            await tick(element, BETA);
+
+            await tick(element, GAMMA);
+            expect(ticked(element)).toEqual([ALPHA.id, GAMMA.id]);
+
+            await tick(element, DELTA);
+            await wait();
+            expect(ticked(element)).toEqual([ALPHA.id, DELTA.id]);
+            expect(diffViewer(element).rightContent).toBe('delta body');
+        });
+
+        it('takes a ticked log off, the next tick taking its side', async () => {
+            const element = await createSameOrg();
+            await tick(element, ALPHA);
+            await tick(element, BETA);
+
+            await tick(element, ALPHA);
+            expect(ticked(element)).toEqual([undefined, BETA.id]);
+            expect(diffViewer(element).leftContent).toBeUndefined();
+
+            await tick(element, GAMMA);
+            expect(ticked(element)).toEqual([GAMMA.id, BETA.id]);
+        });
+
+        it('only reloads the side of the new tick', async () => {
+            // Logs of its own, the bodies of the others are cached already.
+            const [first, second, slow] = [newLog(), newLog(), newLog()];
+            mockOrgs({
+                bodies: { [first.id]: 'a', [second.id]: 'b', [slow.id]: 'c' },
+                delays: { [slow.id]: 30 }
+            });
+            const element = await createCompareLogs({ scope: 'sameOrg' });
+            await tick(element, first);
+            await tick(element, second);
             await wait();
 
-            element.shadowRoot
-                .querySelector('.sfdl-compare-logs__close')
-                .click();
+            await tick(element, slow);
 
-            expect(handleClose).toHaveBeenCalled();
+            expect(diffViewer(element).loadingSide).toBe('right');
+            expect(diffViewer(element).leftContent).toBe('a');
+
+            await wait(50);
+            expect(diffViewer(element).rightContent).toBe('c');
+        });
+
+        it('unticks both logs when its org changes', async () => {
+            const element = await createSameOrg();
+            await tick(element, ALPHA);
+            await tick(element, BETA);
+
+            sameOrgPicker(element).dispatchEvent(
+                new CustomEvent('change', {
+                    detail: { value: GLOBEX.instanceUrl }
+                })
+            );
+            await wait();
+
+            expect(ticked(element)).toEqual([undefined, undefined]);
+            expect(sameOrgList(element).sessionInformation).toEqual(GLOBEX);
+        });
+
+        it('starts on two logs handed by the analyse list, the older on the left', async () => {
+            const element = await createSameOrg({
+                pair: {
+                    left: { log: ALPHA, sessionInformation: ACME },
+                    right: { log: BETA, sessionInformation: ACME }
+                }
+            });
+            await wait();
+
+            expect(ticked(element)).toEqual([ALPHA.id, BETA.id]);
+            expect(sameOrgList(element).sessionInformation).toEqual(
+                ACME_SESSION
+            );
+            expect(diffViewer(element).rightContent).toBe('beta body');
+
+            await tick(element, GAMMA);
+            expect(ticked(element)).toEqual([ALPHA.id, GAMMA.id]);
         });
 
         it('compares a new pair it is handed', async () => {
-            const [left, right, other] = [newLog(), newLog(), newLog('other')];
-            mockOrgs({
-                bodies: { [left.id]: 'a', [right.id]: 'b', [other.id]: 'c' }
+            const element = await createSameOrg({
+                pair: {
+                    left: { log: ALPHA, sessionInformation: ACME },
+                    right: { log: BETA, sessionInformation: ACME }
+                }
             });
-            const element = await comparePair(left, right);
             await wait();
 
             element.pair = {
-                left: { log: left, sessionInformation: ACME },
-                right: { log: other, sessionInformation: ACME }
+                left: { log: ALPHA, sessionInformation: ACME },
+                right: { log: DELTA, sessionInformation: ACME }
             };
             await wait();
             await wait();
 
-            expect(diffViewer(element).rightLabel).toBe('other');
-            expect(diffViewer(element).rightContent).toBe('c');
+            expect(diffViewer(element).rightLabel).toBe('Jane Roe | delta');
+            expect(diffViewer(element).rightContent).toBe('delta body');
         });
     });
 });

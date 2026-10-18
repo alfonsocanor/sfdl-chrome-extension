@@ -8,8 +8,7 @@ import { css } from './compareLogsCss';
 
 const LEFT = 'left';
 const RIGHT = 'right';
-const SWAP_ICON = '/slds/icons/utility/sort.svg';
-const CLOSE_ICON = '/slds/icons/utility/close.svg';
+const SAME_ORG = 'sameOrg';
 const COMPARE_OPTION_NAMES = compareOptions().map(({ name }) => name);
 //Debug logs run to megabytes, only the latest ones are kept around.
 const LOG_BODIES_TO_KEEP = 20;
@@ -21,6 +20,11 @@ const logBodies = new Map();
 //acme from acme.my.salesforce.com, acme--uat from its sandbox.
 function shortOrgName(instanceUrl){
     return instanceUrl.replace('https://', '').split('.')[0];
+}
+
+//What a side shows: a log of an org.
+function sideKey(side){
+    return side ? side.sessionInformation.instanceUrl + '|' + side.log.id : undefined;
 }
 
 function downloadLogBody(sessionInformation, log){
@@ -40,14 +44,18 @@ function downloadLogBody(sessionInformation, log){
     return logBodies.get(key);
 }
 
-//A log of one org against a log of another one: the logs of the left org, the
-//two logs, and the logs of the right org. Handed a pair, it only shows those
-//two logs, for two logs of the same org compared from the analyse list.
+//Two logs side by side. Of two orgs: the logs of the left org, the two logs,
+//and the logs of the right org. Of the same org: its logs, two of them ticked,
+//and the two logs.
 export default class CompareLogs extends LightningElement{
     @api orgs = [];
     @api height;
+    //twoOrgs or sameOrg.
+    @api scope = 'twoOrgs';
 
-    //{ left, right }, each { log, sessionInformation }.
+    //Two logs of the org of the log list, ticked there to compare them side
+    //by side: { left, right }, each { log, sessionInformation }, the older log
+    //on the left. They are ticked here as if picked one after the other.
     @api
     get pair(){
         return this._pair;
@@ -56,8 +64,11 @@ export default class CompareLogs extends LightningElement{
         this._pair = pair;
 
         if(pair){
-            this.left = pair.left;
-            this.right = pair.right;
+            const { instanceUrl, authToken } = pair.left.sessionInformation;
+            this.leftOrgSession = { instanceUrl, authToken };
+            this.left = { log: pair.left.log, sessionInformation: this.leftOrgSession };
+            this.right = { log: pair.right.log, sessionInformation: this.leftOrgSession };
+            this.lastPickedSide = RIGHT;
             this.refreshComparison();
         }
     }
@@ -88,12 +99,16 @@ export default class CompareLogs extends LightningElement{
     leftContent;
     rightContent;
     isLoadingLogs = false;
-    //The raw bodies of the logs on screen, filtered again when an option changes.
+    //The side whose new log is on its way while the other one stays on screen.
+    pendingSide;
+    //The raw bodies of the logs on screen, filtered again when an option
+    //changes, and which log of which org each one is.
     leftBody;
     rightBody;
+    shownKeys = {};
     comparisonSequence = 0;
-    swapIcon = SWAP_ICON;
-    closeIcon = CLOSE_ICON;
+    //Of the same org, the side a new tick replaces once both are taken.
+    lastPickedSide = RIGHT;
     //The filters both logs go through, kept here so a menu built again starts
     //from them.
     options = [...analyseOptions(), ...compareOptions()];
@@ -103,8 +118,12 @@ export default class CompareLogs extends LightningElement{
         adoptCompareTheme();
     }
 
-    get isPairMode(){
-        return !!this._pair;
+    get isSameOrg(){
+        return this.scope === SAME_ORG;
+    }
+
+    get isTwoOrgs(){
+        return !this.isSameOrg;
     }
 
     get containerStyle(){
@@ -137,7 +156,7 @@ export default class CompareLogs extends LightningElement{
             return undefined;
         }
 
-        return this.isPairMode ?
+        return this.isSameOrg ?
             side.log.name :
             shortOrgName(side.sessionInformation.instanceUrl) + ' \u00b7 ' + side.log.name;
     }
@@ -156,6 +175,10 @@ export default class CompareLogs extends LightningElement{
 
     get rightOrgOptions(){
         return this.orgOptionsBesides(this.leftOrgUrl);
+    }
+
+    get allOrgOptions(){
+        return this.orgOptionsBesides(undefined);
     }
 
     get leftOrgUrl(){
@@ -179,6 +202,12 @@ export default class CompareLogs extends LightningElement{
             return 'Downloading the two logs...';
         }
 
+        if(this.isSameOrg){
+            return this.left || this.right ?
+                'Now tick a second log.' :
+                'Tick two logs of the list to compare them.';
+        }
+
         if(this.left && !this.right){
             return 'Now pick the log for the right side.';
         }
@@ -190,14 +219,8 @@ export default class CompareLogs extends LightningElement{
         return 'Pick a log on each side to compare them.';
     }
 
-    //The two logs of a pair change places, each side keeping its colour.
-    handleSwap(){
-        [this.left, this.right] = [this.right, this.left];
-        this.refreshComparison();
-    }
-
-    handleClose(){
-        this.dispatchEvent(new CustomEvent('close'));
+    get pendingMessage(){
+        return this.pendingSide ? 'Downloading the ' + this.pendingSide + ' log...' : undefined;
     }
 
     handleOrgChange(event){
@@ -205,11 +228,19 @@ export default class CompareLogs extends LightningElement{
         const otherOrgUrl = side === LEFT ? this.rightOrgUrl : this.leftOrgUrl;
         const org = (this.orgs || []).find(candidate => candidate.label === event.detail.value);
 
-        if(!org || org.label === otherOrgUrl){
+        if(!org || (this.isTwoOrgs && org.label === otherOrgUrl)){
             return;
         }
 
         this[side + 'OrgSession'] = { instanceUrl: org.label, authToken: org.value };
+
+        //Of the same org, both logs belonged to the org it had before.
+        if(this.isSameOrg){
+            this.left = null;
+            this.right = null;
+            this.refreshComparison();
+            return;
+        }
 
         //The log of that side belonged to the org it had before.
         if(this[side]){
@@ -222,6 +253,11 @@ export default class CompareLogs extends LightningElement{
     handleLogSelect(event){
         const { log, side } = event.detail;
 
+        if(this.isSameOrg){
+            this.tickLog(log);
+            return;
+        }
+
         if(this[side] && this[side].log.id === log.id){
             this[side] = null;
         } else {
@@ -231,14 +267,26 @@ export default class CompareLogs extends LightningElement{
         this.refreshComparison();
     }
 
+    //Of the same org, two logs are ticked at most. A ticked log clicked again
+    //comes off, a new one takes a free side, or else the side of the log
+    //ticked last, so the other one stays to compare against.
+    tickLog(log){
+        const tickedSide = [LEFT, RIGHT].find(side => this[side] && this[side].log.id === log.id);
+
+        if(tickedSide){
+            this[tickedSide] = null;
+        } else {
+            const side = !this.left ? LEFT : !this.right ? RIGHT : this.lastPickedSide;
+            this[side] = { log, sessionInformation: this.leftOrgSession };
+            this.lastPickedSide = side;
+        }
+
+        this.refreshComparison();
+    }
+
     async refreshComparison(){
         const sequence = ++this.comparisonSequence;
         const sides = [this.left, this.right];
-
-        this.leftContent = undefined;
-        this.rightContent = undefined;
-        this.leftBody = undefined;
-        this.rightBody = undefined;
 
         //The first log starts downloading while the second one is picked.
         sides.filter(side => side).forEach(side => {
@@ -246,11 +294,26 @@ export default class CompareLogs extends LightningElement{
         });
 
         if(!this.left || !this.right){
-            this.isLoadingLogs = false;
+            this.clearComparison();
             return;
         }
 
-        this.isLoadingLogs = true;
+        const changedSides = [LEFT, RIGHT].filter(side => this.shownKeys[side] !== sideKey(this[side]));
+        const isDiffOnScreen = typeof this.leftContent === 'string' && typeof this.rightContent === 'string';
+
+        if(!changedSides.length){
+            return;
+        }
+
+        //Only the side whose log changed waits, the other one stays on screen.
+        if(isDiffOnScreen && changedSides.length === 1){
+            this.pendingSide = changedSides[0];
+        } else {
+            this.pendingSide = undefined;
+            this.leftContent = undefined;
+            this.rightContent = undefined;
+            this.isLoadingLogs = true;
+        }
 
         const [leftResult, rightResult] = await Promise.allSettled(
             sides.map(side => downloadLogBody(side.sessionInformation, side.log))
@@ -261,19 +324,31 @@ export default class CompareLogs extends LightningElement{
             return;
         }
 
-        this.isLoadingLogs = false;
-
         const failedSides = [[LEFT, leftResult], [RIGHT, rightResult]].filter(([, result]) => result.status === 'rejected');
 
         if(failedSides.length){
             showToastEvent('error', 'The log could not be downloaded', failedSides[0][1].reason.message);
             failedSides.forEach(([side]) => { this[side] = null; });
+            this.clearComparison();
             return;
         }
 
+        this.isLoadingLogs = false;
+        this.pendingSide = undefined;
         this.leftBody = leftResult.value;
         this.rightBody = rightResult.value;
+        this.shownKeys = { left: sideKey(this.left), right: sideKey(this.right) };
         this.renderContents();
+    }
+
+    clearComparison(){
+        this.leftContent = undefined;
+        this.rightContent = undefined;
+        this.leftBody = undefined;
+        this.rightBody = undefined;
+        this.shownKeys = {};
+        this.isLoadingLogs = false;
+        this.pendingSide = undefined;
     }
 
     //Both logs go through the same filters, the analyse ones first and the

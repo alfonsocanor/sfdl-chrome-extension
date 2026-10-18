@@ -280,4 +280,74 @@ describe('sfdl-compare-log-list', () => {
             ).toEqual(['07L2', '07L3']);
         });
     });
+
+    describe('feeding both sides', () => {
+        const ticks = (element) => [
+            ...element.shadowRoot.querySelectorAll('.sfdl-compare-log-tick')
+        ];
+
+        it('ticks the two logs compared, each in the colour of its side', async () => {
+            const element = await createLogList({
+                side: 'both',
+                leftLogId: '07L1',
+                rightLogId: '07L3'
+            });
+
+            expect(ticks(element).map((tick) => tick.checked)).toEqual([
+                true,
+                false,
+                true
+            ]);
+            expect(
+                rows(element).map((row) =>
+                    row.classList.contains('sfdl-compare-log-row_left')
+                        ? 'left'
+                        : row.classList.contains('sfdl-compare-log-row_right')
+                          ? 'right'
+                          : ''
+                )
+            ).toEqual(['left', '', 'right']);
+        });
+
+        it('has no ticks feeding one side', async () => {
+            const element = await createLogList({ side: 'left' });
+
+            expect(ticks(element)).toHaveLength(0);
+        });
+
+        it('leaves the side of a log ticked or clicked to the comparison', async () => {
+            const element = await createLogList({ side: 'both' });
+            const handleSelect = jest.fn();
+            element.addEventListener('logselect', handleSelect);
+
+            click(ticks(element)[1]);
+            click(element.shadowRoot.querySelectorAll('.sfdl-compare-log-name')[2]);
+
+            expect(
+                handleSelect.mock.calls.map(([event]) => event.detail)
+            ).toEqual([
+                { log: LOGS[1], side: undefined },
+                { log: LOGS[2], side: undefined }
+            ]);
+        });
+
+        it('walks past a ticked log with the arrows, it is the one compared against', async () => {
+            const element = await createLogList({
+                side: 'both',
+                leftLogId: '07L2'
+            });
+            const handleSelect = jest.fn();
+            element.addEventListener('logselect', handleSelect);
+            const logButtons = element.shadowRoot.querySelectorAll(
+                '.sfdl-compare-log-name'
+            );
+
+            pressKey(logButtons[0], 'ArrowDown');
+            pressKey(logButtons[1], 'ArrowDown');
+
+            expect(
+                handleSelect.mock.calls.map(([event]) => event.detail.log.id)
+            ).toEqual(['07L3']);
+        });
+    });
 });

@@ -14,8 +14,15 @@
           <div class="sfdl-debug-logs__toolbar">
             <div class="slds-button-group" role="group">
               <button class={analyseButtonClass} data-mode="analyse" aria-pressed={isAnalysePressed} onclick={handleLogsModeChange}><span class="slds-text-title_caps">Analyse</span></button>
-              <button class={compareButtonClass} data-mode="compare" aria-pressed={isComparePressed} onclick={handleLogsModeChange}><span class="slds-text-title_caps">Compare two orgs</span></button>
+              <button class={compareButtonClass} data-mode="compare" aria-pressed={isComparePressed} onclick={handleLogsModeChange}><span class="slds-text-title_caps">Compare logs</span></button>
             </div>
+            <!-- Comparing, the logs come from one org or from two. -->
+            <template if:false={isAnalyseMode}>
+              <div class="slds-button-group sfdl-debug-logs__scope" role="group">
+                <button class={sameOrgButtonClass} data-scope="sameOrg" aria-pressed={isSameOrgPressed} onclick={handleCompareScopeChange}><span class="slds-text-title_caps">Same org</span></button>
+                <button class={twoOrgsButtonClass} data-scope="twoOrgs" aria-pressed={isTwoOrgsPressed} onclick={handleCompareScopeChange}><span class="slds-text-title_caps">Two orgs</span></button>
+              </div>
+            </template>
             <span class="sfdl-debug-logs__hint">{logsHint}</span>
           </div>
           <div class={analyseViewClass}>
@@ -44,26 +51,30 @@
               </sfdl-side-panel>
               <div class="slds-col" style="position:relative;">
                 <sfdl-log-details
-                  class={logDetailsClass}
                   is-analise-logs="true"
                   onenablepicklistbuttons={handleActivateActionButtons}
                   onmanipulationoptions={handleManipulationOptions}>
                 </sfdl-log-details>
-                <template if:true={pairComparison}>
-                  <sfdl-compare-logs
-                    class="sfdl-debug-logs__pair"
-                    pair={pairComparison}
-                    onclose={handleClosePairComparison}>
-                  </sfdl-compare-logs>
-                </template>
               </div>
             </div>
           </div>
-          <!-- Built the first time it is opened, and hidden rather than destroyed
-               from then on so it keeps the comparison left on screen. -->
+          <!-- Each comparison is built the first time it is opened, and hidden
+               rather than destroyed from then on so it keeps what it had. -->
+          <template if:true={compareSameOrgRendered}>
+            <div class={compareSameOrgViewClass}>
+              <sfdl-compare-logs
+                scope="sameOrg"
+                orgs={orgs}
+                session-information={sessionInformation}
+                pair={pairComparison}
+                height={logsBodyHeight}>
+              </sfdl-compare-logs>
+            </div>
+          </template>
           <template if:true={compareTwoOrgsRendered}>
             <div class={compareTwoOrgsViewClass}>
               <sfdl-compare-logs
+                scope="twoOrgs"
                 orgs={orgs}
                 session-information={sessionInformation}
                 height={logsBodyHeight}>

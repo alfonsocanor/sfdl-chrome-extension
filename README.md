@@ -39,14 +39,18 @@ the file you get on disk matches what you see in the console.
 ## Comparing logs
 
 Comparing logs lives in the **Debug Logs** tab, next to reading them. The toggle at the
-top of the tab switches between **Analyse** and **Compare two orgs**, and each keeps what
-it had on screen while the other one is open. Whatever comes only from the left log
-shows in light blue, whatever comes only from the right log in light amber.
+top of the tab switches between **Analyse** and **Compare logs**, and Compare logs
+between **Same org** and **Two orgs**. Each keeps what it had on screen while another
+one is open. Whatever comes only from the left log shows in light blue, whatever comes
+only from the right log in light amber.
 
-- **Two logs of the same org**: in Analyse, tick two logs of the list and click
-  `compare side by side` next to `unselect`. The two logs open side by side in place of
-  the editor, the one further down the list, the older one, on the left. The buttons of
-  the diff swap them or close the comparison and go back to the log.
+- **Same org**: one list of the logs of an org, the org of the log list to start with.
+  Tick two logs to compare them, the first on the left. A new tick replaces the log
+  ticked last, so the other one stays to compare against; a ticked log ticked again
+  comes off. The arrow keys walk the list the same way, past the log compared against.
+  In Analyse, ticking two logs and clicking `compare side by side` opens them here, the
+  older one on the left, the way an editor opens the diff of two files in a view of its
+  own, and Analyse keeps the log it shows.
 - **Two orgs**: four columns, the logs of the left org, the left log, the right log and
   the logs of the right org. Each side picks its own org at the top of its column, the
   border of the picker in the colour of its side and its name on hover. The left one
@@ -54,6 +58,8 @@ shows in light blue, whatever comes only from the right log in light amber.
   the other. Click a log to compare it on its side, or walk a list with the arrow keys
   to compare each log against the other side as you go. Both lists filter by any word
   of the log name and fold away.
+
+A new log on one side only reloads that side, the other one stays on screen.
 
 The filters of a log are pills, outlined in blue on a light blue fill while on, each
 explained on hover. Analyse shows
@@ -161,9 +167,11 @@ the LWC jest transformer does not ship with.
      what is ticked; the checkbox above the button ticks and unticks the whole list
    - `Download all logs` still produces `sfdl-ApexLog.zip`
    - the progress bar and its cancel button behave during a long download
-   - Debug Logs, Analyse: ticking two logs offers `compare side by side`, the two logs
-     open in place of the editor and the close button brings the log back
-   - Debug Logs, Compare two orgs: each side lists the logs of its own org, the org of
+   - Debug Logs, Analyse: ticking two logs offers `compare side by side`, which opens
+     them in Compare logs, Same org, and Analyse still shows its log when you go back
+   - Debug Logs, Compare logs, Same org: a third tick replaces the last one, the first
+     stays on the left and only the right side reloads
+   - Debug Logs, Compare logs, Two orgs: each side lists the logs of its own org, the org of
      one side is not offered on the other, the timestamp and id filters make two runs
      of the same transaction differ only where they really do
    - Compare Metadata: picking a type only lists names, opening a component compares

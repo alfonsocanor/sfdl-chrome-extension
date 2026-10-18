@@ -73,9 +73,4 @@ export const css = `
     .sfdl-body-tab > .slds-col {
         min-width: 0;
     }
-
-    .sfdl-debug-logs__pair {
-        display: block;
-        height: 100%;
-    }
 `;

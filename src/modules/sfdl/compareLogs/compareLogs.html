@@ -1,7 +1,33 @@
 <template>
     <div class="sfdl-compare-logs" style={containerStyle}>
         <div class="sfdl-compare-logs__body">
-            <template if:false={isPairMode}>
+            <template if:true={isSameOrg}>
+                <!-- One org feeds both sides: two of its logs are ticked, the first
+                     on the left, and a new tick replaces the last one. -->
+                <sfdl-side-panel class="sfdl-compare-logs__list-panel" label="Log List" side="left" width="20rem">
+                    <sfdl-combobox
+                        slot="header"
+                        class="sfdl-compare-logs__org-picker"
+                        side="left"
+                        label="Org"
+                        placeholder="Pick the org"
+                        empty-message="No org session, log in to an org first"
+                        options={allOrgOptions}
+                        value={leftOrgUrl}
+                        data-side="left"
+                        onchange={handleOrgChange}>
+                    </sfdl-combobox>
+                    <sfdl-compare-log-list
+                        side="both"
+                        session-information={leftOrgSession}
+                        left-log-id={leftLogId}
+                        right-log-id={rightLogId}
+                        no-session-message="Pick the org of the logs"
+                        onlogselect={handleLogSelect}>
+                    </sfdl-compare-log-list>
+                </sfdl-side-panel>
+            </template>
+            <template if:true={isTwoOrgs}>
                 <!-- The org of each side is picked where its title would be, its
                      colour telling the side. Folded, each reads Log List. -->
                 <sfdl-side-panel class="sfdl-compare-logs__left-panel" label="Log List" side="left" width="18rem">
@@ -34,6 +60,7 @@
                         oncheckboxselection={handleOptionsChange}>
                     </sfdl-log-manipulation-menu>
                 </div>
+                <!-- A new log on one side only reloads that side. -->
                 <sfdl-diff-viewer
                     language="apexlog"
                     left-label={leftLabel}
@@ -41,28 +68,12 @@
                     left-content={leftContent}
                     right-content={rightContent}
                     loading={isLoadingLogs}
+                    loading-side={pendingSide}
+                    side-loading-message={pendingMessage}
                     empty-message={emptyMessage}>
-                    <template if:true={isPairMode}>
-                        <button
-                            slot="actions"
-                            class="sfdl-compare-logs__pair-swap slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
-                            style="width:22px;height:22px;padding:2px;"
-                            title="Swap the two logs"
-                            onclick={handleSwap}>
-                            <img class="sfdl-swap-icon" src={swapIcon} alt="swap the logs"/>
-                        </button>
-                        <button
-                            slot="actions"
-                            class="sfdl-compare-logs__close slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
-                            style="width:22px;height:22px;padding:2px;"
-                            title="Close the comparison and go back to the log"
-                            onclick={handleClose}>
-                            <img src={closeIcon} alt="close the comparison"/>
-                        </button>
-                    </template>
                 </sfdl-diff-viewer>
             </div>
-            <template if:false={isPairMode}>
+            <template if:true={isTwoOrgs}>
                 <sfdl-side-panel class="sfdl-compare-logs__right-panel" label="Log List" side="right" width="18rem">
                     <sfdl-combobox
                         slot="header"

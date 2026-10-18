@@ -248,29 +248,48 @@ describe('sfdl-console', () => {
             ).toBeNull();
         });
 
-        it('compares two orgs in the same tab and keeps the analysis', async () => {
+        it('compares logs of the same org or of two orgs, and keeps the analysis', async () => {
             const element = await createConsole();
+            const scopeButton = (scope) =>
+                element.shadowRoot.querySelector(`[data-scope="${scope}"]`);
+
+            expect(scopeButton('sameOrg')).toBeNull();
 
             click(modeButton(element, 'compare'));
             await wait();
 
             expect(isShown(element, 'sfdl-debug-logs__analyse')).toBe(false);
-            expect(isShown(element, 'sfdl-debug-logs__compare')).toBe(true);
-            expect(modeButton(element, 'compare').classList).toContain(
-                'slds-button_brand'
+            expect(isShown(element, 'sfdl-debug-logs__same-org')).toBe(true);
+            expect(
+                element.shadowRoot.querySelector('.sfdl-debug-logs__two-orgs')
+            ).toBeNull();
+            expect(modeButton(element, 'compare').textContent).toBe(
+                'Compare logs'
             );
             expect(
                 modeButton(element, 'compare').getAttribute('aria-pressed')
             ).toBe('true');
+            expect(scopeButton('sameOrg').getAttribute('aria-pressed')).toBe(
+                'true'
+            );
+
+            click(scopeButton('twoOrgs'));
+            await wait();
+
+            expect(isShown(element, 'sfdl-debug-logs__same-org')).toBe(false);
+            expect(isShown(element, 'sfdl-debug-logs__two-orgs')).toBe(true);
+            expect(
+                [
+                    ...element.shadowRoot.querySelectorAll('sfdl-compare-logs')
+                ].map((compareLogs) => compareLogs.scope)
+            ).toEqual(['sameOrg', 'twoOrgs']);
 
             click(modeButton(element, 'analyse'));
             await wait();
 
             expect(isShown(element, 'sfdl-debug-logs__analyse')).toBe(true);
-            expect(isShown(element, 'sfdl-debug-logs__compare')).toBe(false);
-            expect(
-                element.shadowRoot.querySelector('sfdl-compare-logs')
-            ).not.toBeNull();
+            expect(isShown(element, 'sfdl-debug-logs__two-orgs')).toBe(false);
+            expect(scopeButton('twoOrgs')).toBeNull();
             expect(logDetails(element)).not.toBeNull();
         });
 
@@ -413,8 +432,10 @@ describe('sfdl-console', () => {
             name: 'newer',
             attributes: { url: '/one' }
         };
-        const pairComparison = (element) =>
-            element.shadowRoot.querySelector('.sfdl-debug-logs__pair');
+        const sameOrgComparison = (element) =>
+            element.shadowRoot.querySelector(
+                '.sfdl-debug-logs__same-org sfdl-compare-logs'
+            );
 
         async function compareTwoLogs(element) {
             logList(element).dispatchEvent(
@@ -425,13 +446,13 @@ describe('sfdl-console', () => {
             await wait();
         }
 
-        it('compares them in place of the editor', async () => {
+        it('opens them in the comparison of the same org', async () => {
             const element = await createConsole();
             await selectOrg(element);
 
             await compareTwoLogs(element);
 
-            expect(pairComparison(element).pair).toEqual({
+            expect(sameOrgComparison(element).pair).toEqual({
                 left: {
                     log: LEFT_LOG,
                     sessionInformation: expect.objectContaining({
@@ -445,55 +466,31 @@ describe('sfdl-console', () => {
                     })
                 }
             });
-            expect(logDetails(element).classList.contains('slds-hide')).toBe(
-                true
-            );
+            expect(
+                element.shadowRoot
+                    .querySelector('.sfdl-debug-logs__same-org')
+                    .classList.contains('slds-hide')
+            ).toBe(false);
+            expect(
+                element.shadowRoot
+                    .querySelector('.sfdl-debug-logs__analyse')
+                    .classList.contains('slds-hide')
+            ).toBe(true);
+            expect(
+                element.shadowRoot
+                    .querySelector('[data-scope="sameOrg"]')
+                    .getAttribute('aria-pressed')
+            ).toBe('true');
         });
 
-        it('goes back to the log when the comparison is closed', async () => {
+        it('leaves the analysis as it was, to go back to', async () => {
             const element = await createConsole();
             await selectOrg(element);
+
             await compareTwoLogs(element);
 
-            pairComparison(element).dispatchEvent(new CustomEvent('close'));
-            await wait();
-
-            expect(pairComparison(element)).toBeNull();
-            expect(logDetails(element).classList.contains('slds-hide')).toBe(
-                false
-            );
-        });
-
-        it('goes back to reading when a log is opened', async () => {
-            const element = await createConsole();
-            await selectOrg(element);
-            await compareTwoLogs(element);
-            jest.spyOn(
-                logDetails(element),
-                'processLogsFromLogList'
-            ).mockImplementation(() => {});
-
-            logList(element).dispatchEvent(
-                new CustomEvent('logdetails', {
-                    detail: {
-                        logName: 'a log',
-                        logDetails: { response: 'body' }
-                    }
-                })
-            );
-            await wait();
-
-            expect(pairComparison(element)).toBeNull();
-        });
-
-        it('closes when another org is picked for the log list', async () => {
-            const element = await createConsole();
-            await selectOrg(element);
-            await compareTwoLogs(element);
-
-            await selectOrg(element);
-
-            expect(pairComparison(element)).toBeNull();
+            expect(logDetails(element).className).toBe('');
+            expect(logList(element)).not.toBeNull();
         });
     });
 });
