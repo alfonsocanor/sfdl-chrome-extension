@@ -1,6 +1,6 @@
 export const css = `
-    /* The tabs sit on a light grey strip. The open one is white and joins
-       what it shows below, a thin light blue line on top. */
+    /* The tabs sit on a light grey strip. The open one takes the light blue
+       of the panel headers and joins the toolbar of its tab, as light blue. */
     .sfdl-console-tabs > .slds-tabs_scoped__nav {
         background: #f3f3f3;
         border: 0;
@@ -21,10 +21,9 @@ export const css = `
 
     .sfdl-console-tabs .slds-is-active .slds-tabs_scoped__link,
     .sfdl-console-tabs .slds-is-active .slds-tabs_scoped__link:hover {
-        background: #ffffff;
-        border-left-color: #dddbda;
-        border-right-color: #dddbda;
-        box-shadow: inset 0 2px 0 #78b0fd;
+        background: var(--sfdl-left-tint, #edf5fd);
+        border-left-color: var(--sfdl-left-border, #b9d6f2);
+        border-right-color: var(--sfdl-left-border, #b9d6f2);
         color: #181818;
     }
 
@@ -37,8 +36,8 @@ export const css = `
         align-items: center;
         gap: 12px;
         padding: 8px 12px;
-        background: #ffffff;
-        border-bottom: 1px solid #dddbda;
+        background: var(--sfdl-left-tint, #edf5fd);
+        border-bottom: 1px solid var(--sfdl-left-border, #b9d6f2);
     }
 
     .sfdl-debug-logs__hint {

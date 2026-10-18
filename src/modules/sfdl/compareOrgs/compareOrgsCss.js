@@ -18,8 +18,8 @@ export const css = `
         justify-content: space-between;
         gap: 12px;
         padding: 8px 12px;
-        background: #ffffff;
-        border-bottom: 1px solid #dddbda;
+        background: var(--sfdl-left-tint, #edf5fd);
+        border-bottom: 1px solid var(--sfdl-left-border, #b9d6f2);
     }
 
     .sfdl-compare-orgs__org {
