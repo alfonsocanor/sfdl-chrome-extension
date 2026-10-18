@@ -1,14 +1,14 @@
 <template>
     <div class="slds-form-element sfdl-combobox">
-        <template if:true={label}>
-            <span class="slds-form-element__label sfdl-combobox-label">
-                <template if:true={side}>
-                    <span class={swatchClass}></span>
-                </template>
-                {label}
-            </span>
+        <template if:true={showLabel}>
+            <span class="slds-form-element__label sfdl-combobox-label">{label}</span>
         </template>
-        <div class="slds-form-element__control">
+        <div class={controlClass}>
+            <!-- The colour of the side says which one it is, the label only
+                 comes on hover. -->
+            <template if:true={side}>
+                <span class={swatchClass} title={label} data-side={side}></span>
+            </template>
             <div class="slds-combobox_container">
                 <div class={comboboxClass}>
                     <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
@@ -17,6 +17,7 @@
                             class="slds-input_faux slds-combobox__input sfdl-combobox-button"
                             disabled={disabled}
                             title={buttonTitle}
+                            aria-label={label}
                             aria-haspopup="listbox"
                             aria-expanded={ariaExpanded}
                             onclick={handleToggle}

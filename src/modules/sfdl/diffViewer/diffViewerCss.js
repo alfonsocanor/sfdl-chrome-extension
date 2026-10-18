@@ -36,6 +36,18 @@ export const css = `
         justify-content: flex-end;
     }
 
+    /* The names of the sides lead the bar, a step under the org pickers. */
+    .sfdl-diff-viewer .sfdl-diff-summary .sfdl-side-chip {
+        padding: 2px 8px;
+        font-size: 13px;
+        line-height: 20px;
+    }
+
+    .sfdl-diff-viewer .sfdl-diff-summary .sfdl-side-swatch {
+        width: 10px;
+        height: 10px;
+    }
+
     /* What the org of the side is doing, next to its name. */
     .sfdl-diff-viewer .sfdl-diff-side-status {
         flex: 0 1 auto;

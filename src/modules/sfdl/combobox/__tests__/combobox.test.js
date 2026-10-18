@@ -212,14 +212,26 @@ describe('sfdl-combobox', () => {
         ).toBe('No org session');
     });
 
-    it('paints the swatch of its side next to the label', () => {
-        const element = createCombobox({ side: 'right' });
+    it('writes its label above it', () => {
+        const element = createCombobox({ label: 'Metadata' });
 
         expect(
-            element.shadowRoot
-                .querySelector('.sfdl-side-swatch')
-                .classList.contains('sfdl-side-swatch_right')
-        ).toBe(true);
+            element.shadowRoot.querySelector('.sfdl-combobox-label').textContent
+        ).toBe('Metadata');
+        expect(element.shadowRoot.querySelector('.sfdl-side-swatch')).toBeNull();
+    });
+
+    it('stands the colour of its side for the label, which shows on hover', () => {
+        const element = createCombobox({ side: 'right', label: 'Right org' });
+        const swatch = element.shadowRoot.querySelector('.sfdl-side-swatch');
+
+        expect(swatch.classList.contains('sfdl-side-swatch_right')).toBe(true);
+        expect(swatch.title).toBe('Right org');
+        expect(swatch.parentElement.classList).toContain(
+            'sfdl-combobox-control_right'
+        );
+        expect(element.shadowRoot.querySelector('.sfdl-combobox-label')).toBeNull();
+        expect(button(element).getAttribute('aria-label')).toBe('Right org');
     });
 
     it('can be disabled', () => {

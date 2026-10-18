@@ -14,7 +14,8 @@ export default class Combobox extends LightningElement{
     @api placeholder = 'Select an option';
     @api emptyMessage = 'Nothing to pick from';
     @api disabled = false;
-    //left or right, paints the swatch of that side next to the label.
+    //left or right: a square of the colour of that side stands in for the
+    //label, on the outer edge of that side, and the label shows on hover.
     @api side;
 
     @api
@@ -60,8 +61,16 @@ export default class Combobox extends LightningElement{
         return 'slds-truncate' + (this.selectedOption ? '' : ' sfdl-combobox-placeholder');
     }
 
+    get showLabel(){
+        return !!this.label && !this.side;
+    }
+
+    get controlClass(){
+        return 'slds-form-element__control' + (this.side ? ' sfdl-combobox-control_' + this.side : '');
+    }
+
     get swatchClass(){
-        return 'sfdl-side-swatch sfdl-side-swatch_' + this.side;
+        return 'sfdl-side-swatch sfdl-side-swatch_' + this.side + ' sfdl-combobox-swatch';
     }
 
     get comboboxClass(){
