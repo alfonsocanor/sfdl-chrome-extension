@@ -10,6 +10,9 @@ const COMPARE_MODE = 'compare';
 const TAB_ITEM_CLASS = 'slds-tabs_scoped__item';
 const TAB_CONTENT_CLASS = 'slds-tabs_scoped__content';
 const BUTTON_CLASS = 'slds-button';
+const LOG_LIST_OPENING_CLASS = 'log-list-is-opening';
+//The transition of consoleCss, and a little more.
+const LOG_LIST_TRANSITION_MILLISECONDS = 700;
 
 export default class Console extends LightningElement {
     firstRender = true;
@@ -144,8 +147,14 @@ export default class Console extends LightningElement {
             } else {
                 logListPanel.classList[event.detail.classAction]('slds-is-open');
                 setTimeout(() => {
+                    //Only this opening grows the panel from nothing, not the
+                    //tab holding it being shown again.
+                    logListPanel.classList.add(LOG_LIST_OPENING_CLASS);
                     logListPanel.classList.remove('log-list-is-closed');
-                },50);    
+                    setTimeout(() => {
+                        logListPanel.classList.remove(LOG_LIST_OPENING_CLASS);
+                    }, LOG_LIST_TRANSITION_MILLISECONDS);
+                },50);
             }
         },50);
     }

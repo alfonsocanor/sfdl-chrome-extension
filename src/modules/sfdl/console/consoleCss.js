@@ -1,23 +1,29 @@
 export const css = `
-    .slds-is-open {
+    /* The log list panel folds away and opens again from nothing with its
+       toggle. The starting style only holds while it is being opened: a
+       starting style applies whenever an element starts being rendered, so
+       on its own it would play again every time the tab holding the panel is
+       shown. */
+    .sfdl-console-log-list-section.slds-is-open {
         opacity: 1;
-        min-width:0px;
-
-        @starting-style {
-            width: 0px;
-            min-width:0px;
-            opacity: 0;
-        }
-
+        min-width: 0px;
         transition-property: display, opacity, width;
         transition-duration: 0.6s;
         transition-behavior: allow-discrete;
     }
-    
-    .log-list-is-closed {
+
+    @starting-style {
+        .sfdl-console-log-list-section.log-list-is-opening {
+            width: 0px;
+            min-width: 0px;
+            opacity: 0;
+        }
+    }
+
+    .sfdl-console-log-list-section.log-list-is-closed {
         display: none;
         width: 0px;
-        min-width:0px;
+        min-width: 0px;
         opacity: 0;
         transition-property: display, opacity, width;
         transition-duration: 0.6s;

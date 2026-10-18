@@ -1,5 +1,6 @@
 import { createElement } from 'lwc';
 import Console from 'sfdl/console';
+import { css } from '../consoleCss';
 
 jest.mock('sfdl/utils', () => ({
     showToastEvent: jest.fn(),
@@ -380,6 +381,61 @@ describe('sfdl-console', () => {
             );
             await wait(150);
             expect(panel.classList.contains('slds-is-open')).toBe(true);
+        });
+    });
+
+    describe('the log list panel', () => {
+        const panel = (element) =>
+            element.shadowRoot.querySelector('.sfdl-console-log-list-section');
+
+        async function toggleLogList(element, classAction) {
+            logDetails(element).dispatchEvent(
+                new CustomEvent('displayloglistsection', {
+                    detail: { classAction }
+                })
+            );
+            await wait(150);
+        }
+
+        it('grows from nothing only while its toggle opens it', async () => {
+            const element = await createConsole();
+            await toggleLogList(element, 'remove');
+
+            await toggleLogList(element, 'add');
+
+            expect(panel(element).classList).toContain('log-list-is-opening');
+            expect(panel(element).classList).not.toContain(
+                'log-list-is-closed'
+            );
+
+            await wait(750);
+
+            expect(panel(element).classList).not.toContain(
+                'log-list-is-opening'
+            );
+        });
+
+        it('does not open again when its tab is shown again', async () => {
+            const element = await createConsole();
+
+            click(tab(element, 'compareMetadata'));
+            await wait();
+            click(tab(element, 'debugLogs'));
+            await wait();
+
+            expect(panel(element).classList).not.toContain(
+                'log-list-is-opening'
+            );
+        });
+
+        it('keeps its starting style to its own opening', () => {
+            // A starting style applies whenever an element starts being
+            // rendered, showing the tab again included.
+            expect(css).not.toMatch(/^\s*\.slds-is-open\s*\{/m);
+            expect(css).toMatch(
+                /@starting-style\s*\{\s*\.sfdl-console-log-list-section\.log-list-is-opening\s*\{/
+            );
+            expect(css.match(/@starting-style/g)).toHaveLength(1);
         });
     });
 
