@@ -9,12 +9,14 @@ export const css = `
         background: #fafaf9;
     }
 
+    /* The left org on the left edge, the right org on the right edge, as the
+       sides of the diff below them, and the swap between them. */
     .sfdl-compare-orgs__toolbar {
         display: flex;
         flex: 0 0 auto;
-        flex-wrap: wrap;
         align-items: flex-end;
-        gap: 8px 12px;
+        justify-content: space-between;
+        gap: 12px;
         padding: 8px 12px;
         background: #ffffff;
         border-bottom: 1px solid #dddbda;
@@ -24,30 +26,12 @@ export const css = `
         width: 17rem;
     }
 
-    .sfdl-compare-orgs__type {
-        width: 15rem;
-    }
-
-    .sfdl-compare-orgs__toolbar-button {
+    .sfdl-compare-orgs .sfdl-compare-orgs__swap {
         margin-bottom: 5px;
     }
 
-    .sfdl-compare-orgs__managed {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
-        margin-bottom: 7px;
-        color: #3e3e3c;
-        font-size: 12px;
-        cursor: pointer;
-        white-space: nowrap;
-    }
-
-    .sfdl-compare-orgs__managed input {
-        width: 14px;
-        height: 14px;
-        margin: 0;
-        cursor: pointer;
+    .sfdl-compare-orgs .sfdl-compare-orgs__type {
+        margin-bottom: 8px;
     }
 
     .sfdl-compare-orgs__body {

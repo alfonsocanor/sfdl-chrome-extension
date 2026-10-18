@@ -1,11 +1,7 @@
 import { createElement } from 'lwc';
 import CompareOrgs from 'sfdl/compareOrgs';
 import { getCommonApiVersion } from 'sfdl/salesforceConnection';
-import {
-    listOrgComponents,
-    compareComponents,
-    forgetComponents
-} from 'sfdl/orgCompare';
+import { listOrgComponents, compareComponents } from 'sfdl/orgCompare';
 
 // Object.assign rather than a spread: the transform turns a spread into a
 // helper the hoisted factory cannot reach.
@@ -17,8 +13,7 @@ jest.mock('sfdl/salesforceConnection', () =>
 jest.mock('sfdl/orgCompare', () =>
     Object.assign({}, jest.requireActual('sfdl/orgCompare'), {
         listOrgComponents: jest.fn(),
-        compareComponents: jest.fn(),
-        forgetComponents: jest.fn()
+        compareComponents: jest.fn()
     })
 );
 
@@ -254,12 +249,6 @@ describe('sfdl-compare-orgs', () => {
                 'globex.my.salesforce.com'
             );
         });
-
-        it('cannot refresh before there is something to compare', async () => {
-            const element = await createCompareOrgs();
-
-            expect(picker(element, 'refresh').disabled).toBe(true);
-        });
     });
 
     describe('listing', () => {
@@ -281,26 +270,15 @@ describe('sfdl-compare-orgs', () => {
             );
             expect(
                 listOrgComponents.mock.calls.map(
-                    ([session, type, apiVersion, options]) => [
+                    ([session, type, apiVersion]) => [
                         session.instanceUrl,
                         type.key,
-                        apiVersion,
-                        options
+                        apiVersion
                     ]
                 )
             ).toEqual([
-                [
-                    ACME.instanceUrl,
-                    'ApexClass',
-                    '60.0',
-                    { includeManaged: false, refresh: false }
-                ],
-                [
-                    GLOBEX.instanceUrl,
-                    'ApexClass',
-                    '60.0',
-                    { includeManaged: false, refresh: false }
-                ]
+                [ACME.instanceUrl, 'ApexClass', '60.0'],
+                [GLOBEX.instanceUrl, 'ApexClass', '60.0']
             ]);
             expect(compareComponents).not.toHaveBeenCalled();
             expect(statuses(element)).toEqual([
@@ -384,63 +362,49 @@ describe('sfdl-compare-orgs', () => {
             ).toBe('The orgs do not share any api version');
         });
 
-        it('lists again when the type, an org or the managed choice changes', async () => {
+        it('lists again when the type or an org changes', async () => {
             const element = await listType();
 
             await pick(element, 'type', 'ApexTrigger');
             await pick(element, 'left-org', INITECH.instanceUrl);
-            const managed = element.shadowRoot.querySelector(
-                '.sfdl-compare-orgs__managed-checkbox'
-            );
-            managed.checked = true;
-            managed.dispatchEvent(new CustomEvent('change'));
-            await wait();
-            await wait();
 
             expect(
-                listOrgComponents.mock.calls.map(([session, type, , options]) =>
-                    [
-                        session.instanceUrl,
-                        type.key,
-                        options.includeManaged
-                    ].join(' ')
+                listOrgComponents.mock.calls.map(([session, type]) =>
+                    [session.instanceUrl, type.key].join(' ')
                 )
             ).toEqual([
-                ACME.instanceUrl + ' ApexClass false',
-                GLOBEX.instanceUrl + ' ApexClass false',
-                ACME.instanceUrl + ' ApexTrigger false',
-                GLOBEX.instanceUrl + ' ApexTrigger false',
-                INITECH.instanceUrl + ' ApexTrigger false',
-                GLOBEX.instanceUrl + ' ApexTrigger false',
-                INITECH.instanceUrl + ' ApexTrigger true',
-                GLOBEX.instanceUrl + ' ApexTrigger true'
+                ACME.instanceUrl + ' ApexClass',
+                GLOBEX.instanceUrl + ' ApexClass',
+                ACME.instanceUrl + ' ApexTrigger',
+                GLOBEX.instanceUrl + ' ApexTrigger',
+                INITECH.instanceUrl + ' ApexTrigger',
+                GLOBEX.instanceUrl + ' ApexTrigger'
             ]);
         });
 
-        it('lists again and forgets what was retrieved on refresh', async () => {
-            const element = await listType();
-
-            picker(element, 'refresh').click();
-            await wait();
-            await wait();
+        it('keeps the orgs in the toolbar and what to compare in the components panel', async () => {
+            const element = await createCompareOrgs();
+            const toolbar = element.shadowRoot.querySelector(
+                '.sfdl-compare-orgs__toolbar'
+            );
 
             expect(
-                listOrgComponents.mock.calls
-                    .slice(2)
-                    .map(([, , , options]) => options.refresh)
-            ).toEqual([true, true]);
-            expect(
-                forgetComponents.mock.calls.map(
-                    ([session, type, apiVersion]) => [
-                        session.instanceUrl,
-                        type.key,
-                        apiVersion
-                    ]
+                [...toolbar.children].map(
+                    (child) => child.className.split(' ')[0]
                 )
             ).toEqual([
-                [ACME.instanceUrl, 'ApexClass', '60.0'],
-                [GLOBEX.instanceUrl, 'ApexClass', '60.0']
+                'sfdl-compare-orgs__org',
+                'sfdl-compare-orgs__swap',
+                'sfdl-compare-orgs__org'
             ]);
+            expect(
+                resultsPanel(element).querySelector('.sfdl-compare-orgs__type')
+            ).not.toBeNull();
+            expect(
+                element.shadowRoot.querySelector(
+                    '.sfdl-compare-orgs__managed-checkbox'
+                )
+            ).toBeNull();
         });
 
         it('swaps the orgs of both sides', async () => {

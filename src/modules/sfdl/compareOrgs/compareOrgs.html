@@ -13,7 +13,7 @@
                 onchange={handleOrgChange}>
             </sfdl-combobox>
             <button
-                class="sfdl-compare-orgs__swap sfdl-compare-orgs__toolbar-button slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
+                class="sfdl-compare-orgs__swap slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
                 style="width:22px;height:22px;padding:2px;"
                 title="Swap the orgs of both sides"
                 disabled={isSwapDisabled}
@@ -31,29 +31,17 @@
                 data-side="right"
                 onchange={handleOrgChange}>
             </sfdl-combobox>
-            <sfdl-combobox
-                class="sfdl-compare-orgs__type"
-                label="Metadata"
-                placeholder="Pick what to compare"
-                options={typeOptions}
-                value={typeKey}
-                onchange={handleTypeChange}>
-            </sfdl-combobox>
-            <button
-                class="sfdl-compare-orgs__refresh sfdl-compare-orgs__toolbar-button slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
-                style="width:22px;height:22px;padding:2px;"
-                title="List both orgs again and forget what was retrieved"
-                disabled={isRefreshDisabled}
-                onclick={handleRefresh}>
-                <img src={refreshIcon} alt="list both orgs again"/>
-            </button>
-            <label class="sfdl-compare-orgs__managed" title="Compare the components of installed packages too">
-                <input type="checkbox" class="sfdl-compare-orgs__managed-checkbox" checked={includeManaged} onchange={handleManagedChange}/>
-                <span>Include managed packages</span>
-            </label>
         </div>
         <div class="sfdl-compare-orgs__body">
             <sfdl-side-panel class="sfdl-compare-orgs__results-panel" title="Components" subtitle={resultsSubtitle} dock="left" width="24rem">
+                <sfdl-combobox
+                    class="sfdl-compare-orgs__type"
+                    label="Metadata"
+                    placeholder="Pick what to compare"
+                    options={typeOptions}
+                    value={typeKey}
+                    onchange={handleTypeChange}>
+                </sfdl-combobox>
                 <template if:true={showProgress}>
                     <div class="sfdl-compare-orgs__progress">
                         <template for:each={sideProgress} for:item="progress">

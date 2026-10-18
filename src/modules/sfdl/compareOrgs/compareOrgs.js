@@ -4,7 +4,6 @@ import { getMetadataType, metadataTypeOptions, languageForFile } from 'sfdl/meta
 import {
     listOrgComponents,
     compareComponents,
-    forgetComponents,
     IDENTICAL,
     LEFT_ONLY,
     RIGHT_ONLY,
@@ -19,7 +18,6 @@ const LEFT = 'left';
 const RIGHT = 'right';
 const BOTH = 'both';
 const SWAP_ICON = '/slds/icons/utility/sort.svg';
-const REFRESH_ICON = '/slds/icons/utility/refresh.svg';
 const DEFAULT_BATCH_SIZE = 100;
 
 //What the Metadata API and the custom settings reader report, in words.
@@ -27,7 +25,7 @@ const STATUS_LABELS = {
     Pending: 'Queued in the org',
     InProgress: 'Retrieving',
     Succeeded: 'Retrieved',
-    'Already retrieved': 'Retrieved earlier, refresh to retrieve again'
+    'Already retrieved': 'Unchanged since it was retrieved'
 };
 
 function domainOf(instanceUrl){
@@ -113,7 +111,6 @@ export default class CompareOrgs extends LightningElement{
     leftOrgSession;
     rightOrgSession;
     typeKey;
-    includeManaged = false;
 
     listSequence = 0;
     isListing = false;
@@ -131,7 +128,6 @@ export default class CompareOrgs extends LightningElement{
     comparisonQueue = Promise.resolve();
 
     swapIcon = SWAP_ICON;
-    refreshIcon = REFRESH_ICON;
     typeOptions = metadataTypeOptions();
 
     connectedCallback(){
@@ -197,10 +193,6 @@ export default class CompareOrgs extends LightningElement{
 
     get isSwapDisabled(){
         return !this.leftOrgSession && !this.rightOrgSession;
-    }
-
-    get isRefreshDisabled(){
-        return !this.canCompare || this.isListing || this.activeComparisons > 0;
     }
 
     get selectedComponent(){
@@ -355,15 +347,6 @@ export default class CompareOrgs extends LightningElement{
         this.runListing();
     }
 
-    handleManagedChange(event){
-        this.includeManaged = event.target.checked;
-        this.runListing();
-    }
-
-    handleRefresh(){
-        this.runListing({ refresh: true });
-    }
-
     //What was retrieved stays cached, swapping only lists and compares the
     //other way round.
     handleSwap(){
@@ -435,7 +418,7 @@ export default class CompareOrgs extends LightningElement{
         );
     }
 
-    async runListing({ refresh = false } = {}){
+    async runListing(){
         const sequence = ++this.listSequence;
 
         this.resetResults();
@@ -447,7 +430,6 @@ export default class CompareOrgs extends LightningElement{
 
         const type = this.selectedType;
         const sessions = { [LEFT]: this.leftOrgSession, [RIGHT]: this.rightOrgSession };
-        const includeManaged = this.includeManaged;
 
         this.isListing = true;
         [LEFT, RIGHT].forEach(side => this.updateSideState(side, { status: 'Listing the components' }));
@@ -461,12 +443,8 @@ export default class CompareOrgs extends LightningElement{
 
             this.apiVersion = apiVersion;
 
-            if(refresh){
-                [LEFT, RIGHT].forEach(side => forgetComponents(sessions[side], type, apiVersion));
-            }
-
             const [leftResult, rightResult] = await Promise.allSettled([LEFT, RIGHT].map(side =>
-                listOrgComponents(sessions[side], type, apiVersion, { includeManaged, refresh })
+                listOrgComponents(sessions[side], type, apiVersion)
             ));
 
             //The orgs or the type changed while these were on their way.
