@@ -182,6 +182,14 @@ export default class DiffViewer extends LightningElement{
         return !!this.loadingSide && this.hasContent;
     }
 
+    get stencilPanes(){
+        return this.isInline ? 1 : 2;
+    }
+
+    get sideLoadingLabel(){
+        return this.sideLoadingMessage || 'Loading';
+    }
+
     //Inline, both sides share one pane, and the whole of it waits.
     get sideLoadingStyle(){
         if(this.isInline){

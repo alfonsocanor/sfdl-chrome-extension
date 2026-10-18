@@ -1,0 +1,26 @@
+<template>
+    <!-- sfdl-log-list, bar for bar: the row of its actions (the tick of the
+         whole list, the download icon and its label), then its rows, each
+         a tick, the two lines of the name of a log and the download icon. -->
+    <div class="sfdl-stencil" role="status" aria-busy="true" aria-label={label}>
+        <div class="sfdl-stencil-actions" aria-hidden="true">
+            <span class="sfdl-shimmer sfdl-stencil__tick"></span>
+            <span class="sfdl-shimmer sfdl-stencil__icon"></span>
+            <span class="sfdl-shimmer sfdl-stencil-actions__label"></span>
+        </div>
+        <ul class="slds-has-dividers_around slds-has-block-links" aria-hidden="true">
+            <template for:each={rowList} for:item="row">
+                <li key={row.key} class="slds-item">
+                    <div class="sfdl-stencil-log-row">
+                        <span class="sfdl-shimmer sfdl-stencil__tick"></span>
+                        <span class="sfdl-stencil__lines">
+                            <span class="sfdl-shimmer sfdl-stencil__line sfdl-stencil__line_first"></span>
+                            <span class="sfdl-shimmer sfdl-stencil__line sfdl-stencil__line_second"></span>
+                        </span>
+                        <span class="sfdl-shimmer sfdl-stencil__icon"></span>
+                    </div>
+                </li>
+            </template>
+        </ul>
+    </div>
+</template>

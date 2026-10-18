@@ -29,14 +29,11 @@
         <div class="sfdl-compare-log-list__logs">
             <!-- Loading, the outline of the rows to come stands in their place. -->
             <template if:true={isLoading}>
-                <sfdl-skeleton
-                    rows="8"
-                    shape={skeletonShape}
-                    list-class="slds-has-dividers_around slds-has-block-links"
-                    item-class="slds-item"
-                    row-class="sfdl-compare-log-row"
+                <sfdl-loading-stencil
+                    type="compareLogList"
+                    ticks={isTickable}
                     label="Loading the logs">
-                </sfdl-skeleton>
+                </sfdl-loading-stencil>
             </template>
             <ul class={listClass}>
                 <template for:each={visibleLogs} for:item="log">

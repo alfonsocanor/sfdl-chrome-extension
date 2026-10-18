@@ -169,6 +169,16 @@ export const css = `
         background: #fafaf9;
     }
 
+    /* The stencil of the diff over the whole body, above the editor. */
+    .sfdl-diff-viewer .sfdl-diff-stencil {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 20;
+    }
+
     .sfdl-diff-viewer .sfdl-diff-empty {
         position: absolute;
         top: 0;

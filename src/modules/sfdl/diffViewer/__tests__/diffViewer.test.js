@@ -36,19 +36,39 @@ describe('sfdl-diff-viewer', () => {
             expect(monaco.editor.createDiffEditor).not.toHaveBeenCalled();
         });
 
-        it('writes the message under the spinner while loading, not behind it', async () => {
+        it('draws the two panes of the diff while loading, what it waits for above them', async () => {
             const element = await createDiffViewer({
                 loading: true,
                 emptyMessage: 'Retrieving Utils from both orgs...'
             });
+            const stencil = element.shadowRoot.querySelector(
+                'sfdl-loading-stencil'
+            );
 
-            expect(
-                element.shadowRoot.querySelector('sfdl-spinner').message
-            ).toBe('Retrieving Utils from both orgs...');
+            expect(stencil.type).toBe('diff');
+            expect(stencil.panes).toBe(2);
+            expect(stencil.message).toBe('Retrieving Utils from both orgs...');
             expect(emptyState(element)).toBeNull();
         });
 
-        it('only spins over a diff already on screen', async () => {
+        it('draws one pane while loading inline', async () => {
+            const element = await createDiffViewer({
+                leftContent: 'a',
+                rightContent: 'b'
+            });
+            const inline = element.shadowRoot.querySelector('.sfdl-diff-inline');
+            inline.checked = true;
+            inline.dispatchEvent(new CustomEvent('change'));
+
+            element.loading = true;
+            await flushPromises();
+
+            expect(
+                element.shadowRoot.querySelector('sfdl-loading-stencil').panes
+            ).toBe(1);
+        });
+
+        it('writes no message over a diff already on screen', async () => {
             const element = await createDiffViewer({
                 loading: true,
                 leftContent: 'a',
@@ -57,7 +77,7 @@ describe('sfdl-diff-viewer', () => {
             });
 
             expect(
-                element.shadowRoot.querySelector('sfdl-spinner').message
+                element.shadowRoot.querySelector('sfdl-loading-stencil').message
             ).toBeUndefined();
         });
     });
@@ -562,14 +582,17 @@ describe('sfdl-diff-viewer', () => {
             });
         }
 
-        it('spins over the pane of that side only', async () => {
+        it('draws the lines of that side only, over its pane', async () => {
             const element = await loadSide('right');
+            const stencil = sideLoading(element).querySelector(
+                'sfdl-loading-stencil'
+            );
 
             expect(sideLoading(element).style.left).toBe('50%');
             expect(sideLoading(element).style.right).toBe('0px');
-            expect(
-                sideLoading(element).querySelector('sfdl-spinner').message
-            ).toBe('Comparing with acme--qa...');
+            expect(stencil.type).toBe('diff');
+            expect(stencil.panes).toBe('1');
+            expect(stencil.message).toBe('Comparing with acme--qa...');
             expect(
                 element.shadowRoot.querySelector('.sfdl-diff-empty')
             ).toBeNull();

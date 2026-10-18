@@ -19,7 +19,10 @@
         </div>
     </template>
   </template>
+  <!-- The lines of a log stand where the editor will, as high as it is. -->
   <template if:true={isProcessing}>
-    <sfdl-spinner></sfdl-spinner>
+    <div style={monacoEditorHeight}>
+      <sfdl-loading-stencil type="log" label="Opening the log"></sfdl-loading-stencil>
+    </div>
   </template>
 </template>

@@ -1,0 +1,22 @@
+<template>
+    <!-- The editor holding a log, one pane, or the two panes of a diff (`panes`):
+         the gutter of the line numbers and the lines of a log, stepping in and
+         out the way its calls do. What is on its way is said above them. -->
+    <div class="sfdl-stencil sfdl-stencil-code" role="status" aria-busy="true" aria-label={label}>
+        <template if:true={message}>
+            <p class="sfdl-stencil-code__message">{message}</p>
+        </template>
+        <div class="sfdl-stencil-code__panes" aria-hidden="true">
+            <template for:each={paneList} for:item="pane">
+                <div key={pane.key} class="sfdl-stencil-code__pane">
+                    <template for:each={codeLineList} for:item="line">
+                        <div key={line.key} class="sfdl-stencil-code__line">
+                            <span class="sfdl-shimmer sfdl-stencil-code__number"></span>
+                            <span class="sfdl-shimmer sfdl-stencil-code__text" style={line.style}></span>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </div>
+    </div>
+</template>

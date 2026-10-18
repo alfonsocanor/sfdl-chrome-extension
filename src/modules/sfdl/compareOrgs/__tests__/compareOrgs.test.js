@@ -268,6 +268,9 @@ describe('sfdl-compare-orgs', () => {
 
             const element = await listType();
 
+            expect(
+                element.shadowRoot.querySelector('sfdl-loading-stencil')
+            ).toBeNull();
             expect(getCommonApiVersion).toHaveBeenCalledWith(
                 ACME_SESSION,
                 GLOBEX
@@ -313,10 +316,13 @@ describe('sfdl-compare-orgs', () => {
                 'left | Listing the components',
                 'right | Listing the components'
             ]);
-            expect(diffViewer(element).loading).toBe(true);
+            expect(diffViewer(element).loading).toBe(false);
             expect(diffViewer(element).emptyMessage).toBe(
                 'Listing the Apex Classes of both orgs...'
             );
+            expect(
+                element.shadowRoot.querySelector('sfdl-loading-stencil').type
+            ).toBe('componentList');
         });
 
         it('leaves the where clause of the header out', async () => {
@@ -490,7 +496,7 @@ describe('sfdl-compare-orgs', () => {
             expect(diffViewer(element).language).toBe('apex');
         });
 
-        it('shows the spinner while the component on screen is retrieved', async () => {
+        it('draws the diff while the component on screen is retrieved', async () => {
             compareComponents.mockImplementation(() => new Promise(() => {}));
             const element = await listType();
 

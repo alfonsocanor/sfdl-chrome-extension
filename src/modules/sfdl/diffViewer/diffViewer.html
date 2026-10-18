@@ -96,13 +96,24 @@
             </template>
             <template if:true={isSideLoading}>
                 <div class="sfdl-diff-side-loading" style={sideLoadingStyle}>
-                    <sfdl-spinner message={sideLoadingMessage}></sfdl-spinner>
+                    <sfdl-loading-stencil
+                        type="diff"
+                        panes="1"
+                        message={sideLoadingMessage}
+                        label={sideLoadingLabel}>
+                    </sfdl-loading-stencil>
                 </div>
             </template>
-            <!-- Loading, the spinner tells what it waits for under it, rather than
-                 over the empty message. -->
+            <!-- Loading, the lines of the diff stand where it will, what it waits
+                 for written above them. -->
             <template if:true={loading}>
-                <sfdl-spinner message={loadingMessage}></sfdl-spinner>
+                <sfdl-loading-stencil
+                    class="sfdl-diff-stencil"
+                    type="diff"
+                    panes={stencilPanes}
+                    message={loadingMessage}
+                    label="Comparing">
+                </sfdl-loading-stencil>
             </template>
         </div>
     </div>

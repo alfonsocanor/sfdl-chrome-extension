@@ -119,16 +119,19 @@ describe('sfdl-compare-log-list', () => {
             );
             const element = await createLogList({ side: 'both' });
 
-            const skeleton = element.shadowRoot.querySelector('sfdl-skeleton');
-            expect(skeleton.rowClass).toBe('sfdl-compare-log-row');
-            expect(skeleton.shape).toEqual([{ square: 14 }, { lines: 2 }]);
-            expect(element.shadowRoot.querySelector('sfdl-spinner')).toBeNull();
+            const stencil = element.shadowRoot.querySelector(
+                'sfdl-loading-stencil'
+            );
+            expect(stencil.type).toBe('compareLogList');
+            expect(stencil.ticks).toBe(true);
             expect(count(element)).toBeNull();
 
             answer({ apexLogList: LOGS });
             await wait();
 
-            expect(element.shadowRoot.querySelector('sfdl-skeleton')).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('sfdl-loading-stencil')
+            ).toBeNull();
             expect(names(element)).toEqual(LOGS.map((log) => log.name));
         });
 

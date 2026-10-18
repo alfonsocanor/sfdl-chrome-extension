@@ -45,7 +45,7 @@ describe('sfdl-log-details', () => {
         expect(element.shadowRoot.querySelector('span').textContent).toBe('');
     });
 
-    it('shows a spinner while the log is being processed', async () => {
+    it('draws the lines of a log where the editor will be while it is processed', async () => {
         const element = createLogDetails();
 
         element.processLogsFromLogList(
@@ -54,7 +54,9 @@ describe('sfdl-log-details', () => {
         );
         await Promise.resolve();
 
-        expect(element.shadowRoot.querySelector('sfdl-spinner')).not.toBeNull();
+        expect(
+            element.shadowRoot.querySelector('sfdl-loading-stencil').type
+        ).toBe('log');
     });
 
     it('renders the log in a monaco editor with the checked filters applied', async () => {

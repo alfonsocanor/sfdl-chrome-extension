@@ -78,12 +78,6 @@ export default class CompareLogList extends LightningElement{
         return 'slds-has-dividers_around slds-has-block-links' + (this.isLoading ? ' slds-hide' : '');
     }
 
-    //A row of the list: a tick feeding both sides, and the two lines of the
-    //name of a log.
-    get skeletonShape(){
-        return this.isTickable ? [{ square: 14 }, { lines: 2 }] : [{ lines: 2 }];
-    }
-
     get isRefreshDisabled(){
         return !this.hasSession || this.isLoading;
     }

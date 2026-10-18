@@ -37,6 +37,9 @@
                 <template if:true={errorMessage}>
                     <p class="sfdl-compare-orgs__error">{errorMessage}</p>
                 </template>
+                <template if:true={isFirstListing}>
+                    <sfdl-loading-stencil type="componentList" label="Listing the components"></sfdl-loading-stencil>
+                </template>
                 <template if:true={hasListed}>
                     <sfdl-compare-results
                         components={components}

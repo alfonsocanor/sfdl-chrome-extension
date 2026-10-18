@@ -42,9 +42,6 @@ export default class LogList extends LightningElement{
     //The query came back without a log, as opposed to not having run yet.
     isListEmpty = false;
     isLoading = false;
-    //A row of the list: its tick, the two lines of the name of a log and its
-    //download icon.
-    skeletonShape = [{ square: 14 }, { lines: 2 }, { square: 18 }];
     isDownloading;
     firstRender = true;
 

@@ -36,6 +36,13 @@ out of the org:
 Whatever you download always has the filter pills that are on applied to it, so
 the file you get on disk matches what you see in the console.
 
+## Loading
+
+While something loads, a stencil drawn in its shape stands in its place rather than a
+spinner: the rows of a log list, the components of a type, the lines of a log or the two
+panes of a diff. `sfdl-loading-stencil` holds one template per shape, picked by its
+`type`, each one copying the measures of what it stands for.
+
 ## Comparing logs
 
 Comparing logs lives in the **Debug Logs** tab, next to reading them. The toggle at the

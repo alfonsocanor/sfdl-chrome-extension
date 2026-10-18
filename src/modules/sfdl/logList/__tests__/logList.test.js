@@ -160,14 +160,10 @@ describe('sfdl-log-list', () => {
             document.body.appendChild(element);
             await flushPromises();
 
-            const skeleton = element.shadowRoot.querySelector('sfdl-skeleton');
-            expect(skeleton).not.toBeNull();
-            expect(skeleton.rowClass).toBe('sfdl-log-row');
-            expect(skeleton.shape).toEqual([
-                { square: 14 },
-                { lines: 2 },
-                { square: 18 }
-            ]);
+            const stencil = element.shadowRoot.querySelector(
+                'sfdl-loading-stencil'
+            );
+            expect(stencil.type).toBe('logList');
 
             answer({
                 status: 200,
@@ -177,7 +173,9 @@ describe('sfdl-log-list', () => {
             await flushPromises();
             await flushPromises();
 
-            expect(element.shadowRoot.querySelector('sfdl-skeleton')).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('sfdl-loading-stencil')
+            ).toBeNull();
             expect(rows(element).length).toBe(2);
         });
 
@@ -228,7 +226,7 @@ describe('sfdl-log-list', () => {
             check(rowCheckboxes(element)[1], true);
             await flushPromises();
 
-            // The skeleton shown while loading adopts a sheet of its own.
+            // The stencil shown while loading adopts a sheet of its own.
             const sheets = document.adoptedStyleSheets.map(
                 (sheet) => sheet.cssText
             );

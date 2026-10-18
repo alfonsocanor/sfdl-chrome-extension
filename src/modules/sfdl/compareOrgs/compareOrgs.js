@@ -212,8 +212,11 @@ export default class CompareOrgs extends LightningElement{
         return !!this.selectedComponent && this.selectedComponent.status === COMPARING;
     }
 
+    //Only a diff on its way draws the stencil of a diff. Listing with nothing
+    //open, the list draws its own and the diff only says what is going on.
     get isDiffLoading(){
-        return (this.isListing || this.isSelectedComparing) && !this.pendingSideOnScreen;
+        const isListingTheOpenOne = this.isListing && !!this.selectedEntry;
+        return (isListingTheOpenOne || this.isSelectedComparing) && !this.pendingSideOnScreen;
     }
 
     //The side of the file on screen waiting for its new org, when the other
@@ -327,6 +330,11 @@ export default class CompareOrgs extends LightningElement{
 
     get panelHint(){
         return this.canCompare ? '' : this.emptyMessage;
+    }
+
+    //Listed again, the components on screen stay while the new ones come.
+    get isFirstListing(){
+        return this.isListing && !this.hasListed;
     }
 
     get showPanelHint(){
