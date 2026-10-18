@@ -40,6 +40,7 @@ const ACME_SESSION = {
     authToken: ACME.authToken
 };
 
+const LISTED_ON = '2026-10-12T09:30:00.000Z';
 const text = (content) => ({ content, isBinary: false });
 const listed = (name, by = 'Jane Roe') => ({
     name,
@@ -482,7 +483,14 @@ describe('sfdl-compare-orgs', () => {
                 GLOBEX,
                 expect.objectContaining({ key: 'ApexClass' }),
                 '60.0',
-                [{ name: 'AccountService', presence: 'both' }]
+                [
+                    {
+                        name: 'AccountService',
+                        presence: 'both',
+                        leftVersion: LISTED_ON,
+                        rightVersion: LISTED_ON
+                    }
+                ]
             ]);
             expect(statuses(element)[0]).toBe('AccountService different');
         });
@@ -555,7 +563,12 @@ describe('sfdl-compare-orgs', () => {
             await openComponent(element, 'LegacyHelper');
 
             expect(compareComponents.mock.calls[0][4]).toEqual([
-                { name: 'LegacyHelper', presence: 'right' }
+                {
+                    name: 'LegacyHelper',
+                    presence: 'right',
+                    leftVersion: undefined,
+                    rightVersion: LISTED_ON
+                }
             ]);
             expect(diffViewer(element).leftContent).toBeUndefined();
             expect(diffViewer(element).rightContent).toBe(
@@ -580,7 +593,14 @@ describe('sfdl-compare-orgs', () => {
             await wait();
 
             expect(compareComponents).toHaveBeenCalledTimes(1);
-            expect(compareComponents.mock.calls[0][4]).toEqual([
+            expect(
+                compareComponents.mock.calls[0][4].map(
+                    ({ name, presence }) => ({
+                        name,
+                        presence
+                    })
+                )
+            ).toEqual([
                 { name: 'AccountService', presence: 'both' },
                 { name: 'InvoiceBatch', presence: 'left' },
                 { name: 'Utils', presence: 'both' }

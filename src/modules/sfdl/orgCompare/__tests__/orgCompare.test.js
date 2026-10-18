@@ -4,7 +4,6 @@ import {
     componentOfPath,
     retrieveComponentFiles,
     compareComponents,
-    forgetComponents,
     UNAVAILABLE,
     DIFFERENT,
     LEFT_ONLY,
@@ -131,38 +130,21 @@ describe('listOrgComponents', () => {
         listCustomSettings.mockResolvedValue([{ name: 'A__c' }]);
 
         await expect(
-            listOrgComponents(org, getMetadataType('CustomSettings'), '60.0', {
-                includeManaged: true
-            })
+            listOrgComponents(org, getMetadataType('CustomSettings'), '60.0')
         ).resolves.toEqual([{ name: 'A__c' }]);
-        expect(listCustomSettings).toHaveBeenCalledWith(org, '60.0', {
-            includeManaged: true
-        });
+        expect(listCustomSettings).toHaveBeenCalledWith(org, '60.0');
         expect(listMetadata).not.toHaveBeenCalled();
     });
 
-    it('lists an org and a type once until refreshed', async () => {
+    it('lists again every time, the listing tells what changed', async () => {
         const org = newOrg();
         const type = getMetadataType('ApexTrigger');
         listMetadata.mockResolvedValue([]);
 
         await listOrgComponents(org, type, '60.0');
         await listOrgComponents(org, type, '60.0');
-        await listOrgComponents(org, type, '60.0', { refresh: true });
 
         expect(listMetadata).toHaveBeenCalledTimes(2);
-    });
-
-    it('forgets a listing that failed', async () => {
-        const org = newOrg();
-        const type = getMetadataType('ApexTrigger');
-        listMetadata.mockRejectedValueOnce(new Error('INVALID_SESSION_ID'));
-        listMetadata.mockResolvedValueOnce([]);
-
-        await expect(listOrgComponents(org, type, '60.0')).rejects.toThrow(
-            'INVALID_SESSION_ID'
-        );
-        await expect(listOrgComponents(org, type, '60.0')).resolves.toEqual([]);
     });
 });
 
@@ -186,6 +168,8 @@ describe('componentOfPath', () => {
 });
 
 describe('retrieveComponentFiles', () => {
+    const at = (name, version = 'v1') => ({ name, version });
+
     function mockRetrieve(filesByMember) {
         retrieveFiles.mockImplementation((session, apiVersion, [{ members }]) =>
             Promise.resolve({
@@ -215,7 +199,7 @@ describe('retrieveComponentFiles', () => {
             org,
             getMetadataType('ApexClass'),
             '60.0',
-            ['Foo', 'Bar']
+            [at('Foo'), at('Bar')]
         );
 
         expect(retrieveFiles).toHaveBeenCalledWith(
@@ -233,9 +217,8 @@ describe('retrieveComponentFiles', () => {
 
     it('splits objects and asks for them a few at a time', async () => {
         const org = newOrg();
-        const names = Array.from(
-            { length: 23 },
-            (value, index) => 'Object' + index + '__c'
+        const components = Array.from({ length: 23 }, (value, index) =>
+            at('Object' + index + '__c')
         );
         mockRetrieve({});
         const onStatus = jest.fn();
@@ -244,10 +227,8 @@ describe('retrieveComponentFiles', () => {
             org,
             getMetadataType('CustomObjects'),
             '60.0',
-            names,
-            {
-                onStatus
-            }
+            components,
+            { onStatus }
         );
 
         expect(
@@ -259,7 +240,7 @@ describe('retrieveComponentFiles', () => {
         expect(onStatus).toHaveBeenCalledWith('Batch 2 of 3: InProgress');
     });
 
-    it('retrieves a component once until refreshed', async () => {
+    it('retrieves a component again only once the org changed it', async () => {
         const org = newOrg();
         const type = getMetadataType('ApexClass');
         mockRetrieve({
@@ -268,12 +249,16 @@ describe('retrieveComponentFiles', () => {
         });
         const onStatus = jest.fn();
 
-        await retrieveComponentFiles(org, type, '60.0', ['Foo']);
-        await retrieveComponentFiles(org, type, '60.0', ['Foo', 'Bar']);
-        await retrieveComponentFiles(org, type, '60.0', ['Foo'], { onStatus });
-        await retrieveComponentFiles(org, type, '60.0', ['Foo'], {
-            refresh: true
+        await retrieveComponentFiles(org, type, '60.0', [at('Foo', 'monday')]);
+        await retrieveComponentFiles(org, type, '60.0', [
+            at('Foo', 'monday'),
+            at('Bar')
+        ]);
+        await retrieveComponentFiles(org, type, '60.0', [at('Foo', 'monday')], {
+            onStatus
         });
+        await retrieveComponentFiles(org, type, '60.0', [at('Foo', 'tuesday')]);
+        await retrieveComponentFiles(org, type, '60.0', [at('Foo', 'tuesday')]);
 
         expect(
             retrieveFiles.mock.calls.map(([, , [{ members }]]) => members)
@@ -281,21 +266,15 @@ describe('retrieveComponentFiles', () => {
         expect(onStatus).toHaveBeenCalledWith('Already retrieved');
     });
 
-    it('retrieves again what was forgotten', async () => {
+    it('retrieves every time a component no date tells about', async () => {
         const org = newOrg();
-        const other = newOrg();
         const type = getMetadataType('ApexClass');
         mockRetrieve({ Foo: { 'classes/Foo.cls': 'foo' } });
 
-        await retrieveComponentFiles(org, type, '60.0', ['Foo']);
-        await retrieveComponentFiles(other, type, '60.0', ['Foo']);
-        forgetComponents(org, type, '60.0');
-        await retrieveComponentFiles(org, type, '60.0', ['Foo']);
-        await retrieveComponentFiles(other, type, '60.0', ['Foo']);
+        await retrieveComponentFiles(org, type, '60.0', [{ name: 'Foo' }]);
+        await retrieveComponentFiles(org, type, '60.0', [{ name: 'Foo' }]);
 
-        expect(
-            retrieveFiles.mock.calls.map(([session]) => session.instanceUrl)
-        ).toEqual([org.instanceUrl, other.instanceUrl, org.instanceUrl]);
+        expect(retrieveFiles).toHaveBeenCalledTimes(2);
     });
 
     it('hands back an empty component the org had nothing of', async () => {
@@ -306,14 +285,15 @@ describe('retrieveComponentFiles', () => {
             org,
             getMetadataType('ApexClass'),
             '60.0',
-            ['Gone']
+            [at('Gone')]
         );
 
         expect(files.get('Gone').size).toBe(0);
     });
 
-    it('reads custom settings one by one through REST', async () => {
+    it('reads custom settings one by one through REST, every time', async () => {
         const org = newOrg();
+        const type = getMetadataType('CustomSettings');
         readCustomSettingFile.mockImplementation((session, apiVersion, name) =>
             Promise.resolve({
                 path: 'customSettings/' + name + '.setting',
@@ -321,14 +301,13 @@ describe('retrieveComponentFiles', () => {
             })
         );
 
-        const { files } = await retrieveComponentFiles(
-            org,
-            getMetadataType('CustomSettings'),
-            '60.0',
-            ['A__c', 'B__c']
-        );
+        const { files } = await retrieveComponentFiles(org, type, '60.0', [
+            { name: 'A__c' },
+            { name: 'B__c' }
+        ]);
+        await retrieveComponentFiles(org, type, '60.0', [{ name: 'A__c' }]);
 
-        expect(readCustomSettingFile).toHaveBeenCalledTimes(2);
+        expect(readCustomSettingFile).toHaveBeenCalledTimes(3);
         expect(files.get('B__c').get('customSettings/B__c.setting')).toEqual(
             text('B__c')
         );

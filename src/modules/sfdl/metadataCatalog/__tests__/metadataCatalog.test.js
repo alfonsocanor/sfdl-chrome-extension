@@ -103,23 +103,19 @@ describe('metadataCatalog', () => {
             ]);
         });
 
-        it('leaves the components of managed packages out unless asked for', async () => {
+        it('leaves the components of managed packages out', async () => {
             listMetadata.mockResolvedValue([
                 component('Utils'),
                 component('pkg__Helper', { namespacePrefix: 'pkg' })
             ]);
-            const type = getMetadataType('ApexClass');
 
-            const unmanaged = await listMetadataComponents(type, ACME, '60.0');
-            const all = await listMetadataComponents(type, ACME, '60.0', {
-                includeManaged: true
-            });
+            const components = await listMetadataComponents(
+                getMetadataType('ApexClass'),
+                ACME,
+                '60.0'
+            );
 
-            expect(unmanaged.map(({ name }) => name)).toEqual(['Utils']);
-            expect(all.map(({ name }) => name)).toEqual([
-                'pkg__Helper',
-                'Utils'
-            ]);
+            expect(components.map(({ name }) => name)).toEqual(['Utils']);
         });
 
         it('tells the standard objects from the custom ones', async () => {

@@ -57,8 +57,8 @@ function isStandardObject(fullName){
 
 //Which of the components listMetadata names belong to a type of the catalog:
 //CustomObject covers both standard and custom objects, and the components of
-//managed packages carry their namespace.
-function belongsToType(type, component, includeManaged){
+//managed packages, which carry their namespace, are left out.
+function belongsToType(type, component){
     if(type.members === 'standardObjects'){
         return isStandardObject(component.fullName);
     }
@@ -67,16 +67,16 @@ function belongsToType(type, component, includeManaged){
         return false;
     }
 
-    return includeManaged || !component.namespacePrefix;
+    return !component.namespacePrefix;
 }
 
 //The names of the components of a type in an org, with when and by whom each
 //was last modified. One listMetadata call, nothing is retrieved.
-export async function listMetadataComponents(type, sessionInformation, apiVersion, { includeManaged = false } = {}){
+export async function listMetadataComponents(type, sessionInformation, apiVersion){
     const components = await listMetadata(sessionInformation, apiVersion, [{ type: type.metadataType }]);
 
     return components
-        .filter(component => belongsToType(type, component, includeManaged))
+        .filter(component => belongsToType(type, component))
         .map(component => ({
             name: component.fullName,
             lastModifiedDate: component.lastModifiedDate,

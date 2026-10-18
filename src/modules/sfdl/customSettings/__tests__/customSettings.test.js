@@ -207,7 +207,7 @@ describe('reading custom settings', () => {
         expect(fetch).toHaveBeenCalledTimes(2);
     });
 
-    it('lists the names of the custom settings in one call', async () => {
+    it('lists the names of the custom settings in one call, managed ones left out', async () => {
         mockOrg();
 
         await expect(listCustomSettings(ACME, '60.0')).resolves.toEqual([
@@ -215,9 +215,6 @@ describe('reading custom settings', () => {
             { name: 'Integration__c' }
         ]);
         expect(fetch).toHaveBeenCalledTimes(1);
-        await expect(
-            listCustomSettings(ACME, '60.0', { includeManaged: true })
-        ).resolves.toContainEqual({ name: 'pkg__Config__c' });
     });
 
     it('reads the owner of hierarchy values and the custom fields', async () => {

@@ -139,12 +139,13 @@ export async function readCustomSettingFile(sessionInformation, apiVersion, sett
     };
 }
 
-//The names of the custom settings of the org, one describeGlobal call.
-export async function listCustomSettings(sessionInformation, apiVersion, { includeManaged = false } = {}){
+//The names of the custom settings of the org, one describeGlobal call. The
+//settings of managed packages are left out.
+export async function listCustomSettings(sessionInformation, apiVersion){
     const { sobjects } = await describeGlobal(sessionInformation, apiVersion);
 
     return sobjects
-        .filter(sObject => sObject.customSetting && (includeManaged || !isNamespaced(sObject.name)))
+        .filter(sObject => sObject.customSetting && !isNamespaced(sObject.name))
         .map(sObject => ({ name: sObject.name }))
         .sort((a, b) => a.name.localeCompare(b.name));
 }

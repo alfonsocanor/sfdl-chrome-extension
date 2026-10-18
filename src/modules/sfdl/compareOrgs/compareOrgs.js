@@ -490,7 +490,12 @@ export default class CompareOrgs extends LightningElement{
 
         const runComparison = async () => {
             const result = await compareComponents(sessions[LEFT], sessions[RIGHT], type, apiVersion,
-                targets.map(({ name, presence }) => ({ name, presence })),
+                targets.map(({ name, presence, leftModified, rightModified }) => ({
+                    name,
+                    presence,
+                    leftVersion: leftModified && leftModified.date,
+                    rightVersion: rightModified && rightModified.date
+                })),
                 {
                     onStatus: (side, status) => {
                         if(sequence === this.listSequence){
