@@ -1,37 +1,22 @@
 import { LightningElement, api } from 'lwc';
-import { compareOptions } from 'sfdl/logDetailsManipulation';
+import { analyseOptions } from 'sfdl/logDetailsManipulation';
 
 export default class DropdownMenu extends LightningElement{
-    manipulationOptions = [
-        {
-            label: 'ENTRY/EXIT/END/BEGIN',
-            name: 'methodEntryExitCodeUnitStartedFinished2Hierarchy',
-            checked: true
-        },
-        {
-            label: 'HEAP_ALLOCATE/STATEMENT_EXECUTE',
-            name: 'removeHeapAllocateAndStatementExecute',
-            checked: true
-        },
-        {
-            label: 'FLOW/LIMIT/INTERVIEW',
-            name: 'removeFlowNoise',
-            checked: true
-        }
-    ];
-    
-    //The compare tabs add the options that only make sense between two logs.
-    @api withCompareOptions = false;
+    manipulationOptions = analyseOptions();
+
+    //A comparison hands in its own options, the analyse ones and the compare
+    //ones, and keeps them when the menu is built again.
+    @api
+    get options(){
+        return this.manipulationOptions;
+    }
+    set options(options){
+        this.manipulationOptions = (options || []).map(option => ({ ...option }));
+    }
 
     filterIcon = '/slds/icons/utility/filterList.svg';
     closeIcon = '/slds/icons/utility/close.svg';
     isMenuOpen = true;
-
-    connectedCallback(){
-        if(this.withCompareOptions){
-            this.manipulationOptions = [...this.manipulationOptions, ...compareOptions()];
-        }
-    }
 
     handleOpenCloseMenu(){
         this.isMenuOpen = !this.isMenuOpen;

@@ -69,11 +69,6 @@ export const css = `
         box-shadow: inset 3px 0 0 var(--sfdl-right-swatch);
     }
 
-    .sfdl-compare-log-row_both {
-        background: linear-gradient(90deg, var(--sfdl-left-tint) 50%, var(--sfdl-right-tint) 50%);
-        box-shadow: inset 3px 0 0 var(--sfdl-left-swatch), inset -3px 0 0 var(--sfdl-right-swatch);
-    }
-
     .sfdl-compare-log-row .sfdl-compare-log-name {
         flex: 1 1 auto;
         min-width: 0;
@@ -90,40 +85,5 @@ export const css = `
     .sfdl-compare-log-row .sfdl-compare-log-name:focus {
         outline: none;
         text-decoration: underline;
-    }
-
-    .sfdl-compare-log-pill {
-        flex: 0 0 auto;
-        width: 20px;
-        height: 18px;
-        padding: 0;
-        border: 1px solid var(--sfdl-neutral-border);
-        border-radius: 0.25rem;
-        background: #ffffff;
-        color: #747474;
-        font-size: 11px;
-        line-height: 16px;
-        text-align: center;
-        cursor: pointer;
-    }
-
-    .sfdl-compare-log-pill:hover,
-    .sfdl-compare-log-pill:focus {
-        border-color: #747474;
-        color: #3e3e3c;
-    }
-
-    .sfdl-compare-log-pill_left-active {
-        background: var(--sfdl-left-tint);
-        border-color: var(--sfdl-left-swatch);
-        color: var(--sfdl-left-text);
-        font-weight: 700;
-    }
-
-    .sfdl-compare-log-pill_right-active {
-        background: var(--sfdl-right-tint);
-        border-color: var(--sfdl-right-swatch);
-        color: var(--sfdl-right-text);
-        font-weight: 700;
     }
 `;

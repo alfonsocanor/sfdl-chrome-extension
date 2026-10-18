@@ -38,6 +38,16 @@ export const css = `
         gap: 6px;
     }
 
+    .sfdl-diff-viewer .sfdl-diff-summary__actions {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    .sfdl-diff-viewer .sfdl-diff-summary__actions:not(:empty) {
+        margin-right: 10px;
+    }
+
     .sfdl-diff-viewer .sfdl-diff-count {
         min-width: 8.5rem;
         color: #3e3e3c;

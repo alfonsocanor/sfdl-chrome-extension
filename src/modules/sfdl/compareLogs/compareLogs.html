@@ -1,13 +1,9 @@
 <template>
     <div class="sfdl-compare-logs" style={containerStyle}>
-        <div class="sfdl-compare-logs__toolbar">
-            <sfdl-log-manipulation-menu
-                with-compare-options="true"
-                oncheckboxselection={handleOptionsChange}>
-            </sfdl-log-manipulation-menu>
-            <span class="sfdl-compare-logs__hint"></span>
-            <div class="sfdl-compare-logs__actions">
+        <div class="sfdl-compare-logs__body">
+            <sfdl-side-panel class="sfdl-compare-logs__left-panel" title="Left org" subtitle={leftOrgLabel} side="left" width="18rem">
                 <button
+                    slot="actions"
                     class="sfdl-compare-logs__swap slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
                     style="width:22px;height:22px;padding:2px;"
                     title="Swap the orgs and the logs of both sides"
@@ -15,10 +11,6 @@
                     onclick={handleSwap}>
                     <img class="sfdl-swap-icon" src={swapIcon} alt="swap sides"/>
                 </button>
-            </div>
-        </div>
-        <div class="sfdl-compare-logs__body">
-            <sfdl-side-panel class="sfdl-compare-logs__left-panel" title="Left org" subtitle={leftOrgLabel} side="left" width="18rem">
                     <sfdl-combobox
                         class="sfdl-compare-logs__org-picker"
                         side="left"
@@ -31,7 +23,6 @@
                         onchange={handleOrgChange}>
                     </sfdl-combobox>
                     <sfdl-compare-log-list
-                        mode="single"
                         side="left"
                         session-information={leftOrgSession}
                         left-log-id={leftLogId}
@@ -48,6 +39,11 @@
                     right-content={rightContent}
                     loading={isLoadingLogs}
                     empty-message={emptyMessage}>
+                    <sfdl-log-manipulation-menu
+                        slot="actions"
+                        options={options}
+                        oncheckboxselection={handleOptionsChange}>
+                    </sfdl-log-manipulation-menu>
                 </sfdl-diff-viewer>
             </div>
                 <sfdl-side-panel class="sfdl-compare-logs__right-panel" title="Right org" subtitle={rightOrgLabel} side="right" width="18rem">
@@ -63,7 +59,6 @@
                         onchange={handleOrgChange}>
                     </sfdl-combobox>
                     <sfdl-compare-log-list
-                        mode="single"
                         side="right"
                         session-information={rightOrgSession}
                         right-log-id={rightLogId}

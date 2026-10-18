@@ -369,6 +369,41 @@ describe('sfdl-compare-logs', () => {
             expect(bodyDownloads()).toHaveLength(2);
         });
 
+        it('keeps the filters when the diff is built again for other logs', async () => {
+            const [left, right, other] = [newLog(), newLog(), newLog()];
+            const body = '10:00:00.2 (2)|USER_DEBUG|[6]|DEBUG|hello';
+            mockOrgs({
+                bodies: { [left.id]: body, [right.id]: body, [other.id]: body }
+            });
+            const element = await ready();
+            await selectLog(element, 'left', left);
+            await selectLog(element, 'right', right);
+            await wait();
+            element.shadowRoot
+                .querySelector('sfdl-log-manipulation-menu')
+                .shadowRoot.querySelector('sfdl-checkbox')
+                .dispatchEvent(
+                    new CustomEvent('checkboxselection', {
+                        detail: {
+                            function2Execute: 'ignoreTimestamps',
+                            checked: false
+                        }
+                    })
+                );
+            await wait();
+
+            await selectLog(element, 'right', other);
+            await wait();
+
+            expect(diffViewer(element).rightContent).toBe(body);
+            expect(
+                element.shadowRoot
+                    .querySelector('sfdl-log-manipulation-menu')
+                    .options.find(({ name }) => name === 'ignoreTimestamps')
+                    .checked
+            ).toBe(false);
+        });
+
         it('takes a log off and says why when it cannot be downloaded', async () => {
             const [left, right] = [newLog(), newLog()];
             mockOrgs({

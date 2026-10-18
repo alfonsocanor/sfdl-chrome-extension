@@ -9,30 +9,6 @@ export const css = `
         background: #fafaf9;
     }
 
-    .sfdl-compare-logs__toolbar {
-        display: flex;
-        flex: 0 0 auto;
-        align-items: center;
-        gap: 12px;
-        padding: 8px 12px;
-        background: #ffffff;
-        border-bottom: 1px solid #dddbda;
-    }
-
-    .sfdl-compare-logs__hint {
-        flex: 1 1 auto;
-        min-width: 0;
-        color: #747474;
-        font-size: 12px;
-    }
-
-    .sfdl-compare-logs__actions {
-        display: flex;
-        flex: 0 0 auto;
-        align-items: center;
-        gap: 6px;
-    }
-
     .sfdl-compare-logs__body {
         display: flex;
         flex: 1 1 auto;

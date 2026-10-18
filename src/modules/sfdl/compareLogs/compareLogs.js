@@ -1,6 +1,6 @@
 import { LightningElement, api } from 'lwc';
 import { getApexLogBody } from 'sfdl/salesforceConnection';
-import { manipulationDetailLogs, normalizeLogForCompare, compareOptions } from 'sfdl/logDetailsManipulation';
+import { manipulationDetailLogs, normalizeLogForCompare, analyseOptions, compareOptions } from 'sfdl/logDetailsManipulation';
 import { showToastEvent } from 'sfdl/utils';
 import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { adoptCompareTheme } from 'sfdl/compareTheme';
@@ -74,6 +74,9 @@ export default class CompareLogs extends LightningElement{
     rightBody;
     comparisonSequence = 0;
     swapIcon = SWAP_ICON;
+    //The filters both logs go through. The menu lives in the bar of the diff,
+    //which comes and goes with it, so the comparison keeps them.
+    options = [...analyseOptions(), ...compareOptions()];
 
     connectedCallback(){
         adoptStyleSheet(css);
@@ -248,16 +251,16 @@ export default class CompareLogs extends LightningElement{
             return;
         }
 
-        const options = this.template.querySelector('sfdl-log-manipulation-menu').currentManipulationOptions();
-        const manipulationOptions = options.filter(({ name }) => !COMPARE_OPTION_NAMES.includes(name));
-        const logCompareOptions = options.filter(({ name }) => COMPARE_OPTION_NAMES.includes(name));
+        const manipulationOptions = this.options.filter(({ name }) => !COMPARE_OPTION_NAMES.includes(name));
+        const logCompareOptions = this.options.filter(({ name }) => COMPARE_OPTION_NAMES.includes(name));
         const prepare = body => normalizeLogForCompare(manipulationDetailLogs(body, manipulationOptions), logCompareOptions);
 
         this.leftContent = prepare(this.leftBody);
         this.rightContent = prepare(this.rightBody);
     }
 
-    handleOptionsChange(){
+    handleOptionsChange(event){
+        this.options = event.detail.manipulationOptions.map(option => ({ ...option }));
         this.renderContents();
     }
 }

@@ -125,6 +125,15 @@ const compareNormalizations = {
     }
 }
 
+//The filters of the analyse tab, every one of them on.
+export function analyseOptions(){
+    return [
+        { label: 'ENTRY/EXIT/END/BEGIN', name: 'methodEntryExitCodeUnitStartedFinished2Hierarchy', checked: true },
+        { label: 'HEAP_ALLOCATE/STATEMENT_EXECUTE', name: 'removeHeapAllocateAndStatementExecute', checked: true },
+        { label: 'FLOW/LIMIT/INTERVIEW', name: 'removeFlowNoise', checked: true }
+    ];
+}
+
 export function compareOptions(){
     return [
         { label: 'Ignore timestamps', name: 'ignoreTimestamps', checked: true },

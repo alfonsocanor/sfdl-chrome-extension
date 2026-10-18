@@ -235,7 +235,7 @@ describe('sfdl-compare-log-list', () => {
         });
     });
 
-    describe('single mode', () => {
+    describe('picking', () => {
         it('sends a clicked log to its own side', async () => {
             const element = await createLogList({ side: 'right' });
             const handleSelect = jest.fn();
@@ -249,14 +249,6 @@ describe('sfdl-compare-log-list', () => {
                 log: LOGS[1],
                 side: 'right'
             });
-        });
-
-        it('carries no L and R pills', async () => {
-            const element = await createLogList();
-
-            expect(
-                element.shadowRoot.querySelectorAll('.sfdl-compare-log-pill')
-            ).toHaveLength(0);
         });
 
         it('tints the selected log in the colour of its side', async () => {
@@ -286,97 +278,6 @@ describe('sfdl-compare-log-list', () => {
             expect(
                 handleSelect.mock.calls.map(([event]) => event.detail.log.id)
             ).toEqual(['07L2', '07L3']);
-        });
-    });
-
-    describe('pair mode', () => {
-        it('lets the tab decide where a clicked log goes', async () => {
-            const element = await createLogList({ mode: 'pair' });
-            const handleSelect = jest.fn();
-            element.addEventListener('logselect', handleSelect);
-
-            click(element.shadowRoot.querySelector('.sfdl-compare-log-name'));
-
-            expect(handleSelect.mock.calls[0][0].detail).toEqual({
-                log: LOGS[0],
-                side: null
-            });
-        });
-
-        it('sends a log to the side of the pill clicked', async () => {
-            const element = await createLogList({ mode: 'pair' });
-            const handleSelect = jest.fn();
-            element.addEventListener('logselect', handleSelect);
-            const pills = element.shadowRoot.querySelectorAll(
-                '.sfdl-compare-log-pill'
-            );
-
-            click(pills[1]);
-            click(pills[4]);
-
-            expect(
-                handleSelect.mock.calls.map(([event]) => [
-                    event.detail.log.id,
-                    event.detail.side
-                ])
-            ).toEqual([
-                ['07L1', 'right'],
-                ['07L3', 'left']
-            ]);
-        });
-
-        it('marks the pills and the rows of both sides', async () => {
-            const element = await createLogList({
-                mode: 'pair',
-                leftLogId: '07L1',
-                rightLogId: '07L3'
-            });
-            const pills = [
-                ...element.shadowRoot.querySelectorAll('.sfdl-compare-log-pill')
-            ];
-
-            expect(
-                pills.map(
-                    (pill) =>
-                        pill.classList.contains(
-                            'sfdl-compare-log-pill_left-active'
-                        ) ||
-                        pill.classList.contains(
-                            'sfdl-compare-log-pill_right-active'
-                        )
-                )
-            ).toEqual([true, false, false, false, false, true]);
-            expect(rows(element)[0].classList).toContain(
-                'sfdl-compare-log-row_left'
-            );
-            expect(rows(element)[2].classList).toContain(
-                'sfdl-compare-log-row_right'
-            );
-        });
-
-        it('marks a log compared against itself with both colours', async () => {
-            const element = await createLogList({
-                mode: 'pair',
-                leftLogId: '07L2',
-                rightLogId: '07L2'
-            });
-
-            expect(rows(element)[1].classList).toContain(
-                'sfdl-compare-log-row_both'
-            );
-        });
-
-        it('only moves the focus with the arrows', async () => {
-            const element = await createLogList({ mode: 'pair' });
-            const handleSelect = jest.fn();
-            element.addEventListener('logselect', handleSelect);
-
-            pressKey(
-                element.shadowRoot.querySelector('.sfdl-compare-log-name'),
-                'ArrowDown'
-            );
-
-            expect(handleSelect).not.toHaveBeenCalled();
         });
     });
 });

@@ -8,15 +8,10 @@ import { css } from './compareLogListCss';
 const SEARCH_ICON = '/resources/searchGrey.svg';
 const REFRESH_ICON = '/slds/icons/utility/refresh.svg';
 const ROW_CLASS = 'sfdl-compare-log-row';
-const PILL_CLASS = 'sfdl-compare-log-pill';
 
-//The logs of one org, to pick the ones to compare. In pair mode one list feeds
-//both sides and every row carries an L and an R to send it to either one. In
-//single mode the list feeds its own side and a click is enough.
+//The logs of one org, to pick the one to compare on the side the list feeds.
 export default class CompareLogList extends LightningElement{
-    //pair or single.
-    @api mode = 'single';
-    //left or right, the side a single list feeds.
+    //left or right, the side the list feeds.
     @api side = 'left';
     @api leftLogId;
     @api rightLogId;
@@ -69,10 +64,6 @@ export default class CompareLogList extends LightningElement{
             '';
     }
 
-    get isPairMode(){
-        return this.mode === 'pair';
-    }
-
     get isFilterDisabled(){
         return !this.logs.length;
     }
@@ -94,25 +85,14 @@ export default class CompareLogList extends LightningElement{
     }
 
     decorateLog(log){
-        const isLeft = log.id === this.leftLogId;
-        const isRight = log.id === this.rightLogId;
-        let rowClass = ROW_CLASS;
-
-        if(isLeft && isRight){
-            rowClass += ' ' + ROW_CLASS + '_both';
-        } else if(isLeft){
-            rowClass += ' ' + ROW_CLASS + '_left';
-        } else if(isRight){
-            rowClass += ' ' + ROW_CLASS + '_right';
-        }
+        const selectedLogId = this.side === 'right' ? this.rightLogId : this.leftLogId;
+        const isSelected = log.id === selectedLogId;
 
         return {
             id: log.id,
             name: log.name,
-            title: log.name + (isLeft ? ' (left)' : '') + (isRight ? ' (right)' : ''),
-            rowClass,
-            leftPillClass: PILL_CLASS + (isLeft ? ' ' + PILL_CLASS + '_left-active' : ''),
-            rightPillClass: PILL_CLASS + (isRight ? ' ' + PILL_CLASS + '_right-active' : '')
+            title: log.name + (isSelected ? ' (' + this.side + ')' : ''),
+            rowClass: ROW_CLASS + (isSelected ? ' ' + ROW_CLASS + '_' + this.side : '')
         };
     }
 
@@ -207,12 +187,7 @@ export default class CompareLogList extends LightningElement{
     }
 
     handleRowClick(event){
-        //A single list feeds its own side, a pair list lets the tab decide.
-        this.selectLog(event.currentTarget.dataset.logid, this.isPairMode ? null : this.side);
-    }
-
-    handlePillClick(event){
-        this.selectLog(event.currentTarget.dataset.logid, event.currentTarget.dataset.side);
+        this.selectLog(event.currentTarget.dataset.logid, this.side);
     }
 
     selectLog(logId, side){
@@ -225,8 +200,8 @@ export default class CompareLogList extends LightningElement{
         }
     }
 
-    //Up and down walk the list. A single list compares every log it walks on,
-    //so a side can be scanned against the other one log after the other.
+    //Up and down walk the list and compare every log they walk on, so a side
+    //can be scanned against the other one log after the other.
     handleRowKeyDown(event){
         if(event.key !== 'ArrowDown' && event.key !== 'ArrowUp'){
             return;
@@ -239,9 +214,6 @@ export default class CompareLogList extends LightningElement{
         const nextButton = logButtons[(index + (event.key === 'ArrowDown' ? 1 : -1) + logButtons.length) % logButtons.length];
 
         nextButton.focus();
-
-        if(!this.isPairMode){
-            this.selectLog(nextButton.dataset.logid, this.side);
-        }
+        this.selectLog(nextButton.dataset.logid, this.side);
     }
 }

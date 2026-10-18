@@ -27,19 +27,32 @@ describe('sfdl-log-manipulation-menu', () => {
         ]);
     });
 
-    it('adds the compare options when the compare tab asks for them', () => {
-        const element = createMenu({ withCompareOptions: true });
+    it('starts from the options it is handed and leaves them untouched', () => {
+        const options = [
+            {
+                label: 'Ignore timestamps',
+                name: 'ignoreTimestamps',
+                checked: false
+            }
+        ];
+        const element = createMenu({ options });
+        const handler = jest.fn();
+        element.addEventListener('checkboxselection', handler);
 
-        expect(
-            element.currentManipulationOptions().map(({ name }) => name)
-        ).toEqual([
-            'methodEntryExitCodeUnitStartedFinished2Hierarchy',
-            'removeHeapAllocateAndStatementExecute',
-            'removeFlowNoise',
-            'ignoreTimestamps',
-            'ignoreIdsAndAddresses',
-            'ignoreLineNumbers'
+        element.shadowRoot.querySelector('sfdl-checkbox').dispatchEvent(
+            new CustomEvent('checkboxselection', {
+                detail: { function2Execute: 'ignoreTimestamps', checked: true }
+            })
+        );
+
+        expect(handler.mock.calls[0][0].detail.manipulationOptions).toEqual([
+            {
+                label: 'Ignore timestamps',
+                name: 'ignoreTimestamps',
+                checked: true
+            }
         ]);
+        expect(options[0].checked).toBe(false);
     });
 
     it('turns an option off and republishes the whole selection', () => {
