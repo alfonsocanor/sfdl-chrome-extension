@@ -352,6 +352,9 @@ describe('sfdl-compare-logs', () => {
             await selectLog(element, 'left', left);
             await selectLog(element, 'right', right);
             expect(diffViewer(element).loading).toBe(true);
+            expect(diffViewer(element).emptyMessage).toBe(
+                'Downloading the two logs...'
+            );
 
             await wait(50);
             expect(diffViewer(element).loading).toBe(false);

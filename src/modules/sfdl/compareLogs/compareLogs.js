@@ -183,6 +183,10 @@ export default class CompareLogs extends LightningElement{
     }
 
     get emptyMessage(){
+        if(this.isLoadingLogs){
+            return 'Downloading the two logs...';
+        }
+
         if(this.left && !this.right){
             return 'Now pick the log for the right side.';
         }

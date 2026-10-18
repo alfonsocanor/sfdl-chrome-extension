@@ -36,12 +36,29 @@ describe('sfdl-diff-viewer', () => {
             expect(monaco.editor.createDiffEditor).not.toHaveBeenCalled();
         });
 
-        it('shows the spinner while the content is loading', async () => {
-            const element = await createDiffViewer({ loading: true });
+        it('writes the message under the spinner while loading, not behind it', async () => {
+            const element = await createDiffViewer({
+                loading: true,
+                emptyMessage: 'Retrieving Utils from both orgs...'
+            });
 
             expect(
-                element.shadowRoot.querySelector('sfdl-spinner')
-            ).not.toBeNull();
+                element.shadowRoot.querySelector('sfdl-spinner').message
+            ).toBe('Retrieving Utils from both orgs...');
+            expect(emptyState(element)).toBeNull();
+        });
+
+        it('only spins over a diff already on screen', async () => {
+            const element = await createDiffViewer({
+                loading: true,
+                leftContent: 'a',
+                rightContent: 'b',
+                emptyMessage: 'Retrieving Utils from both orgs...'
+            });
+
+            expect(
+                element.shadowRoot.querySelector('sfdl-spinner').message
+            ).toBeUndefined();
         });
     });
 

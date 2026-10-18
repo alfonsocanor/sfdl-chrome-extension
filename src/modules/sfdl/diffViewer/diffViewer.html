@@ -59,11 +59,13 @@
             <!-- Monaco owns everything inside this element. It is never removed,
                  only hidden, so the editor survives the empty state. -->
             <div class={editorClass} lwc:dom="manual"></div>
-            <template if:false={hasContent}>
+            <template if:true={showEmptyMessage}>
                 <div class="sfdl-diff-empty">{emptyMessage}</div>
             </template>
+            <!-- Loading, the spinner tells what it waits for under it, rather than
+                 over the empty message. -->
             <template if:true={loading}>
-                <sfdl-spinner></sfdl-spinner>
+                <sfdl-spinner message={loadingMessage}></sfdl-spinner>
             </template>
         </div>
     </div>

@@ -132,6 +132,15 @@ export default class DiffViewer extends LightningElement{
         return typeof this._leftContent === 'string' || typeof this._rightContent === 'string';
     }
 
+    get showEmptyMessage(){
+        return !this.hasContent && !this.loading;
+    }
+
+    //Over a diff already on screen the spinner is enough.
+    get loadingMessage(){
+        return this.hasContent ? undefined : this.emptyMessage;
+    }
+
     get viewerStyle(){
         return this.height ? 'height:' + this.height + 'px;' : 'height:100%;';
     }
