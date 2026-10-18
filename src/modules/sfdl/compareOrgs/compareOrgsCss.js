@@ -41,27 +41,28 @@ export const css = `
         min-height: 0;
     }
 
+    /* A strip at the top of the diff: the left org on the left half, the
+       right org on the right half, each status right after its org. */
     .sfdl-compare-orgs__progress {
         display: flex;
-        flex-direction: column;
-        gap: 4px;
-        margin-bottom: 8px;
-        padding: 6px 8px;
-        border: 1px solid var(--sfdl-neutral-border);
-        border-radius: 0.25rem;
+        flex: 0 0 auto;
+        gap: 16px;
+        padding: 6px 12px;
         background: #ffffff;
+        border-bottom: 1px solid #dddbda;
         font-size: 12px;
     }
 
     .sfdl-compare-orgs__progress-row {
         display: flex;
+        flex: 1 1 0;
         align-items: center;
         gap: 6px;
         min-width: 0;
     }
 
     .sfdl-compare-orgs__progress-org {
-        flex: 1 1 auto;
+        flex: 0 1 auto;
         min-width: 0;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -71,8 +72,15 @@ export const css = `
     .sfdl-compare-orgs__progress-status {
         flex: 0 1 auto;
         min-width: 0;
+        overflow: hidden;
         color: #747474;
-        text-align: right;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .sfdl-compare-orgs__progress-status::before {
+        content: '·';
+        margin-right: 6px;
     }
 
     .sfdl-compare-orgs__progress-status_error {
@@ -95,12 +103,15 @@ export const css = `
     }
 
     .sfdl-compare-orgs__diff {
+        display: flex;
         flex: 1 1 auto;
+        flex-direction: column;
         min-width: 0;
         height: 100%;
     }
 
     .sfdl-compare-orgs__diff sfdl-diff-viewer {
-        height: 100%;
+        flex: 1 1 auto;
+        min-height: 0;
     }
 `;

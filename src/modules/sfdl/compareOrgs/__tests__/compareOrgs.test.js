@@ -704,6 +704,28 @@ describe('sfdl-compare-orgs', () => {
             ]);
         });
 
+        it('tells where each org stands over the diff, not in the list of components', async () => {
+            compareComponents.mockImplementation(() => new Promise(() => {}));
+            const element = await listType();
+
+            await openComponent(element, 'Utils');
+
+            const progress = element.shadowRoot.querySelector(
+                '.sfdl-compare-orgs__progress'
+            );
+            expect(progress.parentElement.classList).toContain(
+                'sfdl-compare-orgs__diff'
+            );
+            expect(
+                resultsPanel(element).querySelector(
+                    '.sfdl-compare-orgs__progress'
+                )
+            ).toBeNull();
+            expect(
+                [...progress.children].map((row) => row.dataset.side)
+            ).toEqual(['left', 'right']);
+        });
+
         it('shows the org that failed and leaves the components as they were', async () => {
             compareComponents.mockResolvedValue({
                 components: new Map(),

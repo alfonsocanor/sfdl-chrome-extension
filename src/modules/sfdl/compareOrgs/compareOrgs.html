@@ -42,17 +42,6 @@
                     value={typeKey}
                     onchange={handleTypeChange}>
                 </sfdl-combobox>
-                <template if:true={showProgress}>
-                    <div class="sfdl-compare-orgs__progress">
-                        <template for:each={sideProgress} for:item="progress">
-                            <div key={progress.side} class="sfdl-compare-orgs__progress-row" data-side={progress.side}>
-                                <span class={progress.swatchClass}></span>
-                                <span class="sfdl-compare-orgs__progress-org" title={progress.orgName}>{progress.orgName}</span>
-                                <span class={progress.statusClass} title={progress.statusTitle}>{progress.statusLabel}</span>
-                            </div>
-                        </template>
-                    </div>
-                </template>
                 <template if:true={errorMessage}>
                     <p class="sfdl-compare-orgs__error">{errorMessage}</p>
                 </template>
@@ -76,6 +65,20 @@
                 </template>
             </sfdl-side-panel>
             <div class="sfdl-compare-orgs__diff">
+                <!-- Where each org stands, over the diff the retrieves will fill and
+                     each org on its own side, so the list of components never moves
+                     while it is clicked. -->
+                <template if:true={showProgress}>
+                    <div class="sfdl-compare-orgs__progress">
+                        <template for:each={sideProgress} for:item="progress">
+                            <div key={progress.side} class="sfdl-compare-orgs__progress-row" data-side={progress.side}>
+                                <span class={progress.swatchClass}></span>
+                                <span class="sfdl-compare-orgs__progress-org" title={progress.orgName}>{progress.orgName}</span>
+                                <span class={progress.statusClass} title={progress.statusTitle}>{progress.statusLabel}</span>
+                            </div>
+                        </template>
+                    </div>
+                </template>
                 <sfdl-diff-viewer
                     left-label={leftOrgName}
                     right-label={rightOrgName}
