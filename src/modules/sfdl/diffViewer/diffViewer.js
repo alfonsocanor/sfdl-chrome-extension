@@ -211,6 +211,12 @@ export default class DiffViewer extends LightningElement{
         return this.hasContent && !this.isSideLoading && !this.isComputing && this.lineChanges !== null && this.changeCount === 0;
     }
 
+    //Identical sides have nothing to show otherwise, unless ignoring the
+    //whitespace is what made them so: it has to stay to be unticked.
+    get showWhitespaceOption(){
+        return !this.hasNoDifferences || this.ignoreWhitespace;
+    }
+
     get isNavigationDisabled(){
         return this.isSideLoading || this.isComputing;
     }

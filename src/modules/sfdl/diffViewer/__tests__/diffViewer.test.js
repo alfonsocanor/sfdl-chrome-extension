@@ -391,6 +391,12 @@ describe('sfdl-diff-viewer', () => {
             );
             expect(nextButton(element)).toBeNull();
             expect(previousButton(element)).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-inline')
+            ).toBeNull();
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-whitespace')
+            ).toBeNull();
         });
 
         it('tells when the sides only differ in whitespace', async () => {
@@ -412,6 +418,13 @@ describe('sfdl-diff-viewer', () => {
             expect(identicalBanner(element).textContent).toContain(
                 'The sides only differ in whitespace.'
             );
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-whitespace')
+                    .checked
+            ).toBe(true);
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-inline')
+            ).toBeNull();
         });
 
         it('takes the explanation of the parent for identical sides', async () => {

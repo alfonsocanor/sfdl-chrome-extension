@@ -53,14 +53,18 @@
                             <img src={nextIcon} alt="next difference"/>
                         </button>
                     </template>
-                    <label class="sfdl-diff-option" title="Show both sides in a single column">
-                        <input type="checkbox" class="sfdl-diff-inline" checked={isInline} onchange={handleInlineChange}/>
-                        <span>Inline</span>
-                    </label>
-                    <label class="sfdl-diff-option" title="Leading and trailing whitespace does not count as a difference">
-                        <input type="checkbox" class="sfdl-diff-whitespace" checked={ignoreWhitespace} onchange={handleWhitespaceChange}/>
-                        <span>Ignore whitespace</span>
-                    </label>
+                    <template if:false={hasNoDifferences}>
+                        <label class="sfdl-diff-option" title="Show both sides in a single column">
+                            <input type="checkbox" class="sfdl-diff-inline" checked={isInline} onchange={handleInlineChange}/>
+                            <span>Inline</span>
+                        </label>
+                    </template>
+                    <template if:true={showWhitespaceOption}>
+                        <label class="sfdl-diff-option" title="Leading and trailing whitespace does not count as a difference">
+                            <input type="checkbox" class="sfdl-diff-whitespace" checked={ignoreWhitespace} onchange={handleWhitespaceChange}/>
+                            <span>Ignore whitespace</span>
+                        </label>
+                    </template>
                 </template>
             </div>
             <div class="sfdl-diff-summary__side sfdl-diff-summary__side_right">
