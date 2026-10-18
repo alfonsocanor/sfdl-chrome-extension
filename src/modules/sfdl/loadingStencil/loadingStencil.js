@@ -18,6 +18,8 @@ const TEMPLATES = {
 
 const DEFAULT_ROWS = 8;
 const DEFAULT_CODE_LINES = 40;
+//The lists that fill the room left under them when no count is asked.
+const LIST_TYPES = ['logList', 'compareLogList', 'componentList'];
 
 //The lines of a log, as its calls step in and out: how deep each one sits and
 //how much of the pane it takes, in percent. Repeated as long as the pane asks.
@@ -31,13 +33,51 @@ function listOf(count, prefix){
     return Array.from({ length: count }, (unused, index) => ({ key: prefix + '-' + index }));
 }
 
+//Between 0 and 1, and the same for the same row of the same stencil, so the
+//lengths look picked at random and a row keeps its own when it draws again.
+function noise(seed, index, salt){
+    const value = Math.sin(seed * 9301 + index * 49297 + salt * 233.3) * 43758.5453;
+    return value - Math.floor(value);
+}
+
+function percentBetween(min, max, value){
+    return 'width:' + Math.round(min + (max - min) * value) + '%;';
+}
+
+//Where a node is laid out: in the slot it is handed to, if any, as a list
+//handed to a panel scrolls in the body of the panel, not in the panel itself.
+function layoutParentOf(node){
+    return node.assignedSlot || node.parentNode || node.host || null;
+}
+
+//The element the stencil scrolls in, through the components holding it.
+function scrollContainerOf(element){
+    let node = layoutParentOf(element);
+
+    while(node && node !== document){
+        if(node.nodeType === 1){
+            const overflowY = getComputedStyle(node).overflowY;
+
+            if(overflowY === 'auto' || overflowY === 'scroll'){
+                return node;
+            }
+        }
+
+        node = layoutParentOf(node);
+    }
+
+    return null;
+}
+
 //What stands in a place while what it shows is on its way: one template per
 //thing it stands for, each drawn the way that thing is, so nothing moves when
 //the real one comes. The type picks the template.
 export default class LoadingStencil extends LightningElement{
     //logList, compareLogList, componentList, log or diff.
     @api type;
-    //How many rows a list draws.
+    //How many rows a list draws. Without one, a list draws as many as fill
+    //the room left under it, down to the bottom of what it scrolls in, and no
+    //more, so that never scrolls.
     @api rows;
     //compareLogList: the tick of a list feeding both sides.
     @api ticks = false;
@@ -45,16 +85,85 @@ export default class LoadingStencil extends LightningElement{
     @api panes;
     //log and diff: how many lines a pane draws.
     @api lines;
-    //log and diff: what is on its way, written above the lines.
-    @api message;
+    //What is on its way, for screen readers.
     @api label = 'Loading';
+
+    seed = Math.random();
+    fittedRows = DEFAULT_ROWS;
+    fittedHeight;
 
     connectedCallback(){
         adoptStyleSheet(css);
+        window.addEventListener('resize', this.handleResize);
+    }
+
+    disconnectedCallback(){
+        window.removeEventListener('resize', this.handleResize);
+    }
+
+    renderedCallback(){
+        this.fitRows();
+    }
+
+    handleResize = () => {
+        this.fitRows();
+    };
+
+    get isFilling(){
+        return LIST_TYPES.includes(this.type) && !parseInt(this.rows, 10);
+    }
+
+    get fillStyle(){
+        return this.isFilling && this.fittedHeight !== undefined ?
+            'height:' + this.fittedHeight + 'px;overflow:hidden;' :
+            '';
     }
 
     get rowList(){
-        return listOf(parseInt(this.rows, 10) || DEFAULT_ROWS, 'row');
+        const count = this.isFilling ? this.fittedRows : parseInt(this.rows, 10) || DEFAULT_ROWS;
+
+        return Array.from({ length: count }, (unused, index) => ({
+            key: 'row-' + index,
+            firstLineStyle: percentBetween(58, 96, noise(this.seed, index, 1)),
+            secondLineStyle: percentBetween(28, 74, noise(this.seed, index, 2)),
+            nameStyle: percentBetween(26, 72, noise(this.seed, index, 3))
+        }));
+    }
+
+    //As many rows as reach the bottom of the room left, the last one cut by
+    //it, and the stencil as high as that room, so nothing scrolls. Without a
+    //layout to measure, the rows stay as they are.
+    fitRows(){
+        if(!this.isFilling){
+            return;
+        }
+
+        const root = this.template.querySelector('.sfdl-stencil');
+        const items = this.template.querySelectorAll('ul > li');
+        const container = scrollContainerOf(this.template.host);
+
+        if(!root || !items.length || !container){
+            return;
+        }
+
+        const bottom = container.getBoundingClientRect().bottom - (parseFloat(getComputedStyle(container).paddingBottom) || 0);
+        const firstRow = items[0].getBoundingClientRect();
+        const rowPitch = items.length > 1 ? items[1].getBoundingClientRect().top - firstRow.top : firstRow.height;
+        const height = Math.floor(bottom - root.getBoundingClientRect().top);
+
+        if(height <= 0 || rowPitch <= 0){
+            return;
+        }
+
+        const rows = Math.max(1, Math.ceil((bottom - firstRow.top) / rowPitch));
+
+        if(rows !== this.fittedRows){
+            this.fittedRows = rows;
+        }
+
+        if(height !== this.fittedHeight){
+            this.fittedHeight = height;
+        }
     }
 
     get showsTicks(){

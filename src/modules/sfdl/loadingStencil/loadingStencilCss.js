@@ -44,31 +44,6 @@ export const css = `
         margin: 5px 0;
     }
 
-    .sfdl-stencil .sfdl-stencil__line_first {
-        width: 88%;
-    }
-
-    .sfdl-stencil .sfdl-stencil__line_second {
-        width: 64%;
-    }
-
-    /* No two names read the same length, so neither do their stencils. */
-    .sfdl-stencil li:nth-child(3n + 2) .sfdl-stencil__line_first {
-        width: 76%;
-    }
-
-    .sfdl-stencil li:nth-child(3n + 2) .sfdl-stencil__line_second {
-        width: 70%;
-    }
-
-    .sfdl-stencil li:nth-child(3n) .sfdl-stencil__line_first {
-        width: 94%;
-    }
-
-    .sfdl-stencil li:nth-child(3n) .sfdl-stencil__line_second {
-        width: 46%;
-    }
-
     /* ── the log lists (.sfdl-log-row, .sfdl-compare-log-row) ─────────────── */
 
     .sfdl-stencil .sfdl-stencil-log-row {
@@ -151,16 +126,7 @@ export const css = `
     }
 
     .sfdl-stencil .sfdl-stencil-components__name {
-        width: 45%;
         height: 10px;
-    }
-
-    .sfdl-stencil .sfdl-stencil-components__row:nth-child(3n + 2) .sfdl-stencil-components__name {
-        width: 62%;
-    }
-
-    .sfdl-stencil .sfdl-stencil-components__row:nth-child(3n) .sfdl-stencil-components__name {
-        width: 34%;
     }
 
     /* ── the editor, one pane or the two of a diff ────────────────────────── */
@@ -171,14 +137,6 @@ export const css = `
         height: 100%;
         overflow: hidden;
         background: #ffffff;
-    }
-
-    .sfdl-stencil .sfdl-stencil-code__message {
-        flex: 0 0 auto;
-        padding: 8px 12px 0;
-        color: #747474;
-        font-size: 12px;
-        text-align: center;
     }
 
     .sfdl-stencil .sfdl-stencil-code__panes {

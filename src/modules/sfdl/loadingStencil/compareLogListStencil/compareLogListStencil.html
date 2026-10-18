@@ -2,7 +2,7 @@
     <!-- sfdl-compare-log-list under its filter: the count of the logs, then
          its rows, each the two lines of the name of a log, after a tick when
          the list feeds both sides (`ticks`). -->
-    <div class="sfdl-stencil" role="status" aria-busy="true" aria-label={label}>
+    <div class="sfdl-stencil" style={fillStyle} role="status" aria-busy="true" aria-label={label}>
         <span class="sfdl-shimmer sfdl-stencil-count" aria-hidden="true"></span>
         <ul class="slds-has-dividers_around slds-has-block-links" aria-hidden="true">
             <template for:each={rowList} for:item="row">
@@ -12,8 +12,8 @@
                             <span class="sfdl-shimmer sfdl-stencil__tick"></span>
                         </template>
                         <span class="sfdl-stencil__lines">
-                            <span class="sfdl-shimmer sfdl-stencil__line sfdl-stencil__line_first"></span>
-                            <span class="sfdl-shimmer sfdl-stencil__line sfdl-stencil__line_second"></span>
+                            <span class="sfdl-shimmer sfdl-stencil__line" style={row.firstLineStyle}></span>
+                            <span class="sfdl-shimmer sfdl-stencil__line" style={row.secondLineStyle}></span>
                         </span>
                     </div>
                 </li>

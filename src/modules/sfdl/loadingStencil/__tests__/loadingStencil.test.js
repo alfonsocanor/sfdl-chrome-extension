@@ -59,10 +59,52 @@ describe('sfdl-loading-stencil', () => {
             ).toHaveLength(2);
         });
 
-        it('draws eight rows unless asked for another count', () => {
+        it('draws eight rows unless asked for another count, before it can measure the room', () => {
             const element = createStencil({ type: 'logList' });
 
             expect(all(element, '.sfdl-stencil-log-row')).toHaveLength(8);
+        });
+
+        it('gives each row lines of its own length', () => {
+            const element = createStencil({ type: 'logList', rows: 4 });
+            const firstLines = all(element, '.sfdl-stencil-log-row').map(
+                (row) => row.querySelector('.sfdl-stencil__line').style.width
+            );
+
+            expect(new Set(firstLines).size).toBeGreaterThan(1);
+            firstLines.forEach((width) => {
+                expect(parseInt(width, 10)).toBeGreaterThanOrEqual(58);
+                expect(parseInt(width, 10)).toBeLessThanOrEqual(96);
+            });
+        });
+
+        it('fills the room left under it down to what it scrolls in, and never scrolls it', async () => {
+            const container = document.createElement('div');
+            container.style.overflowY = 'auto';
+            document.body.appendChild(container);
+            const element = createElement('sfdl-loading-stencil', {
+                is: LoadingStencil
+            });
+            element.type = 'logList';
+            container.appendChild(element);
+            const box = (top, height) => () => ({
+                top,
+                bottom: top + height,
+                height
+            });
+            container.getBoundingClientRect = box(0, 500);
+            status(element).getBoundingClientRect = box(10, 0);
+            all(element, 'li').forEach((item, index) => {
+                item.getBoundingClientRect = box(40 + index * 50, 42);
+            });
+
+            window.dispatchEvent(new Event('resize'));
+            await Promise.resolve();
+
+            // From the first row at 40 down to 500, a row every 50px.
+            expect(all(element, 'li')).toHaveLength(10);
+            expect(status(element).style.height).toBe('490px');
+            expect(status(element).style.overflow).toBe('hidden');
         });
     });
 
@@ -133,16 +175,16 @@ describe('sfdl-loading-stencil', () => {
             expect(all(sidePane, '.sfdl-stencil-code__pane')).toHaveLength(1);
         });
 
-        it('says what is on its way above the lines', () => {
+        it('draws the lines alone, what is on its way only read out', () => {
             const element = createStencil({
                 type: 'diff',
-                message: 'Comparing Utils...'
+                label: 'Comparing Utils...'
             });
 
-            expect(
-                element.shadowRoot.querySelector('.sfdl-stencil-code__message')
-                    .textContent
-            ).toBe('Comparing Utils...');
+            expect(status(element).getAttribute('aria-label')).toBe(
+                'Comparing Utils...'
+            );
+            expect(element.shadowRoot.querySelector('p')).toBeNull();
         });
     });
 });

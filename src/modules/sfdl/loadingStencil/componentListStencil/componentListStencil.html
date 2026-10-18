@@ -1,7 +1,7 @@
 <template>
     <!-- sfdl-compare-results, bar for bar: its three status filters, its
          search, then its rows, each the badge of a status and a name. -->
-    <div class="sfdl-stencil sfdl-stencil-components" role="status" aria-busy="true" aria-label={label}>
+    <div class="sfdl-stencil sfdl-stencil-components" style={fillStyle} role="status" aria-busy="true" aria-label={label}>
         <div class="sfdl-stencil-components__filters" aria-hidden="true">
             <span class="sfdl-shimmer sfdl-stencil-components__filter"></span>
             <span class="sfdl-shimmer sfdl-stencil-components__filter sfdl-stencil-components__filter_wide"></span>
@@ -12,7 +12,7 @@
             <template for:each={rowList} for:item="row">
                 <li key={row.key} class="sfdl-stencil-components__row">
                     <span class="sfdl-shimmer sfdl-stencil-components__badge"></span>
-                    <span class="sfdl-shimmer sfdl-stencil-components__name"></span>
+                    <span class="sfdl-shimmer sfdl-stencil-components__name" style={row.nameStyle}></span>
                 </li>
             </template>
         </ul>
