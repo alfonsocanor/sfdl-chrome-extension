@@ -12,14 +12,6 @@
                 data-side="left"
                 onchange={handleOrgChange}>
             </sfdl-combobox>
-            <button
-                class="sfdl-compare-orgs__swap slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
-                style="width:22px;height:22px;padding:2px;"
-                title="Swap the orgs of both sides"
-                disabled={isSwapDisabled}
-                onclick={handleSwap}>
-                <img class="sfdl-swap-icon" src={swapIcon} alt="swap the orgs"/>
-            </button>
             <sfdl-combobox
                 class="sfdl-compare-orgs__org sfdl-compare-orgs__right-org"
                 side="right"

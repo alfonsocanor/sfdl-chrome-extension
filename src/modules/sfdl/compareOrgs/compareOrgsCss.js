@@ -10,7 +10,7 @@ export const css = `
     }
 
     /* The left org on the left edge, the right org on the right edge, as the
-       sides of the diff below them, and the swap between them. */
+       sides of the diff below them. */
     .sfdl-compare-orgs__toolbar {
         display: flex;
         flex: 0 0 auto;
@@ -24,10 +24,6 @@ export const css = `
 
     .sfdl-compare-orgs__org {
         width: 17rem;
-    }
-
-    .sfdl-compare-orgs .sfdl-compare-orgs__swap {
-        margin-bottom: 5px;
     }
 
     /* Under the Components title, in the header of the panel. */

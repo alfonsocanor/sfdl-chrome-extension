@@ -17,7 +17,6 @@ import { css } from './compareOrgsCss';
 const LEFT = 'left';
 const RIGHT = 'right';
 const BOTH = 'both';
-const SWAP_ICON = '/slds/icons/utility/sort.svg';
 
 //What the Metadata API and the custom settings reader report, in words.
 const STATUS_LABELS = {
@@ -145,7 +144,6 @@ export default class CompareOrgs extends LightningElement{
     //other side of the file on screen stays readable meanwhile.
     pendingSide;
 
-    swapIcon = SWAP_ICON;
     typeOptions = metadataTypeOptions();
 
     connectedCallback(){
@@ -199,10 +197,6 @@ export default class CompareOrgs extends LightningElement{
 
     get canCompare(){
         return !!(this.leftOrgSession && this.rightOrgSession && this.selectedType);
-    }
-
-    get isSwapDisabled(){
-        return !this.leftOrgSession && !this.rightOrgSession;
     }
 
     get selectedComponent(){
@@ -371,39 +365,6 @@ export default class CompareOrgs extends LightningElement{
     handleTypeChange(event){
         this.typeKey = event.detail.value;
         this.runListing();
-    }
-
-    handleSwap(){
-        [this.leftOrgSession, this.rightOrgSession] = [this.rightOrgSession, this.leftOrgSession];
-
-        //With everything listed and nothing on its way, the two sides only
-        //trade places and no org is asked anything.
-        if(this.hasListed && !this.isListing && !this.activeComparisons){
-            this.swapResults();
-        } else {
-            this.runListing();
-        }
-    }
-
-    swapResults(){
-        const swapStatus = status => (status === LEFT_ONLY ? RIGHT_ONLY : status === RIGHT_ONLY ? LEFT_ONLY : status);
-        const swapPresence = presence => (presence === LEFT ? RIGHT : presence === RIGHT ? LEFT : presence);
-
-        this.components = this.components.map(component => ({
-            ...component,
-            presence: swapPresence(component.presence),
-            status: swapStatus(component.status),
-            leftModified: component.rightModified,
-            rightModified: component.leftModified,
-            files: component.files && component.files.map(file => ({
-                ...file,
-                left: file.right,
-                right: file.left,
-                status: swapStatus(file.status)
-            }))
-        }));
-        this.listings = { [LEFT]: this.listings[RIGHT], [RIGHT]: this.listings[LEFT] };
-        [this.leftState, this.rightState] = [this.rightState, this.leftState];
     }
 
     handleComponentOpen(event){

@@ -84,7 +84,7 @@ describe('sfdl-diff-viewer', () => {
                 element.shadowRoot.querySelector('.sfdl-diff-next').disabled
             ).toBe(true);
             expect(
-                element.shadowRoot.querySelector('.sfdl-diff-banner_identical')
+                element.shadowRoot.querySelector('.sfdl-diff-count_identical')
             ).toBeNull();
         });
 
@@ -256,7 +256,7 @@ describe('sfdl-diff-viewer', () => {
         const previousButton = (element) =>
             element.shadowRoot.querySelector('.sfdl-diff-previous');
         const identicalBanner = (element) =>
-            element.shadowRoot.querySelector('.sfdl-diff-banner_identical');
+            element.shadowRoot.querySelector('.sfdl-diff-count_identical');
         const revealedLines = () =>
             diffEditor()
                 .getModifiedEditor()
@@ -347,7 +347,7 @@ describe('sfdl-diff-viewer', () => {
             diffEditor().mockDiffComputed([]);
             await flushPromises();
 
-            expect(count(element).textContent).toBe('No differences');
+            expect(count(element).textContent).toContain('No differences.');
             expect(identicalBanner(element).textContent).toContain(
                 'Both sides are identical.'
             );
@@ -386,6 +386,29 @@ describe('sfdl-diff-viewer', () => {
             expect(identicalBanner(element).textContent).toContain(
                 'The class is the same in both orgs.'
             );
+        });
+
+        it('tells it in the bar, where the differences are counted', async () => {
+            const element = await compare({
+                leftContent: 'same',
+                rightContent: 'same',
+                identicalMessage: 'classes/Utils.cls is identical in both orgs.'
+            });
+
+            diffEditor().mockDiffComputed([]);
+            await flushPromises();
+
+            const identical = identicalBanner(element);
+            expect(identical.parentElement.classList).toContain(
+                'sfdl-diff-summary__center'
+            );
+            expect(identical.title).toBe(
+                'No differences. classes/Utils.cls is identical in both orgs.'
+            );
+            expect(count(element)).toBe(identical);
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-banner')
+            ).toBeNull();
         });
 
         it('hides the banner while there are differences', async () => {
@@ -491,7 +514,7 @@ describe('sfdl-diff-viewer', () => {
                 element.shadowRoot.querySelector('.sfdl-diff-count').textContent
             ).toBe('Comparing...');
             expect(
-                element.shadowRoot.querySelector('.sfdl-diff-banner_identical')
+                element.shadowRoot.querySelector('.sfdl-diff-count_identical')
             ).toBeNull();
             expect(
                 element.shadowRoot.querySelector('.sfdl-diff-next').disabled

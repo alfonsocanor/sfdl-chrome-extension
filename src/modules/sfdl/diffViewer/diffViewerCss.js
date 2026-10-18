@@ -33,9 +33,14 @@ export const css = `
 
     .sfdl-diff-viewer .sfdl-diff-summary__center {
         display: flex;
-        flex: 0 0 auto;
+        flex: 0 1 auto;
         align-items: center;
         gap: 6px;
+        min-width: 0;
+    }
+
+    .sfdl-diff-viewer .sfdl-diff-summary__center > * {
+        flex: 0 0 auto;
     }
 
     .sfdl-diff-viewer .sfdl-diff-summary__actions {
@@ -53,6 +58,22 @@ export const css = `
         color: #3e3e3c;
         font-size: 12px;
         text-align: center;
+    }
+
+    /* The green of identical, as a pill that gives way, ellipsis and all,
+       before the names of the sides do. */
+    .sfdl-diff-viewer .sfdl-diff-summary__center > .sfdl-diff-count_identical {
+        flex: 0 1 auto;
+        min-width: 8.5rem;
+        max-width: 36rem;
+        padding: 1px 8px;
+        overflow: hidden;
+        border: 1px solid var(--sfdl-identical-border);
+        border-radius: 0.25rem;
+        background: var(--sfdl-identical-tint);
+        color: var(--sfdl-identical-text);
+        text-overflow: ellipsis;
+        white-space: nowrap;
     }
 
     .sfdl-diff-viewer .sfdl-diff-option {
@@ -78,12 +99,6 @@ export const css = `
         padding: 6px 12px;
         border-bottom: 1px solid;
         font-size: 12px;
-    }
-
-    .sfdl-diff-viewer .sfdl-diff-banner_identical {
-        background: #ebf7e6;
-        border-color: #b7dfab;
-        color: #22683e;
     }
 
     .sfdl-diff-viewer .sfdl-diff-banner_notice {

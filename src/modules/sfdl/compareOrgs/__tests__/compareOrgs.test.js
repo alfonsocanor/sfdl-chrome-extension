@@ -394,11 +394,7 @@ describe('sfdl-compare-orgs', () => {
                 [...toolbar.children].map(
                     (child) => child.className.split(' ')[0]
                 )
-            ).toEqual([
-                'sfdl-compare-orgs__org',
-                'sfdl-compare-orgs__swap',
-                'sfdl-compare-orgs__org'
-            ]);
+            ).toEqual(['sfdl-compare-orgs__org', 'sfdl-compare-orgs__org']);
             const typePicker = resultsPanel(element).querySelector(
                 '.sfdl-compare-orgs__type'
             );
@@ -961,24 +957,10 @@ describe('sfdl-compare-orgs', () => {
             ]);
         });
 
-        it('swaps the two sides without asking the orgs anything', async () => {
+        it('offers no swap, the comparison is the same either way round', async () => {
             const element = await compareTwo();
 
-            picker(element, 'swap').click();
-            await wait();
-
-            expect(picker(element, 'left-org').value).toBe(GLOBEX.instanceUrl);
-            expect(picker(element, 'right-org').value).toBe(ACME.instanceUrl);
-            expect(listOrgComponents).not.toHaveBeenCalled();
-            expect(compareComponents).not.toHaveBeenCalled();
-            expect(statuses(element)).toEqual([
-                'AccountService different',
-                'InvoiceBatch right',
-                'LegacyHelper left',
-                'Utils identical'
-            ]);
-            expect(diffViewer(element).leftContent).toBe('globex service');
-            expect(diffViewer(element).rightContent).toBe('acme service');
+            expect(picker(element, 'swap')).toBeNull();
         });
     });
 });

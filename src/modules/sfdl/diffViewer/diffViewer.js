@@ -229,6 +229,10 @@ export default class DiffViewer extends LightningElement{
         return plural(leftLines, 'line') + ' on the left and ' + plural(rightLines, 'line') + ' on the right differ';
     }
 
+    get noDifferencesText(){
+        return 'No differences. ' + this.noDifferencesDetail;
+    }
+
     get noDifferencesDetail(){
         if(this.identicalMessage){
             return this.identicalMessage;

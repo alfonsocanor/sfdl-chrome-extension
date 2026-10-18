@@ -21,7 +21,17 @@
                     onclick={handlePreviousChange}>
                     <img src={previousIcon} alt="previous difference"/>
                 </button>
-                <span class="sfdl-diff-count" title={changesTitle}>{changesLabel}</span>
+                <!-- Identical sides are told here, where the differences are counted,
+                     rather than in a row of their own that would push the diff down. -->
+                <template if:true={hasNoDifferences}>
+                    <span class="sfdl-diff-count sfdl-diff-count_identical" role="status" title={noDifferencesText}>
+                        <strong>No differences.</strong>
+                        <span class="slds-m-left_xx-small">{noDifferencesDetail}</span>
+                    </span>
+                </template>
+                <template if:false={hasNoDifferences}>
+                    <span class="sfdl-diff-count" title={changesTitle}>{changesLabel}</span>
+                </template>
                 <button
                     class="sfdl-diff-next slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border"
                     style="width:22px;height:22px;padding:2px;"
@@ -49,12 +59,6 @@
         <template if:true={hasContent}>
             <template if:true={notice}>
                 <div class="sfdl-diff-banner sfdl-diff-banner_notice" role="status">{notice}</div>
-            </template>
-            <template if:true={hasNoDifferences}>
-                <div class="sfdl-diff-banner sfdl-diff-banner_identical" role="status">
-                    <strong>No differences.</strong>
-                    <span class="slds-m-left_xx-small">{noDifferencesDetail}</span>
-                </div>
             </template>
         </template>
         <div class="sfdl-diff-body">
