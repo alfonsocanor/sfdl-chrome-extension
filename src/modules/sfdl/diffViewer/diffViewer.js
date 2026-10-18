@@ -70,8 +70,8 @@ export default class DiffViewer extends LightningElement{
     //error or warning. Written next to the name of the side.
     @api leftStatus;
     @api rightStatus;
-    //The bar only comes with something to compare, for a parent that has
-    //nothing to show in it before.
+    //The bar only comes with something to compare, or an org of a side at
+    //work, for a parent that has nothing to show in it before.
     @api hideEmptySummary = false;
 
     @api
@@ -218,7 +218,7 @@ export default class DiffViewer extends LightningElement{
     }
 
     get showSummary(){
-        return !this.hideEmptySummary || this.showControls;
+        return !this.hideEmptySummary || this.showControls || !!this.leftStatus || !!this.rightStatus;
     }
 
     //The comparison, or one side of it, is on its way. The bar only says it

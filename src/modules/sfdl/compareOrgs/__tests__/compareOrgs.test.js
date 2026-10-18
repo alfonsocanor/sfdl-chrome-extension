@@ -203,6 +203,7 @@ describe('sfdl-compare-orgs', () => {
             const element = await createCompareOrgs();
 
             expect(progressText(element)).toEqual(['left | ', 'right | ']);
+            expect(diffViewer(element).hideEmptySummary).toBe(true);
             expect(
                 element.shadowRoot.querySelector('.sfdl-compare-orgs__progress')
             ).toBeNull();

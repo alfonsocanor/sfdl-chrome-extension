@@ -121,6 +121,8 @@ export default class CompareOrgs extends LightningElement{
 
     listSequence = 0;
     isListing = false;
+    //Nothing compared and no org at work, the bar of the diff has nothing to say.
+    hideEmptySummary = true;
     hasListed = false;
     errorMessage;
     apiVersion;

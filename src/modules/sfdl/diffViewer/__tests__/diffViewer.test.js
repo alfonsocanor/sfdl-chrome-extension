@@ -129,6 +129,17 @@ describe('sfdl-diff-viewer', () => {
             ).not.toBeNull();
         });
 
+        it('comes, waiting for a comparison, as soon as an org of a side is at work', async () => {
+            const element = await createDiffViewer({
+                hideEmptySummary: true,
+                leftStatus: { label: 'Listing the components', title: '' }
+            });
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-diff-summary')
+            ).not.toBeNull();
+        });
+
         it('writes what the org of each side is doing next to its name', async () => {
             const element = await createDiffViewer({
                 leftLabel: 'acme.my.salesforce.com',
