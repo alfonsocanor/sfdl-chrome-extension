@@ -1,0 +1,63 @@
+export const css = `
+    /* In a toolbar it keeps its width, the name of the log gives way. */
+    sfdl-log-manipulation-menu {
+        display: block;
+        flex: 0 0 auto;
+    }
+
+    .sfdl-log-filters {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .sfdl-log-filter {
+        position: relative;
+    }
+
+    /* The look of the status filters of the metadata, a brand button while on. */
+    .sfdl-log-filters .sfdl-log-filter__pill {
+        padding: 1px 8px;
+        border: 1px solid var(--sfdl-neutral-border, #dddbda);
+        border-radius: 0.25rem;
+        background: #ffffff;
+        color: #3e3e3c;
+        font-size: 12px;
+        line-height: 18px;
+        white-space: nowrap;
+        cursor: pointer;
+    }
+
+    .sfdl-log-filters .sfdl-log-filter__pill:hover {
+        background: #f3f3f3;
+    }
+
+    .sfdl-log-filters .sfdl-log-filter__pill.sfdl-log-filter__pill_on {
+        background: #0176d3;
+        border-color: #0176d3;
+        color: #ffffff;
+    }
+
+    .sfdl-log-filters .sfdl-log-filter__pill.sfdl-log-filter__pill_on:hover {
+        background: #014486;
+        border-color: #014486;
+    }
+
+    .sfdl-log-filters .sfdl-log-filter__tooltip {
+        position: absolute;
+        top: calc(100% + 0.75rem);
+        left: 0;
+        width: max-content;
+        max-width: 20rem;
+        visibility: hidden;
+        opacity: 0;
+        transition: opacity 0.1s;
+        pointer-events: none;
+    }
+
+    .sfdl-log-filters .sfdl-log-filter:hover > .sfdl-log-filter__tooltip {
+        visibility: visible;
+        opacity: 1;
+    }
+`;

@@ -1,16 +1,22 @@
 <template>
-    <div class="sfdlDropdownMenu slds-dropdown-trigger slds-dropdown-trigger_click">
-        <button style="width:22px;height:22px; padding:2px;" onclick={handleOpenCloseMenu} class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Manipulation Filter Menu">
-            <img src={filterIcon} alt="menu filter manipulation options"/>
-        </button>
-        <div class="slds-dropdown slds-dropdown_left slds-dropdown_small" style="min-width:18rem !important; padding-bottom:0px;">
-            <button style="width:12px;height:12px; position:absolute; right:5px; z-index:1;" onclick={handleOpenCloseMenu} class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border" title="Manipulation Filter Menu">
-                <img src={closeIcon} alt="close icon"/>
-            </button>
-            <sfdl-checkbox
-                checkbox-options={manipulationOptions}
-                oncheckboxselection={handleManipulationOptions}>
-            </sfdl-checkbox>
-        </div>
+    <div class="sfdl-log-filters" role="group" aria-label="Log filters">
+        <template for:each={pills} for:item="pill">
+            <div key={pill.name} class="sfdl-log-filter">
+                <button
+                    type="button"
+                    class={pill.pillClass}
+                    data-name={pill.name}
+                    aria-pressed={pill.ariaPressed}
+                    onclick={handleToggle}>
+                    {pill.label}
+                </button>
+                <!-- Right on hover, what the filter does to the log. -->
+                <template if:true={pill.description}>
+                    <div class="slds-popover slds-popover_tooltip slds-nubbin_top-left sfdl-log-filter__tooltip" role="tooltip">
+                        <div class="slds-popover__body">{pill.description}</div>
+                    </div>
+                </template>
+            </div>
+        </template>
     </div>
 </template>

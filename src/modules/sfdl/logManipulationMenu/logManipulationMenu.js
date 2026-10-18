@@ -1,7 +1,13 @@
 import { LightningElement, api } from 'lwc';
 import { analyseOptions } from 'sfdl/logDetailsManipulation';
+import { adoptStyleSheet } from 'sfdl/styleSheets';
+import { css } from './logManipulationMenuCss';
 
-export default class DropdownMenu extends LightningElement{
+const PILL_CLASS = 'sfdl-log-filter__pill';
+
+//The filters of a log, one pill each, on while blue. A click turns one on or
+//off and hands the whole selection on.
+export default class LogManipulationMenu extends LightningElement{
     manipulationOptions = analyseOptions();
 
     //A comparison hands in its own options, the analyse ones and the compare
@@ -14,29 +20,28 @@ export default class DropdownMenu extends LightningElement{
         this.manipulationOptions = (options || []).map(option => ({ ...option }));
     }
 
-    filterIcon = '/slds/icons/utility/filterList.svg';
-    closeIcon = '/slds/icons/utility/close.svg';
-    isMenuOpen = true;
-
-    handleOpenCloseMenu(){
-        this.isMenuOpen = !this.isMenuOpen;
-        this.addRemoveSldsIsOpenMenuClass(this.isMenuOpen ? 'remove' : 'add');
+    connectedCallback(){
+        adoptStyleSheet(css);
     }
 
-    addRemoveSldsIsOpenMenuClass(action){
-        this.template.querySelector('.sfdlDropdownMenu').classList[action]('slds-is-open');
+    get pills(){
+        return this.manipulationOptions.map(option => ({
+            ...option,
+            pillClass: PILL_CLASS + (option.checked ? ' ' + PILL_CLASS + '_on' : ''),
+            ariaPressed: option.checked ? 'true' : 'false'
+        }));
     }
 
-    handleManipulationOptions(event){
-        this.manipulationOptions.forEach((option) => {
-            if(option.name === event.detail.function2Execute){
-                option.checked = event.detail.checked;
-            }
-        });
+    handleToggle(event){
+        const name = event.currentTarget.dataset.name;
 
-        this.dispatchEvent(new CustomEvent('checkboxselection',{
+        this.manipulationOptions = this.manipulationOptions.map(option =>
+            option.name === name ? { ...option, checked: !option.checked } : option
+        );
+
+        this.dispatchEvent(new CustomEvent('checkboxselection', {
             detail: { manipulationOptions: this.manipulationOptions }
-        }))
+        }));
     }
 
     @api

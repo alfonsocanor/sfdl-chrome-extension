@@ -94,8 +94,8 @@ export default class CompareLogs extends LightningElement{
     comparisonSequence = 0;
     swapIcon = SWAP_ICON;
     closeIcon = CLOSE_ICON;
-    //The filters both logs go through. The menu lives in the bar of the diff,
-    //which comes and goes with it, so the comparison keeps them.
+    //The filters both logs go through, kept here so a menu built again starts
+    //from them.
     options = [...analyseOptions(), ...compareOptions()];
 
     connectedCallback(){

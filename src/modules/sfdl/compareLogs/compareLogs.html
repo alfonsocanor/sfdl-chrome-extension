@@ -27,6 +27,13 @@
                 </sfdl-side-panel>
             </template>
             <div class="sfdl-compare-logs__diff">
+                <!-- Six pills do not fit the bar of the diff, they get a row above it. -->
+                <div class="sfdl-compare-logs__filters">
+                    <sfdl-log-manipulation-menu
+                        options={options}
+                        oncheckboxselection={handleOptionsChange}>
+                    </sfdl-log-manipulation-menu>
+                </div>
                 <sfdl-diff-viewer
                     language="apexlog"
                     left-label={leftLabel}
@@ -35,11 +42,6 @@
                     right-content={rightContent}
                     loading={isLoadingLogs}
                     empty-message={emptyMessage}>
-                    <sfdl-log-manipulation-menu
-                        slot="actions"
-                        options={options}
-                        oncheckboxselection={handleOptionsChange}>
-                    </sfdl-log-manipulation-menu>
                     <template if:true={isPairMode}>
                         <button
                             slot="actions"

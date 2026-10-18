@@ -126,19 +126,50 @@ const compareNormalizations = {
 }
 
 //The filters of the analyse tab, every one of them on.
+//Each option reads as what it does to the log, its description tells how.
 export function analyseOptions(){
     return [
-        { label: 'ENTRY/EXIT/END/BEGIN', name: 'methodEntryExitCodeUnitStartedFinished2Hierarchy', checked: true },
-        { label: 'HEAP_ALLOCATE/STATEMENT_EXECUTE', name: 'removeHeapAllocateAndStatementExecute', checked: true },
-        { label: 'FLOW/LIMIT/INTERVIEW', name: 'removeFlowNoise', checked: true }
+        {
+            label: 'Indent calls',
+            description: 'Indents each line by how deep it runs: method, constructor, flow and code unit entries step in, their exits step back out.',
+            name: 'methodEntryExitCodeUnitStartedFinished2Hierarchy',
+            checked: true
+        },
+        {
+            label: 'Hide heap and statements',
+            description: 'Hides the HEAP_ALLOCATE and STATEMENT_EXECUTE lines Apex writes for almost every statement.',
+            name: 'removeHeapAllocateAndStatementExecute',
+            checked: true
+        },
+        {
+            label: 'Hide flow noise',
+            description: 'Hides the flow lines about creating and finishing interviews and their limit usage. The flow elements themselves stay.',
+            name: 'removeFlowNoise',
+            checked: true
+        }
     ];
 }
 
 export function compareOptions(){
     return [
-        { label: 'Ignore timestamps', name: 'ignoreTimestamps', checked: true },
-        { label: 'Ignore record Ids and heap addresses', name: 'ignoreIdsAndAddresses', checked: true },
-        { label: 'Ignore code line numbers', name: 'ignoreLineNumbers', checked: false }
+        {
+            label: 'Ignore times',
+            description: 'Leaves out the time that opens each line. Two runs never share it, so every line would differ.',
+            name: 'ignoreTimestamps',
+            checked: true
+        },
+        {
+            label: 'Ignore record Ids',
+            description: 'Reads record ids as their key prefix, 001<id>, and heap addresses as 0x<address>, so other records of the same object match.',
+            name: 'ignoreIdsAndAddresses',
+            checked: true
+        },
+        {
+            label: 'Ignore line numbers',
+            description: 'Reads the code line number of each line as [n], for code that moved between the two runs.',
+            name: 'ignoreLineNumbers',
+            checked: false
+        }
     ];
 }
 

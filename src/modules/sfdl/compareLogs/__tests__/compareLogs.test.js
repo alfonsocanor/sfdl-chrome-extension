@@ -99,6 +99,12 @@ const panel = (element, side) =>
     element.shadowRoot.querySelector(`.sfdl-compare-logs__${side}-panel`);
 const diffViewer = (element) =>
     element.shadowRoot.querySelector('sfdl-diff-viewer');
+const filterPill = (element, name) =>
+    element.shadowRoot
+        .querySelector('sfdl-log-manipulation-menu')
+        .shadowRoot.querySelector(
+            `.sfdl-log-filter__pill[data-name="${name}"]`
+        );
 const bodyDownloads = () =>
     fetch.mock.calls.map(([url]) => url).filter((url) => url.endsWith('/Body'));
 
@@ -145,6 +151,26 @@ describe('sfdl-compare-logs', () => {
             expect(panel(element, 'right').side).toBe('right');
             expect(sideList(element, 'left').side).toBe('left');
             expect(sideList(element, 'right').side).toBe('right');
+        });
+
+        it('puts the filters in a row of their own above the diff', async () => {
+            const element = await createCompareLogs();
+            const menu = element.shadowRoot.querySelector(
+                'sfdl-log-manipulation-menu'
+            );
+
+            expect(menu.parentElement.className).toBe(
+                'sfdl-compare-logs__filters'
+            );
+            expect(menu.slot).toBe('');
+            expect(menu.options.map(({ name }) => name)).toEqual([
+                'methodEntryExitCodeUnitStartedFinished2Hierarchy',
+                'removeHeapAllocateAndStatementExecute',
+                'removeFlowNoise',
+                'ignoreTimestamps',
+                'ignoreIdsAndAddresses',
+                'ignoreLineNumbers'
+            ]);
         });
 
         it('takes the height it is given', async () => {
@@ -391,18 +417,8 @@ describe('sfdl-compare-logs', () => {
                 'USER_DEBUG|[6]|DEBUG|hello'
             );
 
-            const checkbox = element.shadowRoot
-                .querySelector('sfdl-log-manipulation-menu')
-                .shadowRoot.querySelector('sfdl-checkbox');
-            [
-                'removeHeapAllocateAndStatementExecute',
-                'ignoreTimestamps'
-            ].forEach((function2Execute) =>
-                checkbox.dispatchEvent(
-                    new CustomEvent('checkboxselection', {
-                        detail: { function2Execute, checked: false }
-                    })
-                )
+            ['removeHeapAllocateAndStatementExecute', 'ignoreTimestamps'].forEach(
+                (name) => filterPill(element, name).click()
             );
             await wait();
 
@@ -420,17 +436,7 @@ describe('sfdl-compare-logs', () => {
             await selectLog(element, 'left', left);
             await selectLog(element, 'right', right);
             await wait();
-            element.shadowRoot
-                .querySelector('sfdl-log-manipulation-menu')
-                .shadowRoot.querySelector('sfdl-checkbox')
-                .dispatchEvent(
-                    new CustomEvent('checkboxselection', {
-                        detail: {
-                            function2Execute: 'ignoreTimestamps',
-                            checked: false
-                        }
-                    })
-                );
+            filterPill(element, 'ignoreTimestamps').click();
             await wait();
 
             await selectLog(element, 'right', other);

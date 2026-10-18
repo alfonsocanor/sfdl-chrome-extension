@@ -32,7 +32,7 @@ getting logs out of the org:
 - **Every log**: with nothing ticked the button reads `Download all logs` and produces
   `sfdl-ApexLog.zip`, exactly as before.
 
-Whatever you download always has the filters of the manipulation menu applied to it, so
+Whatever you download always has the filter pills that are on applied to it, so
 the file you get on disk matches what you see in the console.
 
 ## Comparing logs
@@ -54,15 +54,25 @@ shows in light blue, whatever comes only from the right log in light amber.
   to compare each log against the other side as you go. Both lists filter by any word
   of the log name and fold away.
 
-The bar above the diff counts the differences, walks them with the chevrons and switches
-to a single column or to ignoring whitespace. Its filter menu holds the filters of the
-analyse view plus three that only make sense between two logs, so two runs of the same
-transaction do not differ on every line:
+The filters of a log are pills, blue while on, each explained on hover. Analyse shows
+them next to the name of the log:
 
-- **Ignore timestamps** drops the time and nanoseconds that open each line.
-- **Ignore record Ids and heap addresses** turns ids into their key prefix followed by
-  `<id>`, so `001xx000003DGbYAAW` reads `001<id>`, and `0x7d7d4e32` into `0x<address>`.
-- **Ignore code line numbers**, off by default, for logs of code that moved.
+- **Indent calls** indents each line by how deep it runs, method, constructor, flow and
+  code unit entries stepping in and their exits stepping back out.
+- **Hide heap and statements** hides the `HEAP_ALLOCATE` and `STATEMENT_EXECUTE` lines.
+- **Hide flow noise** hides the flow lines about creating and finishing interviews and
+  their limit usage, the flow elements themselves stay.
+
+A comparison shows them in a row above the diff, with three more that only make sense
+between two logs, so two runs of the same transaction do not differ on every line:
+
+- **Ignore times** drops the time and nanoseconds that open each line.
+- **Ignore record Ids** turns ids into their key prefix followed by `<id>`, so
+  `001xx000003DGbYAAW` reads `001<id>`, and `0x7d7d4e32` into `0x<address>`.
+- **Ignore line numbers**, off by default, for logs of code that moved.
+
+The bar above the diff counts the differences, walks them with the chevrons and switches
+to a single column or to ignoring whitespace.
 
 A log body is downloaded once and kept while the console is open.
 
