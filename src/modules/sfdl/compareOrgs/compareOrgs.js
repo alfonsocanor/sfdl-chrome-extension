@@ -18,7 +18,6 @@ const LEFT = 'left';
 const RIGHT = 'right';
 const BOTH = 'both';
 const SWAP_ICON = '/slds/icons/utility/sort.svg';
-const DEFAULT_BATCH_SIZE = 100;
 
 //What the Metadata API and the custom settings reader report, in words.
 const STATUS_LABELS = {
@@ -85,8 +84,8 @@ function firstFilePath(component){
 }
 
 //The metadata of two orgs side by side. Picking a type lists the names both
-//orgs hold, a call per org; contents are only retrieved for the components
-//opened or ticked, so a big org is never retrieved whole.
+//orgs hold, a call per org; contents are only retrieved for the component
+//opened, so a big org is never retrieved whole.
 export default class CompareOrgs extends LightningElement{
     @api orgs = [];
     @api height;
@@ -177,14 +176,6 @@ export default class CompareOrgs extends LightningElement{
 
     get typeLabel(){
         return this.selectedType ? this.selectedType.label : 'components';
-    }
-
-    get typeEngine(){
-        return this.selectedType ? this.selectedType.engine : 'metadata';
-    }
-
-    get typeBatchSize(){
-        return (this.selectedType && this.selectedType.batchSize) || DEFAULT_BATCH_SIZE;
     }
 
     get canCompare(){
@@ -320,7 +311,7 @@ export default class CompareOrgs extends LightningElement{
             return 'Retrieving ' + this.selectedName + ' from both orgs...';
         }
 
-        return 'Open a component to compare it, or tick several and compare them together.';
+        return 'Open a component to compare it.';
     }
 
     handleOrgChange(event){
@@ -355,10 +346,6 @@ export default class CompareOrgs extends LightningElement{
         this.selectedPath = event.detail.path;
     }
 
-    handleCompareRequest(event){
-        this.compare(event.detail.names);
-    }
-
     //A component already compared opens on its first difference, one that was
     //not is compared first.
     openComponent(name){
@@ -373,20 +360,6 @@ export default class CompareOrgs extends LightningElement{
 
         if(!component.files && component.status !== COMPARING){
             this.compare([name], { open: name });
-        }
-    }
-
-    //A comparison of several components opens on the first of them that
-    //differs, unless a component is already on screen.
-    openFirstChange(names){
-        const firstChange = this.components.find(component =>
-            names.includes(component.name) && component.files &&
-            component.files.some(file => file.status !== IDENTICAL)
-        );
-
-        if(firstChange){
-            this.selectedName = firstChange.name;
-            this.selectedPath = firstFilePath(firstChange);
         }
     }
 
@@ -518,8 +491,6 @@ export default class CompareOrgs extends LightningElement{
 
             if(open && this.selectedName === open){
                 this.selectedPath = firstFilePath(this.selectedComponent);
-            } else if(!this.selectedName){
-                this.openFirstChange(targets.map(({ name }) => name));
             }
         };
 

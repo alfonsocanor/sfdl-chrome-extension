@@ -9,7 +9,6 @@ const SEARCH_ICON = '/resources/searchGrey.svg';
 //Thousands of standard object names would take the page down rendered at
 //once, they are shown a page at a time.
 const ROWS_PER_PAGE = 300;
-const DEFAULT_BATCH_SIZE = 100;
 
 const STATUS_LABELS = {
     [NOT_COMPARED]: 'In both',
@@ -61,19 +60,14 @@ function modifiedLine(side, modified){
 }
 
 //The components two orgs hold of a type. Their names come from the listings,
-//nothing is compared until asked: a click on a component compares it, and the
-//ones ticked are compared together. The component on screen lists its files.
+//nothing is compared until asked: a click on a component compares it. The
+//component on screen lists its files.
 export default class CompareResults extends LightningElement{
     @api selectedName;
     @api selectedPath;
     @api typeLabel = 'components';
     @api leftName = 'the left org';
     @api rightName = 'the right org';
-    //How the components of the type come out of an org, for the cost of a
-    //comparison: metadata in retrieves of batchSize components, custom
-    //settings in two api calls each.
-    @api engine = 'metadata';
-    @api batchSize = DEFAULT_BATCH_SIZE;
 
     //[{ name, presence, status, files: [{ path, status }], leftModified,
     //rightModified }], a modified being { date, by }.
@@ -85,12 +79,11 @@ export default class CompareResults extends LightningElement{
         this._components = components || [];
 
         //A new listing starts over, a component compared in the same listing
-        //keeps the filter and the selection where they were.
+        //keeps the filter where it was.
         const namesKey = this._components.map(component => component.name).join('\n');
         if(namesKey !== this.namesKey){
             this.namesKey = namesKey;
             this.statusFilter = ALL;
-            this.checkedNames = new Set();
             this.rowLimit = ROWS_PER_PAGE;
         }
     }
@@ -99,7 +92,6 @@ export default class CompareResults extends LightningElement{
     namesKey;
     statusFilter = ALL;
     searchText = '';
-    checkedNames = new Set();
     rowLimit = ROWS_PER_PAGE;
     searchIcon = SEARCH_ICON;
 
@@ -157,13 +149,6 @@ export default class CompareResults extends LightningElement{
         );
     }
 
-    //The components that can be ticked: everything but what is comparing.
-    get selectableNames(){
-        return this.filteredComponents
-            .filter(component => component.status !== COMPARING)
-            .map(component => component.name);
-    }
-
     get visibleRows(){
         return this.filteredComponents.slice(0, this.rowLimit).map(component => {
             const isSelected = component.name === this.selectedName;
@@ -173,8 +158,6 @@ export default class CompareResults extends LightningElement{
                 name: component.name,
                 statusLabel: STATUS_LABELS[component.status],
                 badgeClass: badgeClass(component.status),
-                isChecked: this.checkedNames.has(component.name),
-                isComparing: component.status === COMPARING,
                 title: component.name + modifiedLine('Left', component.leftModified) + modifiedLine('Right', component.rightModified),
                 rowClass: 'sfdl-compare-results__row' + (isSelected ? ' sfdl-compare-results__row_selected' : ''),
                 showFiles: isSelected && files.length > 0,
@@ -218,52 +201,6 @@ export default class CompareResults extends LightningElement{
         return this.searchWords.length ? 'No component matches the filter' : 'No component has this status';
     }
 
-    get checkedCount(){
-        return this.checkedNames.size;
-    }
-
-    get areAllShownSelected(){
-        const names = this.selectableNames;
-        return names.length > 0 && names.every(name => this.checkedNames.has(name));
-    }
-
-    get isSelectAllDisabled(){
-        return !this.selectableNames.length;
-    }
-
-    get selectAllTitle(){
-        return this.areAllShownSelected ? 'Unselect the components shown' : 'Select the components shown';
-    }
-
-    get isCompareDisabled(){
-        return !this.checkedCount;
-    }
-
-    get compareLabel(){
-        return this.checkedCount ? 'Compare selected (' + this.checkedCount + ')' : 'Compare selected';
-    }
-
-    get compareTitle(){
-        return this.checkedCount ? 'Retrieve the selected components from both orgs and compare them' : 'Tick the components to compare first';
-    }
-
-    //What comparing the selection costs each org, so a big selection is a
-    //decision rather than a surprise.
-    get costHint(){
-        const count = this.checkedCount;
-
-        if(!count){
-            return '';
-        }
-
-        if(this.engine === 'customSettings'){
-            return (count * 2) + ' api calls per org';
-        }
-
-        const retrieves = Math.ceil(count / (this.batchSize || DEFAULT_BATCH_SIZE));
-        return retrieves + (retrieves === 1 ? ' retrieve' : ' retrieves') + ' per org';
-    }
-
     handleStatusFilter(event){
         this.statusFilter = event.currentTarget.dataset.filter;
         this.rowLimit = ROWS_PER_PAGE;
@@ -276,41 +213,6 @@ export default class CompareResults extends LightningElement{
 
     handleShowMore(){
         this.rowLimit += ROWS_PER_PAGE;
-    }
-
-    handleCheck(event){
-        const checkedNames = new Set(this.checkedNames);
-
-        if(event.target.checked){
-            checkedNames.add(event.target.dataset.name);
-        } else {
-            checkedNames.delete(event.target.dataset.name);
-        }
-
-        this.checkedNames = checkedNames;
-    }
-
-    handleSelectAll(event){
-        const checkedNames = new Set(this.checkedNames);
-
-        this.selectableNames.forEach(name => {
-            if(event.target.checked){
-                checkedNames.add(name);
-            } else {
-                checkedNames.delete(name);
-            }
-        });
-
-        this.checkedNames = checkedNames;
-    }
-
-    handleCompareSelected(){
-        const names = this._components
-            .map(component => component.name)
-            .filter(name => this.checkedNames.has(name));
-
-        this.checkedNames = new Set();
-        this.dispatchEvent(new CustomEvent('comparerequest', { detail: { names } }));
     }
 
     handleOpen(event){

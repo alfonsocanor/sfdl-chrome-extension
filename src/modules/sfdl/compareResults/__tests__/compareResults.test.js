@@ -50,15 +50,8 @@ const names = (element) =>
     [...element.shadowRoot.querySelectorAll('.sfdl-compare-results__open')].map(
         (button) => button.dataset.name
     );
-const checkboxes = (element) => [
-    ...element.shadowRoot.querySelectorAll('.sfdl-compare-results__checkbox')
-];
 const filterButton = (element, value) =>
     element.shadowRoot.querySelector(`[data-filter="${value}"]`);
-const compareButton = (element) =>
-    element.shadowRoot.querySelector('.sfdl-compare-results__compare');
-const cost = (element) =>
-    element.shadowRoot.querySelector('.sfdl-compare-results__cost').textContent;
 const summary = (element) =>
     element.shadowRoot.querySelector('.sfdl-compare-results__summary');
 
@@ -359,126 +352,9 @@ describe('sfdl-compare-results', () => {
         });
     });
 
-    describe('comparing a selection', () => {
-        it('cannot compare before anything is ticked', () => {
+    describe('a new listing', () => {
+        it('starts over on every component', async () => {
             const element = createResults();
-
-            expect(compareButton(element).disabled).toBe(true);
-            expect(compareButton(element).textContent.trim()).toBe(
-                'Compare selected'
-            );
-            expect(cost(element)).toBe('');
-        });
-
-        it('compares the components ticked and says what it costs', async () => {
-            const element = createResults();
-            const handleCompare = jest.fn();
-            element.addEventListener('comparerequest', handleCompare);
-
-            check(checkboxes(element)[3], true);
-            check(checkboxes(element)[0], true);
-            await flushPromises();
-
-            expect(compareButton(element).textContent.trim()).toBe(
-                'Compare selected (2)'
-            );
-            expect(cost(element)).toBe('1 retrieve per org');
-
-            click(compareButton(element));
-            await flushPromises();
-
-            expect(handleCompare.mock.calls[0][0].detail).toEqual({
-                names: ['AccountService', 'Utils']
-            });
-            expect(checkboxes(element).some((box) => box.checked)).toBe(false);
-        });
-
-        it('counts the retrieves of a big selection', async () => {
-            const many = Array.from({ length: 25 }, (value, index) =>
-                component('Object' + index + '__c', 'notCompared')
-            );
-            const element = createResults({ components: many, batchSize: 10 });
-
-            check(
-                element.shadowRoot.querySelector(
-                    '.sfdl-compare-results__select-all'
-                ),
-                true
-            );
-            await flushPromises();
-
-            expect(cost(element)).toBe('3 retrieves per org');
-        });
-
-        it('counts the api calls of custom settings', async () => {
-            const element = createResults({ engine: 'customSettings' });
-
-            check(checkboxes(element)[0], true);
-            check(checkboxes(element)[1], true);
-            await flushPromises();
-
-            expect(cost(element)).toBe('4 api calls per org');
-        });
-
-        it('ticks every component shown, and only those', async () => {
-            const element = createResults();
-            const handleCompare = jest.fn();
-            element.addEventListener('comparerequest', handleCompare);
-            click(filterButton(element, 'left'));
-            await flushPromises();
-
-            check(
-                element.shadowRoot.querySelector(
-                    '.sfdl-compare-results__select-all'
-                ),
-                true
-            );
-            click(compareButton(element));
-
-            expect(handleCompare.mock.calls[0][0].detail.names).toEqual([
-                'InvoiceBatch'
-            ]);
-        });
-
-        it('leaves a component being compared out of the selection', async () => {
-            const element = createResults({
-                components: [
-                    component('A', 'comparing'),
-                    component('B', 'notCompared')
-                ]
-            });
-            const handleCompare = jest.fn();
-            element.addEventListener('comparerequest', handleCompare);
-
-            expect(checkboxes(element)[0].disabled).toBe(true);
-
-            check(
-                element.shadowRoot.querySelector(
-                    '.sfdl-compare-results__select-all'
-                ),
-                true
-            );
-            click(compareButton(element));
-
-            expect(handleCompare.mock.calls[0][0].detail.names).toEqual(['B']);
-        });
-
-        it('keeps the selection when a component of the same listing is compared', async () => {
-            const element = createResults();
-            check(checkboxes(element)[3], true);
-            await flushPromises();
-
-            element.components = COMPONENTS.map((item) =>
-                item.name === 'InvoiceBatch' ? { ...item, files: [] } : item
-            );
-            await flushPromises();
-
-            expect(checkboxes(element)[3].checked).toBe(true);
-        });
-
-        it('starts over with a new listing', async () => {
-            const element = createResults();
-            check(checkboxes(element)[3], true);
             click(filterButton(element, 'left'));
             await flushPromises();
 
@@ -488,7 +364,32 @@ describe('sfdl-compare-results', () => {
             expect(
                 filterButton(element, 'all').getAttribute('aria-pressed')
             ).toBe('true');
-            expect(compareButton(element).disabled).toBe(true);
         });
+
+        it('keeps the filter when a component of the same listing is compared', async () => {
+            const element = createResults();
+            click(filterButton(element, 'left'));
+            await flushPromises();
+
+            element.components = COMPONENTS.map((item) =>
+                item.name === 'InvoiceBatch' ? { ...item, files: [] } : item
+            );
+            await flushPromises();
+
+            expect(
+                filterButton(element, 'left').getAttribute('aria-pressed')
+            ).toBe('true');
+        });
+    });
+
+    it('offers no way to compare several components at once', () => {
+        const element = createResults();
+
+        expect(
+            element.shadowRoot.querySelector('input[type="checkbox"]')
+        ).toBeNull();
+        expect(
+            element.shadowRoot.querySelector('.sfdl-compare-results__compare')
+        ).toBeNull();
     });
 });

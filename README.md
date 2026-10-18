@@ -83,10 +83,8 @@ Nothing is retrieved until you ask for it, so a big org is never retrieved whole
    `describeGlobal` for custom settings). Every component reads **In both**, **Only
    left** or **Only right**, and its tooltip says when and by whom each org last
    changed it. Components of managed packages are left out.
-2. Clicking a component retrieves that one component from both orgs and opens its first
-   difference. Ticking several and pressing **Compare selected** retrieves them
-   together; the button says what it costs each org, in retrieves of up to 100
-   components, 10 for objects, or in api calls for custom settings.
+2. Clicking a component retrieves that one component from both orgs, or from the one
+   org that holds it, and opens its first difference.
 3. A compared component reads **Different** or **Identical** and lists its files.
    Objects are split the way sfdx splits them, so `Account` lists
    `fields/Tier__c.field` and each validation rule, record type and list view on its
@@ -153,8 +151,8 @@ the LWC jest transformer does not ship with.
    - Debug Logs, Compare two orgs: each side lists the logs of its own org, the org of
      one side is not offered on the other, the timestamp and id filters make two runs
      of the same transaction differ only where they really do
-   - Compare Metadata: picking a type only lists names; opening a component compares
-     it and **Compare selected** compares the ticked ones
+   - Compare Metadata: picking a type only lists names, opening a component compares
+     it
    - Compare Metadata with Custom Objects: a changed field shows as its own file
 5. Keep the service worker console open (`chrome://extensions` → **service worker**) and
    the console page devtools open while you do it: both should stay free of errors.

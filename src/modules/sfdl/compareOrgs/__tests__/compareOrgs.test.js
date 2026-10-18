@@ -300,14 +300,6 @@ describe('sfdl-compare-orgs', () => {
             });
         });
 
-        it('hands the list what a comparison of the type costs', async () => {
-            const element = await listType('CustomObjects');
-
-            expect(results(element).engine).toBe('metadata');
-            expect(results(element).batchSize).toBe(10);
-            expect(results(element).typeLabel).toBe('Custom Objects');
-        });
-
         it('says it is listing until both orgs answered', async () => {
             listOrgComponents.mockImplementation(() => new Promise(() => {}));
 
@@ -577,80 +569,6 @@ describe('sfdl-compare-orgs', () => {
             expect(diffViewer(element).notice).toBe(
                 'classes/LegacyHelper.cls is only in globex.my.salesforce.com.'
             );
-        });
-
-        it('compares the components ticked together', async () => {
-            const element = await listType();
-
-            results(element).dispatchEvent(
-                new CustomEvent('comparerequest', {
-                    detail: {
-                        names: ['AccountService', 'Utils', 'InvoiceBatch']
-                    }
-                })
-            );
-            await wait();
-            await wait();
-
-            expect(compareComponents).toHaveBeenCalledTimes(1);
-            expect(
-                compareComponents.mock.calls[0][4].map(
-                    ({ name, presence }) => ({
-                        name,
-                        presence
-                    })
-                )
-            ).toEqual([
-                { name: 'AccountService', presence: 'both' },
-                { name: 'InvoiceBatch', presence: 'left' },
-                { name: 'Utils', presence: 'both' }
-            ]);
-            expect(statuses(element)).toEqual([
-                'AccountService different',
-                'InvoiceBatch left',
-                'LegacyHelper right',
-                'Utils identical'
-            ]);
-            expect(
-                results(element).components[0].files.map(
-                    ({ path, status }) => path + ' ' + status
-                )
-            ).toEqual([
-                'classes/AccountService.cls different',
-                'classes/AccountService.cls-meta.xml identical'
-            ]);
-        });
-
-        it('opens the first difference of a selection compared with nothing on screen', async () => {
-            const element = await listType();
-
-            results(element).dispatchEvent(
-                new CustomEvent('comparerequest', {
-                    detail: { names: ['Utils', 'AccountService'] }
-                })
-            );
-            await wait();
-            await wait();
-
-            expect(results(element).selectedName).toBe('AccountService');
-            expect(diffViewer(element).leftContent).toBe(
-                'public class AccountService { left }'
-            );
-        });
-
-        it('leaves the component on screen when a selection is compared', async () => {
-            const element = await listType();
-            await openComponent(element, 'Utils');
-
-            results(element).dispatchEvent(
-                new CustomEvent('comparerequest', {
-                    detail: { names: ['AccountService'] }
-                })
-            );
-            await wait();
-            await wait();
-
-            expect(results(element).selectedName).toBe('Utils');
         });
 
         it('runs one comparison at a time', async () => {

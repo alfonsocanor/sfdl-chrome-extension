@@ -25,23 +25,6 @@
                 value={searchText}
                 oninput={handleSearch}/>
         </div>
-        <div class="sfdl-compare-results__actions">
-            <input
-                type="checkbox"
-                class="sfdl-compare-results__select-all"
-                title={selectAllTitle}
-                checked={areAllShownSelected}
-                disabled={isSelectAllDisabled}
-                onchange={handleSelectAll}/>
-            <button
-                class="slds-button slds-button_brand sfdl-compare-results__compare"
-                disabled={isCompareDisabled}
-                title={compareTitle}
-                onclick={handleCompareSelected}>
-                {compareLabel}
-            </button>
-            <span class="sfdl-compare-results__cost">{costHint}</span>
-        </div>
         <template if:true={emptyListMessage}>
             <p class="sfdl-compare-results__empty">{emptyListMessage}</p>
         </template>
@@ -49,14 +32,6 @@
             <template for:each={visibleRows} for:item="row">
                 <li key={row.name} class="sfdl-compare-results__item">
                     <div class={row.rowClass}>
-                        <input
-                            type="checkbox"
-                            class="sfdl-compare-results__checkbox"
-                            data-name={row.name}
-                            checked={row.isChecked}
-                            disabled={row.isComparing}
-                            title="Select this component to compare it with the others"
-                            onchange={handleCheck}/>
                         <button
                             class="sfdl-compare-results__open"
                             data-name={row.name}

@@ -67,36 +67,7 @@ export const css = `
         gap: 2px;
     }
 
-    .sfdl-compare-results__actions {
-        display: flex;
-        align-items: center;
-        gap: 6px;
-        padding-left: 7px;
-    }
-
-    .sfdl-compare-results__actions input,
-    .sfdl-compare-results__checkbox {
-        flex: 0 0 auto;
-        width: 14px;
-        height: 14px;
-        margin: 0;
-        cursor: pointer;
-    }
-
-    .sfdl-compare-results .sfdl-compare-results__compare {
-        min-height: 0;
-        padding: 0 10px;
-        font-size: 12px;
-        line-height: 24px;
-    }
-
-    .sfdl-compare-results__cost {
-        min-width: 0;
-        color: #747474;
-        font-size: 11px;
-    }
-
-    /* The look of the log rows: a checkbox, then what the row opens. */
+    /* The look of the log rows. */
     .sfdl-compare-results .sfdl-compare-results__row {
         display: flex;
         align-items: center;
