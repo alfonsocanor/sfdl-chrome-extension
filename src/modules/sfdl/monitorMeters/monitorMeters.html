@@ -1,0 +1,67 @@
+<template>
+    <!-- A monitor drawn as meters, one per item: its label, how much of its
+         maximum is used and a bar for it. The items with nothing used stay
+         out of the way until asked for. -->
+    <section class="sfdl-monitor-meters" aria-busy={ariaBusy}>
+        <div class="sfdl-monitor-meters__header">
+            <p class="sfdl-monitor-meters__summary" title={description}>{summaryLine}</p>
+            <template if:true={isLoaded}>
+                <span class={severityClass}>
+                    <span class="sfdl-monitor-meters__severity-dot" aria-hidden="true"></span>
+                    {severityLabel}
+                </span>
+            </template>
+        </div>
+        <template if:true={isLoading}>
+                <sfdl-loading-stencil type="monitorMeters" rows="8" label={loadingLabel}></sfdl-loading-stencil>
+            </template>
+            <template if:true={isError}>
+                <p class="sfdl-monitor-meters__error">{error}</p>
+            </template>
+            <template if:true={isLoaded}>
+                <!-- A word or two finds a meter by its name, its API name or what
+                     else it goes by, a letter or two off is fine. -->
+                <template if:true={hasItems}>
+                    <div class="slds-form-element sfdl-monitor-meters__search">
+                        <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left-right">
+                            <span class="slds-icon_container slds-input__icon slds-input__icon_left">
+                                <img class="sfdl-monitor-meters__search-icon" src={searchIcon} alt=""/>
+                            </span>
+                            <input
+                                type="search"
+                                class="slds-input sfdl-monitor-meters__search-input"
+                                placeholder={searchPlaceholder}
+                                aria-label={searchPlaceholder}
+                                value={query}
+                                oninput={handleQueryInput}
+                                onkeydown={handleQueryKeyDown}/>
+                            <template if:true={query}>
+                                <button type="button" class="slds-button slds-button_icon slds-input__icon slds-input__icon_right sfdl-monitor-meters__search-clear" title="Clear the filter" onclick={handleQueryClear}>
+                                    <img src={clearIcon} alt="clear the filter"/>
+                                </button>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+                <template if:true={hasMeters}>
+                    <ul class="sfdl-monitor-meters__list">
+                        <template for:each={meters} for:item="meter">
+                            <li key={meter.id} class={meter.className} title={meter.title}>
+                                <span class="sfdl-monitor-meters__name slds-truncate">{meter.label}</span>
+                                <span class="sfdl-monitor-meters__figure">{meter.figure}</span>
+                                <span class="sfdl-monitor-meters__track">
+                                    <span class={meter.fillClass} style={meter.fillStyle}></span>
+                                </span>
+                            </li>
+                        </template>
+                    </ul>
+                </template>
+                <template if:false={hasMeters}>
+                    <p class="sfdl-monitor-meters__empty">{noMeterMessage}</p>
+                </template>
+                <template if:true={showsUnusedToggle}>
+                    <button type="button" class="sfdl-monitor-meters__unused-toggle" onclick={handleUnusedToggle}>{unusedToggleLabel}</button>
+                </template>
+            </template>
+    </section>
+</template>

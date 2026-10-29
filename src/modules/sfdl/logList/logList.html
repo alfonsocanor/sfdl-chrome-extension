@@ -28,6 +28,23 @@
             ondownloadprocesscompleted={handleDownloadProcessCompleted}>
         </sfdl-download-logs>
     </template>
+    <!-- Deleting, the rows stay until the org has answered for them. -->
+    <template if:true={isDeleting}>
+        <div class="slds-grid slds-wrap">
+            <div style="color:rgb(127 127 127);" class="slds-col slds-size_7-of-8">
+                Deleting...
+            </div>
+        </div>
+        <div class="slds-grid slds-wrap">
+            <div class="slds-col slds-size_1-of-1 sfdl-process-bar" style="margin-bottom: 8px;">
+                <sfdl-process-bar
+                    class="sfdl-delete-process-bar"
+                    total={totalLogsToDelete}
+                    placeholder="Deleting logs...">
+                </sfdl-process-bar>
+            </div>
+        </div>
+    </template>
     <!-- Loading, the outline of the rows to come stands in their place. -->
     <template if:true={isLoading}>
         <sfdl-loading-stencil type="logList" label="Loading the logs"></sfdl-loading-stencil>
@@ -37,12 +54,17 @@
         <p class="sfdl-log-list__message">{emptyMessage}</p>
     </template>
     <template if:true={thereAreLogsToDisplay}>
-        <template if:false={isDownloading}>
+        <template if:false={isBusy}>
             <div class="sfdl-log-list-actions slds-size_1-of-1 slds-m-bottom_small" style="text-align:left;">
                 <input type="checkbox" class="selectAllLogsCheckbox sfdl-log-checkbox" checked={areAllLogsSelected} onchange={handleSelectAllLogs} title={selectAllTitle}/>
-                <button class="downloadLogsButton" onclick={handleDownloadLogs} title={downloadButtonTitle}>
-                    <img class="sfdl-download-action-icon" src={downloadIcon} alt=""/>
-                    <span class="sfdl-download-label">{downloadLabel}</span>
+                <button class="downloadLogsButton sfdl-log-list-action" onclick={handleDownloadLogs} title={downloadButtonTitle}>
+                    <img class="sfdl-download-action-icon sfdl-log-list-action__icon" src={downloadIcon} alt=""/>
+                    <span class="sfdl-download-label sfdl-log-list-action__label">{downloadLabel}</span>
+                </button>
+                <!-- Deleting is for keeps, so unlike the trash of a row this one asks first. -->
+                <button class="deleteLogsButton sfdl-log-list-action" onclick={handleDeleteLogs} title={deleteButtonTitle}>
+                    <img class="sfdl-log-list-action__icon" src={deleteIcon} alt=""/>
+                    <span class="sfdl-delete-label sfdl-log-list-action__label">{deleteLabel}</span>
                 </button>
                 <template if:true={thereAreSelectedLogs}>
                     <button class="clearSelectionButton sfdl-clear-selection" onclick={handleClearSelection} title="Unselect every log">unselect</button>
@@ -79,6 +101,13 @@
                             onclick={handleDownloadSingleLog}
                             title="Download this log">
                             <img src={downloadIcon} alt="download this log"/>
+                        </button>
+                        <button
+                            class="deleteSingleLogButton slds-button slds-button_icon"
+                            data-logid={log.id}
+                            onclick={handleDeleteSingleLog}
+                            title="Delete this log">
+                            <img src={deleteIcon} alt="delete this log"/>
                         </button>
                     </div>
                 </li>

@@ -11,6 +11,17 @@ export const css = `
         min-width: 0;
     }
 
+    /* The buttons keep their width, and the filter is a box of its own so
+       its width can be drawn, see the switch of the modes in consoleCss. */
+    .sfdl-picklist .actionButtons,
+    .sfdl-picklist sfdl-log-query-filter {
+        flex: 0 0 auto;
+    }
+
+    .sfdl-picklist sfdl-log-query-filter {
+        display: block;
+    }
+
     /* The look of the org pickers of the compare tabs, the blue of the left
        side and a line thicker than a plain field. */
     .sfdl-picklist .slds-combobox__input,

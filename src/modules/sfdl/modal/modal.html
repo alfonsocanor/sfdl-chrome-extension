@@ -1,0 +1,31 @@
+<template>
+    <section
+        role="dialog"
+        tabindex="-1"
+        aria-modal="true"
+        aria-labelledby="sfdl-modal-title"
+        aria-describedby="sfdl-modal-message"
+        class="slds-modal slds-fade-in-open slds-modal_small sfdl-modal"
+        onkeydown={handleKeyDown}>
+        <div class="slds-modal__container">
+            <div class="slds-modal__header">
+                <h1 id="sfdl-modal-title" class="slds-modal__title slds-hyphenate">{title}</h1>
+            </div>
+            <div class="slds-modal__content slds-p-around_medium sfdl-modal__content" id="sfdl-modal-message">
+                <template if:true={icon}>
+                    <span class={iconClass}>
+                        <img src={icon} alt=""/>
+                    </span>
+                </template>
+                <p class="sfdl-modal__message">{message}</p>
+            </div>
+            <div class="slds-modal__footer">
+                <template if:true={hasCancel}>
+                    <button class="slds-button slds-button_neutral sfdl-modal__cancel" onclick={handleCancel}>{cancelLabel}</button>
+                </template>
+                <button class={confirmClass} onclick={handleConfirm}>{confirmLabel}</button>
+            </div>
+        </div>
+    </section>
+    <div class="slds-backdrop slds-backdrop_open" onclick={handleCancel}></div>
+</template>

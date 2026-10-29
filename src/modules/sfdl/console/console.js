@@ -5,12 +5,15 @@ import { css } from './consoleCss';
 
 const DEBUG_LOGS_TAB = 'debugLogs';
 const COMPARE_METADATA_TAB = 'compareMetadata';
+const MONITORING_TAB = 'monitoring';
 const ANALYSE_MODE = 'analyse';
 const COMPARE_MODE = 'compare';
 const SAME_ORG_SCOPE = 'sameOrg';
 const TWO_ORGS_SCOPE = 'twoOrgs';
 //The slide of the right panel in consoleCss, and a little more.
 const RIGHT_PANEL_SLIDE_MILLISECONDS = 400;
+//The growing and shrinking of the org pickers in consoleCss, and a little more.
+const MODE_SWITCH_MILLISECONDS = 350;
 
 function prefersReducedMotion(){
     return typeof window.matchMedia === 'function' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -37,7 +40,11 @@ export default class Console extends LightningElement {
     //the other way.
     isTwoOrgsEntering = false;
     isTwoOrgsLeaving = false;
+    //Analyse or the comparison just came on screen, its org picker is
+    //growing or shrinking to its width.
+    isModeEntering = false;
     compareMetadataRendered = false;
+    monitoringRendered = false;
     bodyHeight = 0;
     logsBodyHeight = 0;
     logsToolbarHeight = 0;
@@ -175,11 +182,31 @@ export default class Console extends LightningElement {
             left: { log: left, sessionInformation: this.sessionInformation },
             right: { log: right, sessionInformation: this.sessionInformation }
         };
-        this.logsMode = COMPARE_MODE;
+        this.switchMode(COMPARE_MODE);
         this.stopScopeSlide();
         this.compareScope = SAME_ORG_SCOPE;
         this.shownScope = SAME_ORG_SCOPE;
         this.compareSameOrgRendered = true;
+    }
+
+    //Analyse and the comparison each have an org picker of their own, the one
+    //of Analyse with two buttons beside it. Coming on screen, the view is
+    //marked for a moment so its picker grows or shrinks to its width instead
+    //of jumping, see consoleCss.
+    switchMode(mode){
+        if(mode === this.logsMode){
+            return;
+        }
+
+        this.logsMode = mode;
+        clearTimeout(this.modeSwitchTimeout);
+        this.isModeEntering = !prefersReducedMotion();
+
+        if(this.isModeEntering){
+            this.modeSwitchTimeout = setTimeout(() => {
+                this.isModeEntering = false;
+            }, MODE_SWITCH_MILLISECONDS);
+        }
     }
 
     get debugLogsTabClass(){
@@ -198,8 +225,22 @@ export default class Console extends LightningElement {
         return this.tabContentClass(COMPARE_METADATA_TAB, 'sfdl-compare-metadata');
     }
 
+    get monitoringTabClass(){
+        return this.tabClass(MONITORING_TAB, 'liElementMonitoring');
+    }
+
+    get monitoringContentClass(){
+        return this.tabContentClass(MONITORING_TAB, 'sfdl-monitoring-tab');
+    }
+
     get isAnalyseMode(){
         return this.logsMode === ANALYSE_MODE;
+    }
+
+    //The pane of the log shows its filters and the name of the log once the
+    //log list has an org, and asks for one until then.
+    get isOrgPicked(){
+        return Boolean(this.sessionInformation && this.sessionInformation.instanceUrl);
     }
 
     get analyseButtonClass(){
@@ -219,7 +260,13 @@ export default class Console extends LightningElement {
     }
 
     get analyseViewClass(){
-        return 'sfdl-debug-logs__analyse' + (this.isAnalyseMode ? '' : ' slds-hide');
+        return 'sfdl-debug-logs__analyse' +
+            (this.isAnalyseMode ? '' : ' slds-hide') +
+            (this.isAnalyseMode && this.isModeEntering ? ' sfdl-debug-logs__analyse_entering' : '');
+    }
+
+    get compareEnteringClass(){
+        return !this.isAnalyseMode && this.isModeEntering ? ' sfdl-debug-logs__compare_entering' : '';
     }
 
     get isSameOrgScope(){
@@ -247,12 +294,15 @@ export default class Console extends LightningElement {
     }
 
     get compareSameOrgViewClass(){
-        return 'sfdl-debug-logs__same-org' + (!this.isAnalyseMode && this.isSameOrgShown ? '' : ' slds-hide');
+        return 'sfdl-debug-logs__same-org' +
+            (!this.isAnalyseMode && this.isSameOrgShown ? '' : ' slds-hide') +
+            this.compareEnteringClass;
     }
 
     get compareTwoOrgsViewClass(){
         return 'sfdl-debug-logs__two-orgs' +
             (!this.isAnalyseMode && !this.isSameOrgShown ? '' : ' slds-hide') +
+            this.compareEnteringClass +
             (this.isTwoOrgsEntering ? ' sfdl-debug-logs__two-orgs_entering' : '') +
             (this.isTwoOrgsLeaving ? ' sfdl-debug-logs__two-orgs_leaving' : '');
     }
@@ -270,7 +320,7 @@ export default class Console extends LightningElement {
     //Analyse and the comparisons share the tab and each keeps its state while
     //another one is on screen.
     handleLogsModeChange(event){
-        this.logsMode = event.currentTarget.dataset.mode;
+        this.switchMode(event.currentTarget.dataset.mode);
         this.renderCompareScope();
     }
 
@@ -337,8 +387,12 @@ export default class Console extends LightningElement {
     handleTabNavigation(event){
         const tabName = event.currentTarget.dataset.tabname;
 
+        //Each tab is built the first time it is opened and kept from then on.
         if(tabName === COMPARE_METADATA_TAB){
             this.compareMetadataRendered = true;
+        }
+        if(tabName === MONITORING_TAB){
+            this.monitoringRendered = true;
         }
 
         this.activeTab = tabName;

@@ -105,7 +105,7 @@ describe('sfdl-console', () => {
                         '.slds-tabs_scoped__link'
                     )
                 ].map((link) => link.dataset.tabname)
-            ).toEqual(['debugLogs', 'compareMetadata']);
+            ).toEqual(['debugLogs', 'compareMetadata', 'monitoring']);
             expect(
                 element.shadowRoot.querySelector('sfdl-footer')
             ).not.toBeNull();
@@ -203,6 +203,17 @@ describe('sfdl-console', () => {
                 'https://acme.my.salesforce.com'
             );
         });
+
+        it('tells the log details whether an org is picked, so they ask for one until then', async () => {
+            const element = await createConsole();
+
+            expect(picklist(element).placeholder).toBe('Pick the org');
+            expect(logDetails(element).orgPicked).toBe(false);
+
+            await selectOrg(element);
+
+            expect(logDetails(element).orgPicked).toBe(true);
+        });
     });
 
     describe('tab navigation', () => {
@@ -295,6 +306,34 @@ describe('sfdl-console', () => {
             expect(isShown(element, 'sfdl-debug-logs__two-orgs')).toBe(false);
             expect(scopeButton('twoOrgs')).toBeNull();
             expect(logDetails(element)).not.toBeNull();
+        });
+
+        it('marks the view coming on screen for a moment, so its org picker grows or shrinks to its width', async () => {
+            const element = await createConsole();
+            const analyse = () => tabContent(element, 'sfdl-debug-logs__analyse').classList;
+            const sameOrg = () => tabContent(element, 'sfdl-debug-logs__same-org').classList;
+
+            expect(analyse()).not.toContain('sfdl-debug-logs__analyse_entering');
+
+            click(modeButton(element, 'compare'));
+            await wait();
+
+            expect(sameOrg()).toContain('sfdl-debug-logs__compare_entering');
+            await wait(400);
+            expect(sameOrg()).not.toContain('sfdl-debug-logs__compare_entering');
+
+            click(modeButton(element, 'analyse'));
+            await wait();
+
+            expect(analyse()).toContain('sfdl-debug-logs__analyse_entering');
+            expect(sameOrg()).not.toContain('sfdl-debug-logs__compare_entering');
+            await wait(400);
+            expect(analyse()).not.toContain('sfdl-debug-logs__analyse_entering');
+
+            //The mode already on gets no new mark.
+            click(modeButton(element, 'analyse'));
+            await wait();
+            expect(analyse()).not.toContain('sfdl-debug-logs__analyse_entering');
         });
 
         it('slides the right panel in only when going from the same org to two orgs', async () => {
@@ -550,4 +589,33 @@ describe('sfdl-console', () => {
             expect(logList(element)).not.toBeNull();
         });
     });
+
+    describe('monitoring tab', () => {
+        it('builds the Monitoring tab the first time it is opened and keeps it after', async () => {
+            mockOrgSessions();
+            const element = await createConsole();
+            expect(element.shadowRoot.querySelector('sfdl-monitoring')).toBeNull();
+
+            click(tab(element, 'monitoring'));
+            await wait();
+
+            const monitoring = element.shadowRoot.querySelector('sfdl-monitoring');
+            expect(monitoring).not.toBeNull();
+            expect(monitoring.orgs).toEqual([
+                { label: 'https://acme.my.salesforce.com', value: 'sid-acme' }
+            ]);
+            expect(
+                element.shadowRoot.querySelector('.sfdl-monitoring-tab').classList
+            ).toContain('slds-show');
+
+            click(tab(element, 'debugLogs'));
+            await wait();
+
+            expect(element.shadowRoot.querySelector('sfdl-monitoring')).not.toBeNull();
+            expect(
+                element.shadowRoot.querySelector('.sfdl-monitoring-tab').classList
+            ).toContain('slds-hide');
+        });
+    });
 });
+

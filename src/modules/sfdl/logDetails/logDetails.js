@@ -1,10 +1,15 @@
 import { LightningElement,api } from 'lwc';
 import { manipulationDetailLogs } from 'sfdl/logDetailsManipulation';
 import { monacoThemes, tokenizerRoot } from 'util/monacoThemes';
+import { adoptStyleSheet } from 'sfdl/styleSheets';
+import { css } from './logDetailsCss';
 import * as monaco from 'monaco-editor';
 
 export default class LogDetails extends LightningElement{
     @api isAnaliseLogs = false;
+    //Whether the log list has an org. Until it has, the filters and the name
+    //of the log stay away and the pane asks for one.
+    @api orgPicked = false;
 
     logName = '';
     logDetails; 
@@ -19,6 +24,7 @@ export default class LogDetails extends LightningElement{
     monacoEditorHeight = 'height: 0px';
 
     connectedCallback(){
+        adoptStyleSheet(css);
         this.setMonacoNewLanguage('apexlog')
         this.setMonarchTokensProvider(tokenizerRoot);
         this.defineMonacoTheme('customDawn');
@@ -95,7 +101,8 @@ export default class LogDetails extends LightningElement{
     }
 
     getManipulationOptions(){
-        return this.template.querySelector('sfdl-log-manipulation-menu').currentManipulationOptions();
+        const menu = this.template.querySelector('sfdl-log-manipulation-menu');
+        return menu ? menu.currentManipulationOptions() : [];
     }
 
     @api

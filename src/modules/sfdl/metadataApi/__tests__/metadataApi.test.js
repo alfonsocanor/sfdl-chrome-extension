@@ -5,7 +5,11 @@ import {
     retrieve,
     checkRetrieveStatus,
     unzipFiles,
-    retrieveFiles
+    retrieveFiles,
+    readMetadata,
+    updateMetadata,
+    childElements,
+    childText
 } from 'sfdl/metadataApi';
 
 const ACME = {
@@ -434,6 +438,50 @@ describe('metadataApi', () => {
             await expect(retrieving).rejects.toMatchObject({
                 name: 'AbortError'
             });
+        });
+    });
+});
+
+describe('metadataApi reading and saving one component', () => {
+    it('readMetadata asks for the components by name and hands their records', async () => {
+        global.fetch = jest.fn(() => Promise.resolve(soapResponse(
+            '<readMetadataResponse><result><records xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:type="RealTimeEventSettings">' +
+            '<fullName>RealTimeEvent</fullName>' +
+            '<realTimeEvents><entityName>LoginEventStream</entityName><isEnabled>false</isEnabled></realTimeEvents>' +
+            '</records></result></readMetadataResponse>'
+        )));
+
+        const [record] = await readMetadata(ACME, '60.0', 'RealTimeEventSettings', ['RealTimeEvent']);
+
+        const body = fetch.mock.calls[0][1].body;
+        expect(fetch.mock.calls[0][0]).toBe('https://acme.my.salesforce.com/services/Soap/m/60.0');
+        expect(body).toContain('<met:readMetadata><met:type>RealTimeEventSettings</met:type><met:fullNames>RealTimeEvent</met:fullNames></met:readMetadata>');
+        expect(childText(record, 'fullName')).toBe('RealTimeEvent');
+        expect(childElements(record, 'realTimeEvents').map((setting) => childText(setting, 'entityName'))).toEqual(['LoginEventStream']);
+    });
+
+    it('updateMetadata sends the component with its type and goes through when saved', async () => {
+        global.fetch = jest.fn(() => Promise.resolve(soapResponse(
+            '<updateMetadataResponse><result><fullName>RealTimeEvent</fullName><success>true</success></result></updateMetadataResponse>'
+        )));
+
+        await updateMetadata(ACME, '60.0', 'RealTimeEventSettings', '<met:fullName>RealTimeEvent</met:fullName>');
+
+        expect(fetch.mock.calls[0][1].body).toContain(
+            '<met:updateMetadata><met:metadata xsi:type="met:RealTimeEventSettings" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"><met:fullName>RealTimeEvent</met:fullName></met:metadata></met:updateMetadata>'
+        );
+    });
+
+    it('updateMetadata throws what the api said when it did not save', async () => {
+        global.fetch = jest.fn(() => Promise.resolve(soapResponse(
+            '<updateMetadataResponse><result><fullName>RealTimeEvent</fullName><success>false</success>' +
+            '<errors><message>You do not have the license</message><statusCode>FIELD_INTEGRITY_EXCEPTION</statusCode></errors>' +
+            '</result></updateMetadataResponse>'
+        )));
+
+        await expect(updateMetadata(ACME, '60.0', 'RealTimeEventSettings', '')).rejects.toMatchObject({
+            message: 'You do not have the license',
+            errorCode: 'FIELD_INTEGRITY_EXCEPTION'
         });
     });
 });

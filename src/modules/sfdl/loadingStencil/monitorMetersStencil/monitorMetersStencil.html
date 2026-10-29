@@ -1,0 +1,13 @@
+<template>
+    <!-- sfdl-monitor-meters, meter for meter: a name, a bar and a figure. -->
+    <div class="sfdl-stencil sfdl-stencil-monitor-meters" role="status" aria-busy="true" aria-label={label}>
+        <ul class="sfdl-stencil-monitor-meters__list" aria-hidden="true">
+            <template for:each={rowList} for:item="row">
+                <li key={row.key} class="sfdl-stencil-monitor-meters__row">
+                    <span class="sfdl-shimmer sfdl-stencil-monitor-meters__name" style={row.nameStyle}></span>
+                    <span class="sfdl-shimmer sfdl-stencil-monitor-meters__bar"></span>
+                </li>
+            </template>
+        </ul>
+    </div>
+</template>

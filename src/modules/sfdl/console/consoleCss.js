@@ -20,9 +20,16 @@ export const css = `
         color: #5c5c5c;
     }
 
+    /* Hovered, a tab takes the light blue and the side borders of the open
+       one. slds pulls every tab a pixel down over the line under the strip,
+       so the open tab can join its toolbar; a hovered tab is not open and
+       keeps the line, drawn back under it as an inset shadow, which costs
+       no room the way a border would. */
     .sfdl-console-tabs .slds-tabs_scoped__link:hover {
-        background: #fafaf9;
-        border-color: transparent;
+        background: var(--sfdl-left-tint, #edf5fd);
+        border-left-color: var(--sfdl-left-border, #b9d6f2);
+        border-right-color: var(--sfdl-left-border, #b9d6f2);
+        box-shadow: inset 0 -1px 0 #dddbda;
         color: var(--sfdl-text, #16325c);
     }
 
@@ -31,6 +38,7 @@ export const css = `
         background: var(--sfdl-left-tint, #edf5fd);
         border-left-color: var(--sfdl-left-border, #b9d6f2);
         border-right-color: var(--sfdl-left-border, #b9d6f2);
+        box-shadow: none;
         color: var(--sfdl-text, #16325c);
     }
 
@@ -81,9 +89,52 @@ export const css = `
         }
     }
 
+    /* Analyse and the comparison each have an org picker of their own, in
+       panels of the same width, the one of Analyse with two buttons beside
+       it. Switching, the picker would jump between the two widths. Instead,
+       as Analyse comes, its buttons grow in from nothing and the picker
+       shrinks with them; as the comparison comes, its picker starts at the
+       width of the one of Analyse, the room of the two buttons and their
+       gaps short, and grows to its own. */
+    .sfdl-debug-logs__analyse_entering .sfdl-picklist .actionButtons,
+    .sfdl-debug-logs__analyse_entering .sfdl-picklist sfdl-log-query-filter {
+        overflow: hidden;
+        animation: sfdl-picker-button-in 0.3s ease-out;
+    }
+
+    @keyframes sfdl-picker-button-in {
+        from {
+            width: 0;
+            margin-left: -6px;
+            opacity: 0;
+        }
+        to {
+            width: 22px;
+            margin-left: 0;
+            opacity: 1;
+        }
+    }
+
+    .sfdl-debug-logs__compare_entering .sfdl-compare-logs__list-panel .sfdl-compare-logs__org-picker,
+    .sfdl-debug-logs__compare_entering .sfdl-compare-logs__left-panel .sfdl-compare-logs__org-picker {
+        animation: sfdl-picker-grow 0.3s ease-out;
+    }
+
+    @keyframes sfdl-picker-grow {
+        from {
+            width: calc(100% - 56px);
+        }
+        to {
+            width: 100%;
+        }
+    }
+
     @media (prefers-reduced-motion: reduce) {
         .sfdl-debug-logs__two-orgs_entering .sfdl-compare-logs__right-panel,
-        .sfdl-debug-logs__two-orgs_leaving .sfdl-compare-logs__right-panel {
+        .sfdl-debug-logs__two-orgs_leaving .sfdl-compare-logs__right-panel,
+        .sfdl-debug-logs__analyse_entering .sfdl-picklist .actionButtons,
+        .sfdl-debug-logs__analyse_entering .sfdl-picklist sfdl-log-query-filter,
+        .sfdl-debug-logs__compare_entering .sfdl-compare-logs__org-picker {
             animation: none;
         }
     }

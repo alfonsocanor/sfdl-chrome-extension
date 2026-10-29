@@ -1,14 +1,21 @@
 <template>
-  <div class="slds-grid slds-panel__header" style="padding-top:14px;">
-    <sfdl-log-manipulation-menu
-      oncheckboxselection={handleManipulationOptions}>
-    </sfdl-log-manipulation-menu>
-    <div class="slds-col slds-grid slds-size_1-of-1">
-      <div class="slds-col slds-size_1-of-1">
-        <span class="slds-m-left_x-small">{logName}</span>
+  <!-- Until the log list has an org there is no log to filter or to name:
+       the pane asks for the org and shows nothing else. -->
+  <template if:false={orgPicked}>
+    <p class="sfdl-log-details__message">Pick the org of the logs.</p>
+  </template>
+  <template if:true={orgPicked}>
+    <div class="slds-grid slds-panel__header" style="padding-top:14px;">
+      <sfdl-log-manipulation-menu
+        oncheckboxselection={handleManipulationOptions}>
+      </sfdl-log-manipulation-menu>
+      <div class="slds-col slds-grid slds-size_1-of-1">
+        <div class="slds-col slds-size_1-of-1">
+          <span class="slds-m-left_x-small">{logName}</span>
+        </div>
       </div>
     </div>
-  </div>
+  </template>
   <template if:false={isProcessing}>
     <template if:true={showMonacoEditor}>
         <!--Workaround: 99% allows automaticLayout property to rerender correctly the layout in transition from section hidden toggle. 

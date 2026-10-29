@@ -1,11 +1,19 @@
 import { createElement } from 'lwc';
 import LogList from 'sfdl/logList';
-import { showToastEvent } from 'sfdl/utils';
+import { showToastEvent, confirmDialog, alertDialog } from 'sfdl/utils';
+import { deleteRecords, SalesforceError } from 'sfdl/salesforceConnection';
 
 jest.mock('sfdl/utils', () => ({
     showToastEvent: jest.fn(),
-    setKeyValueLocalStorage: jest.fn()
+    setKeyValueLocalStorage: jest.fn(),
+    confirmDialog: jest.fn(() => Promise.resolve(true)),
+    alertDialog: jest.fn(() => Promise.resolve(true))
 }));
+jest.mock('sfdl/salesforceConnection', () =>
+    Object.assign({}, jest.requireActual('sfdl/salesforceConnection'), {
+        deleteRecords: jest.fn()
+    })
+);
 jest.mock('file-saver', () => ({ saveAs: jest.fn() }));
 
 const SESSION_INFORMATION = {
@@ -106,6 +114,12 @@ const logButtons = (element) =>
     element.shadowRoot.querySelectorAll('.displayLogButton');
 const rowDownloadButtons = (element) =>
     element.shadowRoot.querySelectorAll('.downloadSingleLogButton');
+const rowDeleteButtons = (element) =>
+    element.shadowRoot.querySelectorAll('.deleteSingleLogButton');
+const deleteLogsButton = (element) =>
+    element.shadowRoot.querySelector('.deleteLogsButton');
+const deleteLabel = (element) =>
+    element.shadowRoot.querySelector('.sfdl-delete-label').textContent;
 const rowCheckboxes = (element) =>
     element.shadowRoot.querySelectorAll('.selectLogCheckbox');
 const downloadAllButton = (element) =>
@@ -781,6 +795,258 @@ describe('sfdl-log-list', () => {
             await flushPromises();
 
             expect(downloadLabel(element)).toBe('Download all logs');
+        });
+    });
+
+    describe('deleting', () => {
+        function resolveDeletion(outcome) {
+            deleteRecords.mockImplementation((session, ids, options) => {
+                if (options && options.onProgress) {
+                    options.onProgress(ids.length, ids.length);
+                }
+                return Promise.resolve(
+                    outcome || { deleted: ids, failed: [] }
+                );
+            });
+        }
+
+        beforeEach(() => {
+            resolveDeletion();
+            confirmDialog.mockImplementation(() => Promise.resolve(true));
+        });
+
+        it('renders a delete button on every row and a delete all button', async () => {
+            const element = await createLogList();
+
+            expect(rowDeleteButtons(element).length).toBe(2);
+            expect(deleteLabel(element)).toBe('Delete all logs');
+        });
+
+        it('the trash of a row deletes that log at once without asking', async () => {
+            const element = await createLogList();
+
+            click(rowDeleteButtons(element)[0]);
+            await flushPromises();
+            await flushPromises();
+
+            expect(confirmDialog).not.toHaveBeenCalled();
+            expect(deleteRecords).toHaveBeenCalledWith(
+                SESSION_INFORMATION,
+                ['07L1'],
+                expect.any(Object)
+            );
+            expect(rows(element).length).toBe(1);
+            expect(logButtons(element)[0].textContent.trim()).toBe(
+                'Jane Roe | log two'
+            );
+            expect(showToastEvent).toHaveBeenCalledWith(
+                'success',
+                'Log deleted',
+                SESSION_INFORMATION.instanceUrl
+            );
+        });
+
+        it('delete all asks first and empties the list on yes', async () => {
+            const element = await createLogList();
+
+            click(deleteLogsButton(element));
+            await flushPromises();
+            await flushPromises();
+
+            expect(confirmDialog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: 'Delete all the logs listed?',
+                    confirmLabel: 'Delete 2 logs'
+                })
+            );
+            expect(deleteRecords.mock.calls[0][1]).toEqual(['07L1', '07L2']);
+            expect(rows(element).length).toBe(0);
+            expect(emptyMessage(element).textContent).toBe(
+                'There are no logs in this org'
+            );
+            expect(showToastEvent).toHaveBeenCalledWith(
+                'success',
+                '2 logs deleted',
+                SESSION_INFORMATION.instanceUrl
+            );
+        });
+
+        it('deletes nothing when the question is declined', async () => {
+            confirmDialog.mockImplementation(() => Promise.resolve(false));
+            const element = await createLogList();
+
+            click(deleteLogsButton(element));
+            await flushPromises();
+
+            expect(deleteRecords).not.toHaveBeenCalled();
+            expect(rows(element).length).toBe(2);
+        });
+
+        it('with ticked logs the button carries the count and deletes the selection', async () => {
+            const element = await createLogList();
+            check(rowCheckboxes(element)[1], true);
+            await flushPromises();
+
+            expect(deleteLabel(element)).toBe('Delete selected logs (1)');
+
+            click(deleteLogsButton(element));
+            await flushPromises();
+            await flushPromises();
+
+            expect(confirmDialog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: 'Delete the selected logs?',
+                    confirmLabel: 'Delete 1 log'
+                })
+            );
+            expect(deleteRecords.mock.calls[0][1]).toEqual(['07L2']);
+            expect(rows(element).length).toBe(1);
+        });
+
+        it('tells of the deleted logs with an event', async () => {
+            const element = await createLogList();
+            const deleted = jest.fn();
+            element.addEventListener('logsdeleted', deleted);
+
+            click(rowDeleteButtons(element)[1]);
+            await flushPromises();
+            await flushPromises();
+
+            expect(deleted.mock.calls[0][0].detail).toEqual({ ids: ['07L2'] });
+        });
+
+        it('opens the modal when the org refuses every log for want of a permission', async () => {
+            resolveDeletion({
+                deleted: [],
+                failed: [
+                    {
+                        id: '07L1',
+                        message: 'insufficient access rights',
+                        errorCode: 'INSUFFICIENT_ACCESS_OR_READONLY'
+                    }
+                ]
+            });
+            const element = await createLogList();
+
+            click(rowDeleteButtons(element)[0]);
+            await flushPromises();
+            await flushPromises();
+
+            expect(alertDialog).toHaveBeenCalledWith(
+                expect.objectContaining({
+                    title: "You can't delete logs here",
+                    message: expect.stringContaining('Modify All Data')
+                })
+            );
+            expect(rows(element).length).toBe(2);
+            expect(showToastEvent).not.toHaveBeenCalledWith(
+                'error',
+                expect.anything(),
+                expect.anything()
+            );
+        });
+
+        it('opens the modal when the call itself comes back forbidden', async () => {
+            deleteRecords.mockImplementation(() =>
+                Promise.reject(new SalesforceError('Forbidden', 403))
+            );
+            const element = await createLogList();
+
+            click(deleteLogsButton(element));
+            await flushPromises();
+            await flushPromises();
+
+            expect(alertDialog).toHaveBeenCalledTimes(1);
+            expect(rows(element).length).toBe(2);
+        });
+
+        it('keeps a log the org refused for another reason and says so in a toast', async () => {
+            resolveDeletion({
+                deleted: ['07L1'],
+                failed: [
+                    {
+                        id: '07L2',
+                        message: 'entity is locked',
+                        errorCode: 'ENTITY_IS_LOCKED'
+                    }
+                ]
+            });
+            const element = await createLogList();
+
+            click(deleteLogsButton(element));
+            await flushPromises();
+            await flushPromises();
+
+            expect(alertDialog).not.toHaveBeenCalled();
+            expect(rows(element).length).toBe(1);
+            expect(showToastEvent).toHaveBeenCalledWith(
+                'error',
+                '1 log could not be deleted',
+                'entity is locked The other 1 log went.'
+            );
+        });
+
+        it('a plain failure of the call is a toast, and the list stays', async () => {
+            deleteRecords.mockImplementation(() =>
+                Promise.reject(new SalesforceError('Server down', 500))
+            );
+            const element = await createLogList();
+
+            click(rowDeleteButtons(element)[0]);
+            await flushPromises();
+            await flushPromises();
+
+            expect(showToastEvent).toHaveBeenCalledWith(
+                'error',
+                'Could not delete the logs',
+                'Server down'
+            );
+            expect(rows(element).length).toBe(2);
+        });
+
+        it('shows the deleting bar and hides the actions while the org answers', async () => {
+            let answer;
+            deleteRecords.mockImplementation(
+                () =>
+                    new Promise((resolve) => {
+                        answer = resolve;
+                    })
+            );
+            const element = await createLogList();
+
+            click(deleteLogsButton(element));
+            await flushPromises();
+            await flushPromises();
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-delete-process-bar')
+            ).not.toBeNull();
+            expect(deleteLogsButton(element)).toBeNull();
+
+            answer({ deleted: ['07L1', '07L2'], failed: [] });
+            await flushPromises();
+            await flushPromises();
+
+            expect(
+                element.shadowRoot.querySelector('.sfdl-delete-process-bar')
+            ).toBeNull();
+        });
+
+        it('refuses a download while a deletion is on the way', async () => {
+            deleteRecords.mockImplementation(() => new Promise(() => {}));
+            const element = await createLogList();
+
+            click(rowDeleteButtons(element)[0]);
+            await flushPromises();
+            click(rowDownloadButtons(element)[1]);
+            await flushPromises();
+
+            expect(downloadLogsComponent(element)).toBeNull();
+            expect(showToastEvent).toHaveBeenCalledWith(
+                'info',
+                'sfdl',
+                'There is a deletion in progress, wait for it to finish.'
+            );
         });
     });
 });

@@ -9,6 +9,9 @@
           <li class={compareMetadataTabClass} title="Compare Metadata">
             <a class="slds-tabs_scoped__link" data-tabname="compareMetadata" onclick={handleTabNavigation}><span class="slds-text-title_caps">Compare Metadata</span></a>
           </li>
+          <li class={monitoringTabClass} title="Monitoring">
+            <a class="slds-tabs_scoped__link" data-tabname="monitoring" onclick={handleTabNavigation}><span class="slds-text-title_caps">Monitoring</span></a>
+          </li>
         </ul>
         <div class={debugLogsContentClass} style="padding:0; border-right:none;">
           <div class="sfdl-debug-logs__toolbar">
@@ -36,7 +39,7 @@
                   class="sfdl-log-list-panel__org"
                   onsessioninformation={handleSessionInformation}
                   onenablepicklistbuttons={handleActivateActionButtons}
-                  placeholder="Select your domain">
+                  placeholder="Pick the org">
                 </sfdl-picklist>
                 <template if:true={renderLogList}>
                   <sfdl-log-list
@@ -52,6 +55,7 @@
               <div class="slds-col" style="position:relative;">
                 <sfdl-log-details
                   is-analise-logs="true"
+                  org-picked={isOrgPicked}
                   onenablepicklistbuttons={handleActivateActionButtons}
                   onmanipulationoptions={handleManipulationOptions}>
                 </sfdl-log-details>
@@ -89,6 +93,15 @@
               session-information={sessionInformation}
               height={bodyHeight}>
             </sfdl-compare-orgs>
+          </div>
+        </template>
+        <template if:true={monitoringRendered}>
+          <div class={monitoringContentClass} style="padding:0; border-right:none;">
+            <sfdl-monitoring
+              orgs={orgs}
+              session-information={sessionInformation}
+              height={bodyHeight}>
+            </sfdl-monitoring>
           </div>
         </template>
       </div>

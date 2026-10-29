@@ -1,0 +1,183 @@
+<template>
+    <!-- The detail of any monitor: its items counted by whatever breakdown is
+         picked, as bars, then listed, column for column as the monitor
+         describes them. A bar clicked lists its items only. -->
+    <div class="sfdl-monitor-detail">
+        <div class="sfdl-monitor-detail__header">
+            <button type="button" class="slds-button slds-button_neutral sfdl-monitor-detail__back" onclick={handleBack}>
+                <img class="sfdl-monitor-detail__back-icon" src={backIcon} alt=""/>
+                Monitoring
+            </button>
+            <div class="sfdl-monitor-detail__titles">
+                <h2 class="sfdl-monitor-detail__title">{title}</h2>
+                <p class="sfdl-monitor-detail__summary">{summaryLine}</p>
+            </div>
+        </div>
+        <p class="sfdl-monitor-detail__description">{description}</p>
+        <template if:true={hasBreakdown}>
+            <div class="sfdl-monitor-detail__groupings" role="group" aria-label="Count the items by">
+                <template for:each={groupingOptions} for:item="grouping">
+                    <button
+                        key={grouping.key}
+                        type="button"
+                        class={grouping.className}
+                        data-key={grouping.key}
+                        aria-pressed={grouping.pressed}
+                        onclick={handleGroupingChange}>
+                        {grouping.label}
+                    </button>
+                </template>
+            </div>
+            <!-- Over days, columns on a run of days with the empty ones in,
+                 the count on the cap of each; otherwise a bar per group. -->
+            <template if:true={isTimeline}>
+                <div class="sfdl-monitor-detail__timeline">
+                    <ul class="sfdl-monitor-detail__columns">
+                        <template for:each={dayColumns} for:item="day">
+                            <li
+                                key={day.key}
+                                class={day.className}
+                                title={day.title}
+                                role="button"
+                                tabindex={day.tabIndex}
+                                data-key={day.key}
+                                aria-pressed={day.pressed}
+                                aria-disabled={day.ariaDisabled}
+                                onclick={handleGroupSelect}
+                                onkeydown={handleGroupKeyDown}>
+                                <span class="sfdl-monitor-detail__column-count">{day.countLabel}</span>
+                                <span class="sfdl-monitor-detail__column-track">
+                                    <span class="sfdl-monitor-detail__column" style={day.style}></span>
+                                </span>
+                                <span class="sfdl-monitor-detail__column-label">{day.axisLabel}</span>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+            </template>
+            <template if:false={isTimeline}>
+            <ul class="sfdl-monitor-detail__bars">
+                <template for:each={groups} for:item="group">
+                    <li
+                        key={group.key}
+                        class={group.className}
+                        title={group.title}
+                        role="button"
+                        tabindex={group.tabIndex}
+                        data-key={group.key}
+                        aria-pressed={group.pressed}
+                        onclick={handleGroupSelect}
+                        onkeydown={handleGroupKeyDown}>
+                        <span class="sfdl-monitor-detail__bar-label slds-truncate">{group.label}</span>
+                        <span class="sfdl-monitor-detail__bar-track">
+                            <span class="sfdl-monitor-detail__bar" style={group.style}></span>
+                        </span>
+                        <span class="sfdl-monitor-detail__bar-count">{group.count}</span>
+                    </li>
+                </template>
+            </ul>
+            </template>
+        </template>
+        <template if:true={hasItems}>
+            <!-- What narrows the list: the words typed, the bar picked, how
+                 many rows are left, and the way to save them. -->
+            <div class="sfdl-monitor-detail__filters">
+                <div class="slds-form-element sfdl-monitor-detail__search">
+                    <div class="slds-form-element__control slds-input-has-icon slds-input-has-icon_left-right">
+                        <span class="slds-icon_container slds-input__icon slds-input__icon_left">
+                            <img class="sfdl-monitor-detail__search-icon" src={searchIcon} alt=""/>
+                        </span>
+                        <input
+                            type="search"
+                            class="slds-input sfdl-monitor-detail__search-input"
+                            placeholder="Filter the rows"
+                            aria-label="Filter the rows"
+                            value={query}
+                            oninput={handleQueryInput}
+                            onkeydown={handleQueryKeyDown}/>
+                        <template if:true={isFiltering}>
+                            <button type="button" class="slds-button slds-button_icon slds-input__icon slds-input__icon_right sfdl-monitor-detail__search-clear" title="Clear the filter" onclick={handleQueryClear}>
+                                <img src={clearIcon} alt="clear the filter"/>
+                            </button>
+                        </template>
+                    </div>
+                </div>
+                <template if:true={hasSelection}>
+                    <span class="sfdl-monitor-detail__selection">
+                        <span class="slds-truncate">{selectionLabel}</span>
+                        <button type="button" class="sfdl-monitor-detail__selection-clear" title="List every row again" onclick={handleClearSelection}>
+                            <img src={clearIcon} alt="list every row again"/>
+                        </button>
+                    </span>
+                </template>
+                <span class="sfdl-monitor-detail__row-count">{rowCountLabel}</span>
+                <button type="button" class="slds-button slds-button_neutral sfdl-monitor-detail__copy" title="Copy the rows listed, to paste into a spreadsheet" disabled={hasNoShownItems} onclick={handleCopy}>
+                    {copyLabel}
+                </button>
+                <button type="button" class="slds-button slds-button_neutral sfdl-monitor-detail__csv" title="Save the rows listed as a CSV" disabled={hasNoShownItems} onclick={handleDownloadCsv}>
+                    Download CSV
+                </button>
+            </div>
+            <template if:true={hasShownItems}>
+            <table class="slds-table slds-table_cell-buffer slds-table_bordered sfdl-monitor-detail__table">
+                <thead>
+                    <tr>
+                        <template for:each={headers} for:item="header">
+                            <th key={header.key} scope="col" class={header.className}>{header.label}</th>
+                        </template>
+                        <template if:true={hasActions}>
+                            <th scope="col" class="sfdl-monitor-detail__cell_actions"><span class="slds-assistive-text">Actions</span></th>
+                        </template>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template for:each={rows} for:item="row">
+                        <tr key={row.id} class={row.className}>
+                            <template for:each={row.cells} for:item="cell">
+                                <td key={cell.key} class={cell.className} title={cell.title}>
+                                    <template if:true={cell.isMeter}>
+                                        <span class="sfdl-monitor-detail__meter">
+                                            <span class={cell.meterClass} style={cell.meterStyle}></span>
+                                        </span>
+                                    </template>
+                                    <span class="sfdl-monitor-detail__cell-text">{cell.text}</span>
+                                    <!-- A long message is cut short, a more at its foot shows
+                                         the whole of it, wrapped, and a less folds it again. -->
+                                    <template if:true={cell.isLong}>
+                                        <button type="button" class="sfdl-monitor-detail__more" data-cell={cell.id} onclick={handleToggleCell}>{cell.toggleLabel}</button>
+                                    </template>
+                                </td>
+                            </template>
+                            <template if:true={hasActions}>
+                                <td class="sfdl-monitor-detail__cell_actions">
+                                    <template for:each={row.actions} for:item="action">
+                                        <button
+                                            key={action.key}
+                                            type="button"
+                                            class="slds-button slds-button_neutral sfdl-monitor-detail__action"
+                                            data-id={row.id}
+                                            data-action={action.key}
+                                            disabled={action.disabled}
+                                            onclick={handleAction}>
+                                            {action.label}
+                                        </button>
+                                    </template>
+                                </td>
+                            </template>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+            <template if:true={hasMoreRows}>
+                <button type="button" class="sfdl-monitor-detail__more-rows" onclick={handleMoreRows}>{moreRowsLabel}</button>
+            </template>
+            </template>
+            <template if:false={hasShownItems}>
+                <p class="sfdl-monitor-detail__empty">{noMatchMessage}</p>
+            </template>
+        </template>
+        <template if:false={hasItems}>
+            <p class="sfdl-monitor-detail__empty">{emptyMessage}</p>
+        </template>
+    </div>
+</template>

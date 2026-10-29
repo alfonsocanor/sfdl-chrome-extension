@@ -1,0 +1,30 @@
+<template>
+    <!-- One stat tile, for any monitor: its label, its figure, the caption
+         the figure is read against and the words of its severity. -->
+    <div class={cardClass} role="button" tabindex={tabIndex} title={description} aria-busy={ariaBusy} aria-disabled={ariaDisabled} onclick={handleOpen} onkeydown={handleKeyDown}>
+        <span class="sfdl-monitor-card__label">{title}</span>
+        <template if:true={isLoading}>
+            <sfdl-loading-stencil type="monitorCard" label={loadingLabel}></sfdl-loading-stencil>
+        </template>
+        <template if:true={isLoaded}>
+            <span class="sfdl-monitor-card__value">{value}</span>
+            <span class="sfdl-monitor-card__caption">{caption}</span>
+            <span class={severityClass}>
+                <span class="sfdl-monitor-card__severity-dot" aria-hidden="true"></span>
+                {severityLabel}
+            </span>
+        </template>
+        <template if:true={isError}>
+            <span class="sfdl-monitor-card__error">{error}</span>
+        </template>
+        <!-- An org without the licence or the permission the monitor needs:
+             what it needs, in grey, no figure to open. -->
+        <template if:true={isUnavailable}>
+            <span class="sfdl-monitor-card__requires">{error}</span>
+            <span class="sfdl-monitor-card__severity sfdl-monitor-card__severity_unavailable">
+                <span class="sfdl-monitor-card__severity-dot" aria-hidden="true"></span>
+                {unavailableLabel}
+            </span>
+        </template>
+    </div>
+</template>

@@ -30,11 +30,11 @@ function envelope(sessionId, body){
         '</soapenv:Envelope>';
 }
 
-function childElements(element, localName){
+export function childElements(element, localName){
     return [...element.children].filter(child => child.localName === localName);
 }
 
-function childText(element, localName){
+export function childText(element, localName){
     const child = childElements(element, localName)[0];
     return child ? child.textContent : undefined;
 }
@@ -110,6 +110,42 @@ export async function listMetadata(sessionInformation, apiVersion, queries){
         lastModifiedByName: childText(result, 'lastModifiedByName')
     })));
 }
+
+//The components of a type by their full names, each as the element the api
+//answers with, to read with childElements and childText. A name the org does
+//not have comes back as an element with nothing in it.
+export async function readMetadata(sessionInformation, apiVersion, type, fullNames){
+    const responseDocument = await metadataCall(sessionInformation, apiVersion,
+        '<met:readMetadata>' +
+        '<met:type>' + escapeXml(type) + '</met:type>' +
+        fullNames.map(fullName => '<met:fullNames>' + escapeXml(fullName) + '</met:fullNames>').join('') +
+        '</met:readMetadata>'
+    );
+
+    return [...responseDocument.getElementsByTagNameNS(METADATA_NAMESPACE, 'records')];
+}
+
+//Saves one component of a type, given as the XML of its fields, met:
+//prefixed. Throws with what the api said when it did not save it.
+export async function updateMetadata(sessionInformation, apiVersion, type, fieldsXml){
+    const responseDocument = await metadataCall(sessionInformation, apiVersion,
+        '<met:updateMetadata>' +
+        '<met:metadata xsi:type="met:' + escapeXml(type) + '" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">' + fieldsXml + '</met:metadata>' +
+        '</met:updateMetadata>'
+    );
+    const failed = resultElements(responseDocument).find(result => childText(result, 'success') !== 'true');
+
+    if(failed){
+        const [error] = childElements(failed, 'errors');
+        throw new SalesforceError(
+            (error && childText(error, 'message')) || 'The Metadata API did not save ' + type,
+            0,
+            error ? childText(error, 'statusCode') : undefined
+        );
+    }
+}
+
+export { escapeXml };
 
 //types is [{ name, members }], a member can be the * wildcard.
 export async function retrieve(sessionInformation, apiVersion, types){

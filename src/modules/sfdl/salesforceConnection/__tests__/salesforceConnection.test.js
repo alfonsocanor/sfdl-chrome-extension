@@ -8,7 +8,10 @@ import {
     describeSObject,
     getApexLogs,
     getApexLogBody,
-    mapWithConcurrency
+    mapWithConcurrency,
+    getRecordNames,
+    shortId,
+    updateRecord
 } from 'sfdl/salesforceConnection';
 
 const ACME = {
@@ -331,5 +334,178 @@ describe('salesforceConnection', () => {
                 []
             );
         });
+    });
+});
+
+describe('salesforceConnection deleting and limits', () => {
+    const {
+        deleteRecords,
+        isPermissionError,
+        isPermissionOutcome,
+        getLimits,
+        queryCount
+    } = require('sfdl/salesforceConnection');
+
+    it('deleteRecords deletes through the collections api and reports each record', async () => {
+        global.fetch = jest.fn(() =>
+            jsonResponse([
+                { id: '07L1', success: true, errors: [] },
+                {
+                    id: '07L2',
+                    success: false,
+                    errors: [
+                        {
+                            statusCode: 'ENTITY_IS_DELETED',
+                            message: 'entity is deleted'
+                        }
+                    ]
+                }
+            ])
+        );
+
+        const outcome = await deleteRecords(ACME, ['07L1', '07L2']);
+
+        expect(fetch).toHaveBeenCalledWith(
+            ACME.instanceUrl +
+                '/services/data/v51.0/composite/sobjects?allOrNone=false&ids=07L1,07L2',
+            expect.objectContaining({ method: 'DELETE' })
+        );
+        expect(outcome).toEqual({
+            deleted: ['07L1'],
+            failed: [
+                {
+                    id: '07L2',
+                    message: 'entity is deleted',
+                    errorCode: 'ENTITY_IS_DELETED'
+                }
+            ]
+        });
+    });
+
+    it('deleteRecords goes 200 ids at a time and tells the progress after each chunk', async () => {
+        const ids = Array.from({ length: 201 }, (unused, index) => 'id' + index);
+        global.fetch = jest.fn((url) => {
+            const chunk = url.split('ids=')[1].split(',');
+            return jsonResponse(chunk.map((id) => ({ id, success: true })));
+        });
+        const onProgress = jest.fn();
+
+        const outcome = await deleteRecords(ACME, ids, { onProgress });
+
+        expect(fetch).toHaveBeenCalledTimes(2);
+        expect(outcome.deleted.length).toBe(201);
+        expect(onProgress.mock.calls).toEqual([
+            [200, 201],
+            [201, 201]
+        ]);
+    });
+
+    it('isPermissionError knows a 403 and the insufficient access codes', () => {
+        expect(isPermissionError({ status: 403 })).toBe(true);
+        expect(
+            isPermissionError({
+                status: 400,
+                errorCode: 'INSUFFICIENT_ACCESS_OR_READONLY'
+            })
+        ).toBe(true);
+        expect(
+            isPermissionError({ status: 404, errorCode: 'NOT_FOUND' })
+        ).toBe(false);
+        expect(isPermissionError(undefined)).toBe(false);
+    });
+
+    it('isPermissionOutcome is true only when every record was refused for access', () => {
+        const refused = (id) => ({
+            id,
+            message: 'no',
+            errorCode: 'INSUFFICIENT_ACCESS_OR_READONLY'
+        });
+
+        expect(
+            isPermissionOutcome({ deleted: [], failed: [refused('a'), refused('b')] })
+        ).toBe(true);
+        expect(
+            isPermissionOutcome({ deleted: ['c'], failed: [refused('a')] })
+        ).toBe(false);
+        expect(
+            isPermissionOutcome({
+                deleted: [],
+                failed: [{ id: 'a', message: 'gone', errorCode: 'ENTITY_IS_DELETED' }]
+            })
+        ).toBe(false);
+        expect(isPermissionOutcome({ deleted: [], failed: [] })).toBe(false);
+    });
+
+    it('getLimits reads the limits of the org', async () => {
+        global.fetch = jest.fn(() =>
+            jsonResponse({ DailyApiRequests: { Max: 15000, Remaining: 14000 } })
+        );
+
+        const limits = await getLimits(ACME);
+
+        expect(fetch.mock.calls[0][0]).toBe(
+            ACME.instanceUrl + '/services/data/v51.0/limits/'
+        );
+        expect(limits.DailyApiRequests.Remaining).toBe(14000);
+    });
+
+    it('queryCount returns the total of a count query', async () => {
+        global.fetch = jest.fn(() => jsonResponse({ totalSize: 42, records: [] }));
+
+        const total = await queryCount(ACME, 'SELECT COUNT() FROM AsyncApexJob');
+
+        expect(fetch.mock.calls[0][0]).toContain(
+            '/services/data/v51.0/query/?q=SELECT%20COUNT()'
+        );
+        expect(total).toBe(42);
+    });
+
+    it('getRecordNames names the records of valid ids by their short id, a query per hundred', async () => {
+        const ids = Array.from({ length: 101 }, (unused, index) => '005' + String(index).padStart(12, '0'));
+        global.fetch = jest.fn((url) => {
+            const soql = decodeURIComponent(url.split('?q=')[1]);
+            const records = soql.includes("'005000000000000'") ?
+                [{ Id: '005000000000000AAA', Name: 'Ann' }] :
+                [{ Id: '005000000000100AAA', Name: 'Bob' }];
+            return jsonResponse({ done: true, records });
+        });
+
+        const names = await getRecordNames(ACME, 'User', [...ids, ids[0] + 'AAA', "x' OR Name != '", '', undefined], { apiVersion: '60.0' });
+
+        expect(fetch).toHaveBeenCalledTimes(2);
+        expect(fetch.mock.calls[0][0]).toContain('/services/data/v60.0/query/');
+        expect(decodeURIComponent(fetch.mock.calls[0][0])).toContain("SELECT Id, Name FROM User WHERE Id IN ('005000000000000','005000000000001'");
+        expect(decodeURIComponent(fetch.mock.calls[0][0])).not.toContain('OR Name');
+        expect(names.get('005000000000000')).toBe('Ann');
+        expect(names.get('005000000000100')).toBe('Bob');
+        expect(shortId('005000000000000AAA')).toBe('005000000000000');
+    });
+
+    it('getRecordNames asks nothing of the org without ids', async () => {
+        global.fetch = jest.fn();
+
+        expect((await getRecordNames(ACME, 'User', [])).size).toBe(0);
+        expect(fetch).not.toHaveBeenCalled();
+    });
+
+    it('updateRecord patches the fields of one record', async () => {
+        global.fetch = jest.fn(() => Promise.resolve({ status: 204, statusText: 'No Content' }));
+
+        const result = await updateRecord(ACME, 'TransactionSecurityPolicy', '0w1', { State: 'Enabled' }, { apiVersion: '60.0' });
+
+        expect(result).toBeNull();
+        expect(fetch).toHaveBeenCalledWith(
+            ACME.instanceUrl + '/services/data/v60.0/sobjects/TransactionSecurityPolicy/0w1',
+            expect.objectContaining({ method: 'PATCH', body: '{"State":"Enabled"}' })
+        );
+        expect(fetch.mock.calls[0][1].credentials).toBeUndefined();
+    });
+
+    it('salesforceRequest sends the cookies of the org when asked', async () => {
+        global.fetch = jest.fn(() => jsonResponse([]));
+
+        await salesforceRequest(ACME, '/cometd/60.0/handshake', { method: 'POST', credentials: 'include' });
+
+        expect(fetch.mock.calls[0][1].credentials).toBe('include');
     });
 });

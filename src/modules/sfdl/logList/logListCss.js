@@ -39,7 +39,8 @@ export const css = `
         outline: none;
     }
 
-    .sfdl-log-row .downloadSingleLogButton {
+    .sfdl-log-row .downloadSingleLogButton,
+    .sfdl-log-row .deleteSingleLogButton {
         flex: 0 0 auto;
         display: flex;
         align-items: center;
@@ -56,11 +57,14 @@ export const css = `
     }
 
     .sfdl-log-row .downloadSingleLogButton:hover,
-    .sfdl-log-row .downloadSingleLogButton:focus {
+    .sfdl-log-row .downloadSingleLogButton:focus,
+    .sfdl-log-row .deleteSingleLogButton:hover,
+    .sfdl-log-row .deleteSingleLogButton:focus {
         opacity: 1;
     }
 
-    .sfdl-log-row .downloadSingleLogButton img {
+    .sfdl-log-row .downloadSingleLogButton img,
+    .sfdl-log-row .deleteSingleLogButton img {
         display: block;
         width: 100%;
         height: 100%;
@@ -88,8 +92,8 @@ export const css = `
     }
 
     /* The icon and the count are one control: clicking either starts the same
-       download, and both go blue together on hover. */
-    .sfdl-log-list-actions .downloadLogsButton {
+       action, download or delete, and both go blue together on hover. */
+    .sfdl-log-list-actions .sfdl-log-list-action {
         flex: 0 1 auto;
         display: flex;
         align-items: center;
@@ -104,7 +108,7 @@ export const css = `
         text-align: left;
     }
 
-    .sfdl-download-action-icon {
+    .sfdl-log-list-action__icon {
         flex: 0 0 auto;
         display: block;
         width: 18px;
@@ -114,18 +118,18 @@ export const css = `
         filter: grayscale(1) brightness(1.15);
     }
 
-    .sfdl-log-list-actions .downloadLogsButton:hover .sfdl-download-action-icon,
-    .sfdl-log-list-actions .downloadLogsButton:focus .sfdl-download-action-icon {
+    .sfdl-log-list-actions .sfdl-log-list-action:hover .sfdl-log-list-action__icon,
+    .sfdl-log-list-actions .sfdl-log-list-action:focus .sfdl-log-list-action__icon {
         filter: none;
     }
 
-    .sfdl-log-list-actions .downloadLogsButton:hover .sfdl-download-label,
-    .sfdl-log-list-actions .downloadLogsButton:focus .sfdl-download-label {
+    .sfdl-log-list-actions .sfdl-log-list-action:hover .sfdl-log-list-action__label,
+    .sfdl-log-list-actions .sfdl-log-list-action:focus .sfdl-log-list-action__label {
         color: #0176d3;
         text-decoration: underline;
     }
 
-    .sfdl-log-list-actions .sfdl-download-label {
+    .sfdl-log-list-actions .sfdl-log-list-action__label {
         flex: 0 1 auto;
         min-width: 0;
         color: #747474;

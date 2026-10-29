@@ -10,6 +10,7 @@ function createLogDetails(props = {}) {
     const element = createElement('sfdl-log-details', { is: LogDetails });
     Object.assign(element, {
         isAnaliseLogs: true,
+        orgPicked: true,
         ...props
     });
     document.body.appendChild(element);
@@ -18,8 +19,29 @@ function createLogDetails(props = {}) {
 
 const manipulationMenu = (element) =>
     element.shadowRoot.querySelector('sfdl-log-manipulation-menu');
+const message = (element) =>
+    element.shadowRoot.querySelector('.sfdl-log-details__message');
 
 describe('sfdl-log-details', () => {
+    it('asks for the org of the logs, with no filters and no name, until one is picked', () => {
+        const element = createLogDetails({ orgPicked: false });
+
+        expect(message(element).textContent).toBe('Pick the org of the logs.');
+        expect(manipulationMenu(element)).toBeNull();
+        expect(element.shadowRoot.querySelector('.slds-panel__header')).toBeNull();
+    });
+
+    it('shows the filters and the name of the log once an org is picked', async () => {
+        const element = createLogDetails({ orgPicked: false });
+
+        element.orgPicked = true;
+        await wait(0);
+
+        expect(message(element)).toBeNull();
+        expect(manipulationMenu(element)).not.toBeNull();
+        expect(element.shadowRoot.querySelector('.slds-panel__header')).not.toBeNull();
+    });
+
     it('teaches monaco the apexlog language and the sfdl theme', () => {
         createLogDetails();
 

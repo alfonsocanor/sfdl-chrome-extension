@@ -4,6 +4,8 @@ import logListStencil from './logListStencil/logListStencil.html';
 import compareLogListStencil from './compareLogListStencil/compareLogListStencil.html';
 import componentListStencil from './componentListStencil/componentListStencil.html';
 import codeStencil from './codeStencil/codeStencil.html';
+import monitorCardStencil from './monitorCardStencil/monitorCardStencil.html';
+import monitorMetersStencil from './monitorMetersStencil/monitorMetersStencil.html';
 // The bundle's own empty template, the fallback in render(), see there.
 import emptyStencil from './loadingStencil.html';
 import { css } from './loadingStencilCss';
@@ -13,7 +15,9 @@ const TEMPLATES = {
     compareLogList: compareLogListStencil,
     componentList: componentListStencil,
     log: codeStencil,
-    diff: codeStencil
+    diff: codeStencil,
+    monitorCard: monitorCardStencil,
+    monitorMeters: monitorMetersStencil
 };
 
 const DEFAULT_ROWS = 8;
@@ -73,7 +77,8 @@ function scrollContainerOf(element){
 //thing it stands for, each drawn the way that thing is, so nothing moves when
 //the real one comes. The type picks the template.
 export default class LoadingStencil extends LightningElement{
-    //logList, compareLogList, componentList, log or diff.
+    //logList, compareLogList, componentList, log, diff, monitorCard or
+    //monitorMeters.
     @api type;
     //How many rows a list draws. Without one, a list draws as many as fill
     //the room left under it, down to the bottom of what it scrolls in, and no

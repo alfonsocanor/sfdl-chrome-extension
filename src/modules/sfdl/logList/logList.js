@@ -1,6 +1,7 @@
 /*global chrome*/
 import { track, api, LightningElement  } from 'lwc';
-import { showToastEvent } from 'sfdl/utils';
+import { showToastEvent, confirmDialog, alertDialog } from 'sfdl/utils';
+import { deleteRecords, isPermissionError, isPermissionOutcome } from 'sfdl/salesforceConnection';
 import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { css } from './logListCss';
 
@@ -12,7 +13,12 @@ const KEYBOARD_ARROW_DOWN_CODE = 40;
 //The slds utility icons are white shapes, only readable on a filled button.
 //This one is the same glyph in the #0176d3 the rest of the buttons use.
 const DOWNLOAD_ICON = '/resources/downloadBlue.svg';
+const DELETE_ICON = '/resources/deleteBlue.svg';
 const CLOSE_ICON = '/slds/icons/utility/close.svg';
+
+function pluralLogs(count){
+    return count + (count === 1 ? ' log' : ' logs');
+}
 
 const processResponseBasedOnContentType = {
     httpError(response){
@@ -43,10 +49,13 @@ export default class LogList extends LightningElement{
     isListEmpty = false;
     isLoading = false;
     isDownloading;
+    isDeleting = false;
+    totalLogsToDelete = 0;
     firstRender = true;
 
     closeIcon = CLOSE_ICON;
     downloadIcon = DOWNLOAD_ICON;
+    deleteIcon = DELETE_ICON;
 
     @track logs2Download = [];
     downloadButtonDisabled = false;
@@ -89,13 +98,28 @@ export default class LogList extends LightningElement{
         return this.thereAreSelectedLogs ? 'Download the selected logs' : 'Download all logs';
     }
 
+    get deleteLabel(){
+        return this.thereAreSelectedLogs ?
+            'Delete selected logs (' + this.selectedLogsCount + ')' :
+            'Delete all logs';
+    }
+
+    get deleteButtonTitle(){
+        return this.thereAreSelectedLogs ? 'Delete the selected logs' : 'Delete every log listed';
+    }
+
+    //A download or a deletion on the way: the actions wait for it.
+    get isBusy(){
+        return this.isDownloading || this.isDeleting;
+    }
+
     get selectAllTitle(){
         return this.areAllLogsSelected ? 'Unselect every log' : 'Select all logs';
     }
 
     //A where clause can leave out every log of an org that has some.
     get emptyMessage(){
-        if(!this.isListEmpty || this.isDownloading){
+        if(!this.isListEmpty || this.isBusy){
             return '';
         }
 
@@ -356,6 +380,10 @@ export default class LogList extends LightningElement{
             showToastEvent('info', 'sfdl', 'There is a download in progress, wait for it to finish.');
             return;
         }
+        if(this.isDeleting){
+            showToastEvent('info', 'sfdl', 'There is a deletion in progress, wait for it to finish.');
+            return;
+        }
 
         this.logs2Download = logs2Download;
         this.totalLogsToDownload = logs2Download.length;
@@ -365,6 +393,114 @@ export default class LogList extends LightningElement{
     handleDownloadProcessCompleted(){
         this.isDownloading = false;
         this.logs2Download = [];
+    }
+
+    //The trash of a row deletes at once, a mistake there costs one log.
+    handleDeleteSingleLog(event){
+        const log2Delete = this.getLogByIdFromLogList(event.currentTarget.dataset.logid);
+
+        if(log2Delete){
+            this.deleteLogs([log2Delete]);
+        }
+    }
+
+    //Nothing ticked means the whole list, as the download reads it. Either way
+    //it asks first: there is no recycle bin for a debug log.
+    async handleDeleteLogs(){
+        const logs2Delete = this.thereAreSelectedLogs ? this.selectedLogs : this.logList;
+        const count = logs2Delete.length;
+        const confirmed = await confirmDialog({
+            title: this.thereAreSelectedLogs ? 'Delete the selected logs?' : 'Delete all the logs listed?',
+            message: pluralLogs(count) + ' of ' + this.sessionInformation.instanceUrl +
+                ' will be deleted for good. Salesforce keeps no copy of a deleted debug log.',
+            confirmLabel: 'Delete ' + pluralLogs(count)
+        });
+
+        if(confirmed){
+            await this.deleteLogs(logs2Delete);
+        }
+    }
+
+    async deleteLogs(logs2Delete){
+        if(this.isDownloading){
+            showToastEvent('info', 'sfdl', 'There is a download in progress, wait for it to finish.');
+            return;
+        }
+        if(this.isDeleting){
+            showToastEvent('info', 'sfdl', 'There is a deletion in progress, wait for it to finish.');
+            return;
+        }
+
+        this.isDeleting = true;
+        this.totalLogsToDelete = logs2Delete.length;
+
+        try{
+            const outcome = await deleteRecords(this.sessionInformation, logs2Delete.map(log => log.id), {
+                onProgress: settled => this.updateDeleteProgress(settled)
+            });
+            this.removeLogsFromList(outcome.deleted);
+            this.reportDeletion(outcome);
+        } catch(error){
+            if(isPermissionError(error)){
+                this.alertNoPermissionToDelete();
+            } else {
+                showToastEvent('error', 'Could not delete the logs', error.message);
+            }
+        } finally {
+            this.isDeleting = false;
+        }
+    }
+
+    updateDeleteProgress(settled){
+        const processBar = this.template.querySelector('.sfdl-delete-process-bar');
+
+        if(processBar){
+            processBar.updateProgressBar(settled);
+        }
+    }
+
+    removeLogsFromList(deletedIds){
+        if(!deletedIds.length){
+            return;
+        }
+
+        const deleted = new Set(deletedIds);
+        this.logList = this.logList.filter(log => !deleted.has(log.id));
+
+        if(!this.logList.length){
+            this.thereAreLogsToDisplay = false;
+            this.isListEmpty = true;
+        }
+
+        this.dispatchEvent(new CustomEvent('logsdeleted', {
+            detail: { ids: deletedIds }
+        }));
+    }
+
+    reportDeletion(outcome){
+        if(isPermissionOutcome(outcome)){
+            this.alertNoPermissionToDelete();
+            return;
+        }
+
+        if(outcome.failed.length){
+            showToastEvent('error',
+                pluralLogs(outcome.failed.length) + ' could not be deleted',
+                outcome.failed[0].message + (outcome.deleted.length ? ' The other ' + pluralLogs(outcome.deleted.length) + ' went.' : ''));
+            return;
+        }
+
+        showToastEvent('success',
+            outcome.deleted.length === 1 ? 'Log deleted' : pluralLogs(outcome.deleted.length) + ' deleted',
+            this.sessionInformation.instanceUrl);
+    }
+
+    alertNoPermissionToDelete(){
+        alertDialog({
+            title: 'You can\'t delete logs here',
+            message: 'Your user has no permission to delete the debug logs of ' + this.sessionInformation.instanceUrl +
+                '. Deleting a log takes the Modify All Data permission, ask an administrator for it.'
+        });
     }
 
     disableDownloadButton(isDisable){

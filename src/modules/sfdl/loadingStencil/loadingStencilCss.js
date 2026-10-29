@@ -218,4 +218,55 @@ export const css = `
             animation: none;
         }
     }
+
+    /* ── the figure of a monitor card, from monitorCardCss ─────────────────── */
+
+    .sfdl-stencil.sfdl-stencil-monitor-card {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+    }
+
+    .sfdl-stencil-monitor-card__value {
+        width: 3.5rem;
+        height: 32px;
+        border-radius: 0.25rem;
+    }
+
+    .sfdl-stencil-monitor-card__caption {
+        width: 70%;
+        height: 12px;
+        border-radius: 0.125rem;
+    }
+
+    .sfdl-stencil-monitor-card__badge {
+        width: 5.5rem;
+        height: 18px;
+        border-radius: 0.25rem;
+    }
+
+    /* ── the meters of a limits strip, from monitorMetersCss ────────────── */
+
+    .sfdl-stencil-monitor-meters__list {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .sfdl-stencil-monitor-meters__row {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .sfdl-stencil-monitor-meters__name {
+        height: 12px;
+        border-radius: 0.125rem;
+    }
+
+    .sfdl-stencil-monitor-meters__bar {
+        width: 100%;
+        height: 8px;
+        border-radius: 4px;
+    }
 `;

@@ -1,0 +1,79 @@
+<template>
+    <!-- The live view of a monitor: a channel of the org to pick, the start
+         and stop of listening to it, and what it says, the newest first. -->
+    <div class="sfdl-live-events">
+        <div class="sfdl-live-events__header">
+            <button type="button" class="slds-button slds-button_neutral sfdl-live-events__back" onclick={handleBack}>
+                <img class="sfdl-live-events__back-icon" src={backIcon} alt=""/>
+                Monitoring
+            </button>
+            <div class="sfdl-live-events__titles">
+                <h2 class="sfdl-live-events__title">{title}</h2>
+                <p class="sfdl-live-events__description">{description}</p>
+            </div>
+        </div>
+        <template if:true={hasChannels}>
+            <div class="sfdl-live-events__controls">
+                <sfdl-combobox
+                    class="sfdl-live-events__channel"
+                    label="Channel"
+                    placeholder="Pick the channel to listen to"
+                    options={channelOptions}
+                    value={channel}
+                    onchange={handleChannelChange}>
+                </sfdl-combobox>
+                <sfdl-combobox
+                    class="sfdl-live-events__duration"
+                    label="Stop after"
+                    options={durationOptions}
+                    value={durationValue}
+                    onchange={handleDurationChange}>
+                </sfdl-combobox>
+                <button type="button" class="slds-button slds-button_brand sfdl-live-events__start" disabled={isStartDisabled} onclick={handleStart}>Start</button>
+                <button type="button" class="slds-button slds-button_neutral sfdl-live-events__stop" disabled={isStopDisabled} onclick={handleStop}>Stop</button>
+                <span class="sfdl-live-events__spacer"></span>
+                <template if:true={hasEvents}>
+                    <button type="button" class="slds-button slds-button_neutral sfdl-live-events__copy" title="Copy every event as the org sent it" onclick={handleCopy}>{copyLabel}</button>
+                    <button type="button" class="slds-button slds-button_neutral sfdl-live-events__clear" onclick={handleClear}>Clear</button>
+                </template>
+            </div>
+            <p class={statusClass} role="status">{statusLine}</p>
+            <p class="sfdl-live-events__budget">{budgetLine}</p>
+            <template if:true={hasEvents}>
+                <table class="slds-table slds-table_cell-buffer slds-table_bordered sfdl-live-events__table">
+                    <thead>
+                        <tr>
+                            <th scope="col">When</th>
+                            <th scope="col">Channel</th>
+                            <th scope="col">Replay id</th>
+                            <th scope="col">Payload</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <template for:each={rows} for:item="row">
+                            <tr key={row.key}>
+                                <td title={row.createdDate}>{row.when}</td>
+                                <td>{row.channel}</td>
+                                <td class="sfdl-live-events__number">{row.replayId}</td>
+                                <td class="sfdl-live-events__payload">
+                                    <template if:true={row.isExpanded}>
+                                        <pre class="sfdl-live-events__payload-text">{row.payloadText}</pre>
+                                    </template>
+                                    <template if:false={row.isExpanded}>
+                                        <span class="sfdl-live-events__payload-line">{row.shortText}</span>
+                                    </template>
+                                    <template if:true={row.isLong}>
+                                        <button type="button" class="sfdl-live-events__more" data-key={row.key} onclick={handleToggle}>{row.toggleLabel}</button>
+                                    </template>
+                                </td>
+                            </tr>
+                        </template>
+                    </tbody>
+                </table>
+            </template>
+        </template>
+        <template if:false={hasChannels}>
+            <p class="sfdl-live-events__empty">{emptyMessage}</p>
+        </template>
+    </div>
+</template>

@@ -1,0 +1,89 @@
+<template>
+    <div class="sfdl-monitoring" style={containerStyle}>
+        <div class="sfdl-monitoring__toolbar">
+            <sfdl-combobox
+                class="sfdl-monitoring__org"
+                label="Org"
+                placeholder="Pick the org to monitor"
+                empty-message="No org session, log in to an org first"
+                options={orgOptions}
+                value={orgUrl}
+                badge="1"
+                badge-pulse={isOrgBadgePulsing}
+                onchange={handleOrgChange}>
+            </sfdl-combobox>
+            <button
+                type="button"
+                class="slds-button slds-button_icon slds-is-selected slds-button_icon-border-filled slds-button_icon-border sfdl-monitoring__refresh"
+                style="width:22px;height:22px;padding:2px;"
+                title="Read the org again"
+                disabled={isRefreshDisabled}
+                onclick={handleRefresh}>
+                <img src={refreshIcon} alt="read the org again"/>
+            </button>
+            <span class="sfdl-monitoring__hint">{hint}</span>
+        </div>
+        <div class="sfdl-monitoring__body">
+            <template if:false={hasOrg}>
+                <p class="sfdl-monitoring__message">Pick an org to see how it is doing.</p>
+            </template>
+            <!-- The sections of cards, in the order of the catalogue, each under
+                 its title. They stay built under the detail, so the way back
+                 finds them as they were. -->
+            <template if:true={hasOrg}>
+                <div class="sfdl-monitoring__main">
+                    <div class={sectionsClass}>
+                        <template for:each={cardSections} for:item="section">
+                            <section key={section.key} class="sfdl-monitoring__section">
+                                <h3 class="sfdl-monitoring__section-title">{section.title}</h3>
+                                <div class="sfdl-monitoring__cards">
+                                    <template for:each={section.cards} for:item="card">
+                                        <sfdl-monitor-card
+                                            key={card.key}
+                                            monitor={card.monitor}
+                                            state={card.state}
+                                            onopen={handleOpen}>
+                                        </sfdl-monitor-card>
+                                    </template>
+                                </div>
+                            </section>
+                        </template>
+                    </div>
+                    <template if:true={openCard}>
+                        <template if:true={isLiveOpen}>
+                            <sfdl-live-events
+                                monitor={openCard.monitor}
+                                channels={openCard.state.items}
+                                session={session}
+                                onback={handleBack}>
+                            </sfdl-live-events>
+                        </template>
+                        <template if:false={isLiveOpen}>
+                            <sfdl-monitor-detail
+                                monitor={openCard.monitor}
+                                items={openCard.state.items}
+                                summary={openCard.state.summary}
+                                running-actions={runningActions}
+                                onaction={handleAction}
+                                onback={handleBack}>
+                            </sfdl-monitor-detail>
+                        </template>
+                    </template>
+                </div>
+                <!-- The meters, the limits, in a panel of their own on the right,
+                     so their loading never moves the cards. -->
+                <template for:each={meterSections} for:item="section">
+                    <sfdl-side-panel key={section.key} class="sfdl-monitoring__meters-panel" title={section.title} dock="right" width="22rem" back-to-top="true">
+                        <template for:each={section.cards} for:item="card">
+                            <sfdl-monitor-meters
+                                key={card.key}
+                                monitor={card.monitor}
+                                state={card.state}>
+                            </sfdl-monitor-meters>
+                        </template>
+                    </sfdl-side-panel>
+                </template>
+            </template>
+        </div>
+    </div>
+</template>
