@@ -17,7 +17,9 @@
                 <sfdl-combobox
                     class="sfdl-live-events__channel"
                     label="Channel"
-                    placeholder="Pick the channel to listen to"
+                    placeholder="Search or pick the channel to listen to"
+                    no-match-message="No channel by that name"
+                    searchable
                     options={channelOptions}
                     value={channel}
                     onchange={handleChannelChange}>

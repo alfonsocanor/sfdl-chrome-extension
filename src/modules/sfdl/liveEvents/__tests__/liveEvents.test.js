@@ -106,6 +106,9 @@ describe('sfdl-live-events', () => {
             { label: 'Login Event Stream (/event/LoginEventStream)', value: '/event/LoginEventStream', group: 'Real-time stream' },
             { label: 'Order Event (/event/Order_Event__e)', value: '/event/Order_Event__e', group: 'Platform event' }
         ]);
+        expect($(element, '.sfdl-live-events__channel').searchable).toBe(true);
+        expect($(element, '.sfdl-live-events__channel').noMatchMessage).toBe('No channel by that name');
+        expect($(element, '.sfdl-live-events__duration').searchable).toBe(false);
         expect($(element, '.sfdl-live-events__duration').options.map((option) => option.label)).toEqual([
             '5 minutes', '15 minutes', '30 minutes', '1 hour', '2 hours'
         ]);

@@ -23,21 +23,44 @@
                 </template>
                 <div class={comboboxClass}>
                     <div class="slds-combobox__form-element slds-input-has-icon slds-input-has-icon_right" role="none">
-                        <button
-                            type="button"
-                            class="slds-input_faux slds-combobox__input sfdl-combobox-button"
-                            disabled={disabled}
-                            title={buttonTitle}
-                            aria-label={label}
-                            aria-haspopup="listbox"
-                            aria-expanded={ariaExpanded}
-                            onclick={handleToggle}
-                            onblur={handleBlur}
-                            onkeydown={handleKeyDown}>
-                            <span class={valueClass}>{displayLabel}</span>
-                        </button>
-                        <span class="slds-icon_container slds-icon-utility-down slds-input__icon slds-input__icon_right">
-                            <img src={downIcon} alt=""/>
+                        <!-- Searchable, a field to type into that narrows the list. -->
+                        <template if:true={searchable}>
+                            <input
+                                type="text"
+                                class="slds-input slds-combobox__input sfdl-combobox-button sfdl-combobox-search"
+                                role="combobox"
+                                autocomplete="off"
+                                spellcheck="false"
+                                disabled={disabled}
+                                placeholder={placeholder}
+                                title={buttonTitle}
+                                aria-label={label}
+                                aria-autocomplete="list"
+                                aria-haspopup="listbox"
+                                aria-expanded={ariaExpanded}
+                                value={fieldValue}
+                                onclick={handleSearchClick}
+                                oninput={handleSearchInput}
+                                onblur={handleBlur}
+                                onkeydown={handleKeyDown}/>
+                        </template>
+                        <template if:false={searchable}>
+                            <button
+                                type="button"
+                                class="slds-input_faux slds-combobox__input sfdl-combobox-button"
+                                disabled={disabled}
+                                title={buttonTitle}
+                                aria-label={label}
+                                aria-haspopup="listbox"
+                                aria-expanded={ariaExpanded}
+                                onclick={handleToggle}
+                                onblur={handleBlur}
+                                onkeydown={handleKeyDown}>
+                                <span class={valueClass}>{displayLabel}</span>
+                            </button>
+                        </template>
+                        <span class="slds-icon_container slds-input__icon slds-input__icon_right">
+                            <img src={fieldIcon} alt=""/>
                         </span>
                     </div>
                     <div class="slds-dropdown slds-dropdown_length-10 slds-dropdown_fluid" role="listbox" onmousedown={keepFocusOnButton}>
@@ -66,6 +89,11 @@
                             <template if:true={isEmpty}>
                                 <li role="presentation" class="slds-listbox__item">
                                     <div class="slds-media slds-listbox__option slds-listbox__option_plain sfdl-combobox-empty" role="presentation">{emptyMessage}</div>
+                                </li>
+                            </template>
+                            <template if:true={hasNoMatch}>
+                                <li role="presentation" class="slds-listbox__item">
+                                    <div class="slds-media slds-listbox__option slds-listbox__option_plain sfdl-combobox-empty" role="presentation">{noMatchMessage}</div>
                                 </li>
                             </template>
                         </ul>

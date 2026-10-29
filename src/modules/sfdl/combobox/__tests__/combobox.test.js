@@ -406,4 +406,180 @@ describe('sfdl-combobox', () => {
 
         expect(button(element).disabled).toBe(true);
     });
+
+    describe('searchable', () => {
+        const field = (element) =>
+            element.shadowRoot.querySelector('.sfdl-combobox-search');
+        const optionLabels = (element) =>
+            options(element).map((option) => option.textContent.trim());
+        const isOpen = (element) =>
+            combobox(element).classList.contains('slds-is-open');
+
+        function type(element, value) {
+            field(element).value = value;
+            field(element).dispatchEvent(
+                new CustomEvent('input', { bubbles: true, composed: true })
+            );
+        }
+
+        it('is a field to type into that shows the option picked', () => {
+            const element = createCombobox({
+                searchable: true,
+                value: 'ApexTrigger',
+                placeholder: 'Search a type'
+            });
+
+            expect(field(element).value).toBe('Apex Triggers');
+            expect(field(element).getAttribute('role')).toBe('combobox');
+            expect(field(element).placeholder).toBe('Search a type');
+            expect(
+                element.shadowRoot.querySelector('button.sfdl-combobox-button')
+            ).toBeNull();
+            expect(
+                element.shadowRoot
+                    .querySelector('.slds-input__icon img')
+                    .getAttribute('src')
+            ).toBe('/resources/searchGrey.svg');
+        });
+
+        it('opens on a click with every option, the one picked selected to type over', async () => {
+            const element = createCombobox({
+                searchable: true,
+                value: 'ApexTrigger'
+            });
+            const select = jest.spyOn(field(element), 'select');
+
+            click(field(element));
+            await flushPromises();
+
+            expect(isOpen(element)).toBe(true);
+            expect(select).toHaveBeenCalled();
+            expect(optionLabels(element)).toEqual([
+                'Apex Classes',
+                'Apex Triggers',
+                'Lightning Web Components'
+            ]);
+
+            click(field(element));
+            await flushPromises();
+
+            expect(isOpen(element)).toBe(true);
+            expect(select).toHaveBeenCalledTimes(1);
+        });
+
+        it('narrows the options to the words typed, a mistyped one forgiven, and Enter picks the first', async () => {
+            const element = createCombobox({ searchable: true });
+            const handleChange = jest.fn();
+            element.addEventListener('change', handleChange);
+
+            type(element, 'trigr');
+            await flushPromises();
+
+            expect(isOpen(element)).toBe(true);
+            expect(groupHeaders(element)).toEqual(['Code']);
+            expect(optionLabels(element)).toEqual(['Apex Triggers']);
+            expect(
+                options(element)[0].classList.contains('slds-has-focus')
+            ).toBe(true);
+
+            pressKey(field(element), 'Enter');
+            await flushPromises();
+
+            expect(handleChange.mock.calls[0][0].detail.value).toBe(
+                'ApexTrigger'
+            );
+            expect(isOpen(element)).toBe(false);
+            expect(field(element).value).toBe('Apex Triggers');
+        });
+
+        it('finds the options by their group and their value too', async () => {
+            const element = createCombobox({ searchable: true });
+
+            type(element, 'user interface');
+            await flushPromises();
+            expect(optionLabels(element)).toEqual([
+                'Lightning Web Components'
+            ]);
+
+            type(element, 'bundle');
+            await flushPromises();
+            expect(optionLabels(element)).toEqual([
+                'Lightning Web Components'
+            ]);
+        });
+
+        it('moves through the options left with the arrows', async () => {
+            const element = createCombobox({ searchable: true });
+            const handleChange = jest.fn();
+            element.addEventListener('change', handleChange);
+
+            type(element, 'apex');
+            pressKey(field(element), 'ArrowDown');
+            pressKey(field(element), 'Enter');
+
+            expect(handleChange.mock.calls[0][0].detail.value).toBe(
+                'ApexTrigger'
+            );
+        });
+
+        it('says when nothing matches', async () => {
+            const element = createCombobox({
+                searchable: true,
+                noMatchMessage: 'No type by that name'
+            });
+
+            type(element, 'zzzz');
+            await flushPromises();
+
+            expect(options(element)).toEqual([]);
+            expect(groupHeaders(element)).toEqual([]);
+            expect(
+                element.shadowRoot.querySelector('.sfdl-combobox-empty')
+                    .textContent
+            ).toBe('No type by that name');
+
+            pressKey(field(element), 'Enter');
+            expect(isOpen(element)).toBe(true);
+        });
+
+        it('shows the option picked again when left without picking', async () => {
+            const element = createCombobox({
+                searchable: true,
+                value: 'ApexClass'
+            });
+            const handleChange = jest.fn();
+            element.addEventListener('change', handleChange);
+
+            type(element, 'light');
+            await flushPromises();
+            field(element).dispatchEvent(new CustomEvent('blur'));
+            await flushPromises();
+
+            expect(isOpen(element)).toBe(false);
+            expect(field(element).value).toBe('Apex Classes');
+
+            type(element, 'light');
+            pressKey(field(element), 'Escape');
+            await flushPromises();
+
+            expect(isOpen(element)).toBe(false);
+            expect(field(element).value).toBe('Apex Classes');
+            expect(handleChange).not.toHaveBeenCalled();
+
+            click(field(element));
+            await flushPromises();
+            expect(optionLabels(element)).toHaveLength(3);
+        });
+
+        it('leaves the pickers that are not searchable alone', () => {
+            const element = createCombobox();
+
+            expect(field(element)).toBeNull();
+            expect(
+                element.shadowRoot
+                    .querySelector('.slds-input__icon img')
+                    .getAttribute('src')
+            ).toBe('/slds/icons/utility/down.svg');
+        });
+    });
 });

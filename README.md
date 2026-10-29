@@ -229,7 +229,9 @@ The matching lives in `sfdl/fuzzySearch`, for any other list to use.
   the Event Monitoring add-on may list only the login and logout streams.
 - **Live events**: pick a platform event, a change event or a real-time stream of the
   org and `Start` listening: each event shows as it comes, the newest first, with its
-  payload, up to the latest 500. `Copy all` copies them as the org sent them.
+  payload, up to the latest 500. `Copy all` copies them as the org sent them. The
+  channel field takes a search: type any words of a channel's name, its API name or its
+  kind, a mistyped letter forgiven, and `Enter` picks the first one left.
 
   `Stop after` picks how long one listening lasts: 5, 15 or 30 minutes, 1 hour or 2
   hours, 30 minutes unless picked otherwise. Two hours is the most, as long as the

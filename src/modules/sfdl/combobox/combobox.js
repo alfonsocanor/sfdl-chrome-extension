@@ -2,14 +2,17 @@ import { LightningElement, api } from 'lwc';
 import { adoptStyleSheet } from 'sfdl/styleSheets';
 import { adoptCompareTheme } from 'sfdl/compareTheme';
 import { areStepBadgesDismissed, dismissStepBadges, onStepBadgesDismissed } from 'sfdl/stepBadges';
+import { matchesQuery } from 'sfdl/fuzzySearch';
 import { css } from './comboboxCss';
 
 const DOWN_ICON = '/slds/icons/utility/down.svg';
+const SEARCH_ICON = '/resources/searchGrey.svg';
 const OPTION_CLASS = 'slds-media slds-listbox__option slds-listbox__option_plain slds-media_small';
 
 //The slds combobox of the org picker, for any list of options. Options are
 //{ label, value, group }: the ones sharing a group are listed under its header,
-//in the order the groups first appear.
+//in the order the groups first appear. A searchable one is a field to type
+//into, the list narrowed to the options the words typed find.
 export default class Combobox extends LightningElement{
     @api label;
     @api placeholder = 'Select an option';
@@ -22,6 +25,10 @@ export default class Combobox extends LightningElement{
     //corner while it has no value; pulsing for the step to take next.
     @api badge;
     @api badgePulse = false;
+    //Typed into, the options narrow to the ones every word typed finds in
+    //their label, value or group, a mistyped letter forgiven.
+    @api searchable = false;
+    @api noMatchMessage = 'Nothing matches';
 
     @api
     get options(){
@@ -43,7 +50,11 @@ export default class Combobox extends LightningElement{
     _value;
     isOpen = false;
     highlightedValue;
-    downIcon = DOWN_ICON;
+    //What was typed since the list opened. Until a key is typed the field
+    //shows the option picked, all of it selected, for the first key to
+    //replace.
+    query = '';
+    hasTyped = false;
 
     //Hidden until the storage says the user did not close them for good.
     areBadgesDismissed = true;
@@ -79,6 +90,29 @@ export default class Combobox extends LightningElement{
     //With a side, the tooltip tells the org name already.
     get buttonTitle(){
         return this.selectedOption && !this.side ? this.selectedOption.label : '';
+    }
+
+    get fieldIcon(){
+        return this.searchable ? SEARCH_ICON : DOWN_ICON;
+    }
+
+    get fieldValue(){
+        if(this.hasTyped){
+            return this.query;
+        }
+        return this.selectedOption ? this.selectedOption.label : '';
+    }
+
+    //The options the words typed find, every one until a key is typed.
+    get shownOptions(){
+        if(!this.searchable || !this.hasTyped){
+            return this._options;
+        }
+        return this._options.filter(option => matchesQuery(this.query, [option.label, option.value, option.group]));
+    }
+
+    get hasNoMatch(){
+        return !this.isEmpty && !this.shownOptions.length;
     }
 
     get valueClass(){
@@ -147,7 +181,7 @@ export default class Combobox extends LightningElement{
     get items(){
         const optionsByGroup = new Map();
 
-        this._options.forEach(option => {
+        this.shownOptions.forEach(option => {
             const group = option.group || '';
             if(!optionsByGroup.has(group)){
                 optionsByGroup.set(group, []);
@@ -196,11 +230,36 @@ export default class Combobox extends LightningElement{
     open(){
         this.isOpen = true;
         this.highlightedValue = this._value;
+        this.query = '';
+        this.hasTyped = false;
     }
 
     close(){
         this.isOpen = false;
         this.highlightedValue = undefined;
+        this.query = '';
+        this.hasTyped = false;
+    }
+
+    //A click on the field opens the list with the option picked selected, so
+    //what is typed replaces it. Open, a click only moves the cursor.
+    handleSearchClick(event){
+        if(!this.isOpen){
+            this.open();
+            event.currentTarget.select();
+        }
+    }
+
+    //Each key typed narrows the list, the first option left highlighted for
+    //Enter to pick.
+    handleSearchInput(event){
+        if(!this.isOpen){
+            this.open();
+        }
+        this.query = event.target.value;
+        this.hasTyped = true;
+        const first = this.listedOptions[0];
+        this.highlightedValue = first ? first.value : undefined;
     }
 
     handleBlur(){
